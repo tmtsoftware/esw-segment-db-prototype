@@ -1,2 +1,11 @@
 *.class
 *.log
+*.rdb
+*.cache
+/esw-segment-db-prototype.iml
+/.idea/
+/.bsp/
+/project/target/
+/target/
+/esw-segment-db/target/
+/esw-segment-db/xxx.json
