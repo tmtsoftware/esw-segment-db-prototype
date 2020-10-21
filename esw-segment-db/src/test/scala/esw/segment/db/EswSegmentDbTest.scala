@@ -1,11 +1,8 @@
 package esw.segment.db
 
 import java.sql.Timestamp
-import java.time.Instant
 
 import org.scalatest.funsuite.AnyFunSuite
-import csw.database.scaladsl.JooqExtentions._
-import SegmentDb._
 import scala.concurrent.duration._
 
 import scala.async.Async.{async, await}
