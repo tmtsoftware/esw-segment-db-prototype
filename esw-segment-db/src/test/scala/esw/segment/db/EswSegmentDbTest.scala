@@ -8,6 +8,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import scala.concurrent.duration._
 import scala.async.Async.{async, await}
 import scala.concurrent.Await
+import scala.util.{Failure, Success}
 
 class EswSegmentDbTest extends AnyFunSuite {
 
@@ -20,18 +21,20 @@ class EswSegmentDbTest extends AnyFunSuite {
     log.info("Inserting data in table: segment_to_m1_pos")
     val date1 = Date.valueOf("2020-10-21")
     val date2 = Date.valueOf("2020-10-22")
-    val dateRange1 = DateRange(date1, date1)
-    val dateRange2 = DateRange(date1, date2)
     val s5 = SegmentToM1Pos(date1, "SN0005", 4)
     val s7 = SegmentToM1Pos(date1, "SN0007", 2)
     val s5b = SegmentToM1Pos(date2, "SN0005", 23)
     val s7b = SegmentToM1Pos(date2, "SN0007", 123)
     val doneF = async {
+      assert(await(segmentDb.setPosition(SegmentToM1Pos(Date.valueOf("2020-10-01"), "SN0003", 4))))
+      assert(await(segmentDb.setPosition(SegmentToM1Pos(Date.valueOf("2020-10-10"), "SN0004", 4))))
       assert(await(segmentDb.setPosition(s7)))
       assert(await(segmentDb.setPosition(s5)))
       assert(await(segmentDb.setPosition(s5b)))
       assert(await(segmentDb.setPosition(s7b)))
 
+      val dateRange1 = DateRange(date1, date1)
+      val dateRange2 = DateRange(date1, date2)
       assert(await(segmentDb.getSegmentPositions(dateRange1, "SN0007")) == List(s7))
       assert(await(segmentDb.getSegmentIds(dateRange1, 2)) == List(s7))
       assert(await(segmentDb.getSegmentPositions(dateRange1, "SN0005")) == List(s5))
@@ -43,6 +46,13 @@ class EswSegmentDbTest extends AnyFunSuite {
       assert(await(segmentDb.getSegmentPositions(dateRange2, "SN0007")) == List(s7, s7b))
 
     }
-    Await.ready(doneF, 10.seconds)
+//    doneF.onComplete {
+//      case Success(_) =>
+//        println("Test Passed")
+//      case Failure(ex) =>
+//        println("Test Failed")
+//        ex.printStackTrace()
+//    }
+    Await.result(doneF, 1000.seconds)
   }
 }
