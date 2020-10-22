@@ -25,7 +25,7 @@ class Wiring(maybePort: Option[Int] = None) {
   private lazy val dsl: DSLContext = Await.result(dbFactory.makeDsl(locationService, dbName,
     "DB_WRITE_USERNAME", "DB_WRITE_PASSWORD"), timeout)
 
-  lazy val segmentDb = new SegmentDb(dsl)
+  lazy val segmentDb = new SegmentToM1PosTable(dsl)
   lazy val routes = new Routes(segmentDb)
   lazy val configs = new Configs(maybePort)
   lazy val server = new Server(configs, routes)
