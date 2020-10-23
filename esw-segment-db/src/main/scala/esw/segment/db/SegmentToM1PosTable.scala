@@ -65,8 +65,10 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
   }
 
   /**
-   * Return the input parameter with the date modified to reflect the install date of the segment at
-   * the given position.
+   * Returns the input parameter with the date modified to reflect the install date of the segment at
+   * the given position. The select state statement is rather complicated because it has to examine the row
+   * before each row to see if the segment id changed, in order to get the date that the segment was
+   * installed.
    */
   private def withInstallDate(dateRange: DateRange, segmentToM1Pos: SegmentToM1Pos): Future[SegmentToM1Pos] = async {
     val queryResult = await(dsl.resultQuery(
@@ -162,20 +164,16 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
     await(Future.sequence(fList)).distinct
   }
 
-  //  def getNewlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]] = async {
-  //    val queryResult = await(dsl.resultQuery(
-  //      s"""
-  //         |SELECT $dateCol, $positionsCol[$pos]
-  //         |FROM $tableName
-  //         |WHERE $dateCol >= '${dateRange.from}' AND $dateCol <= '${dateRange.to}'
-  //         |""".stripMargin)
-  //      .fetchAsyncScala[(Date, String)])
-  //    queryResult.map { result =>
-  //      val date = result._1
-  //      val segmentId = result._2
-  //      SegmentToM1Pos(date, segmentId, pos)
-  //    }
-  //  }
+  /**
+   * Returns a list of segments that were installed since the given date
+   * @param since the cutoff date for newly installed segments
+   */
+  def getNewlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]] = async {
+    val dateRange = DateRange(since, new Date(System.currentTimeMillis()))
+    val fList = (1 to numSegments).toList.map(pos => getSegmentIds(dateRange, pos))
+    // await(Future.sequence(fList)).flatten.filter(_.date.after(since))
+    await(Future.sequence(fList)).flatten.filter(_.date.getTime >= since.getTime)
+  }
 
   //  def getCurrentPositions(): Future[List[SegmentToM1Pos]] = async {
   //  }
