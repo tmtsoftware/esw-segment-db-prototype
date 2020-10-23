@@ -68,7 +68,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
    * Return the input parameter with the date modified to reflect the install date of the segment at
    * the given position.
    */
-  private def withInstallDate(segmentToM1Pos: SegmentToM1Pos): Future[SegmentToM1Pos] = async {
+  private def withInstallDate(dateRange: DateRange, segmentToM1Pos: SegmentToM1Pos): Future[SegmentToM1Pos] = async {
     val queryResult = await(dsl.resultQuery(
       s"""
          |SELECT w1.date
@@ -79,6 +79,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
          |  LAG(positions[${segmentToM1Pos.pos}]) OVER (ORDER BY date) as next_id
          | FROM
          |  segment_to_m1_pos
+         | WHERE date <= '${dateRange.to}'
          | ORDER BY date DESC
          |) as w1
          |WHERE
@@ -112,24 +113,6 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
     } else rowStatus
   }
 
-
-  //  /**
-  //   * Fetches the result in a Future. It is a wrapper on Jooq's ResultQuery#fetchAsync().
-  //   *
-  //   * @param classTag the class of type `'R'` used to cast the result data
-  //   * @param ec ExecutionContext on which the async fetch call gets scheduled
-  //   * @tparam R the type to which result data gets casted
-  //   * @return a Future that completes with a list of data `'R'`
-  //   */
-  //  def fetchAsyncScala[R](resultQuery: ResultQuery[Record])(implicit classTag: ClassTag[R], ec: ExecutionContext): Future[List[R]] = {
-  //    val klass = classTag.runtimeClass.asInstanceOf[Class[R]]
-  //    resultQuery
-  //      .fetchAsync()
-  //      .toScala
-  //      .map(_.asScala.map(_.into(klass)).toList)
-  //  }
-
-
   /**
    * Gets a list of segments positions for the given segment id in the given date range.
    *
@@ -151,8 +134,8 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
       val positions = result._2
       positions.zipWithIndex.find(segmentId == _._1).map(p => SegmentToM1Pos(date, segmentId, p._2 + 1))
     }
-    val fList = list.map(s => withInstallDate(s)).distinct
-    await(Future.sequence(fList))
+    val fList = list.map(s => withInstallDate(dateRange, s))
+    await(Future.sequence(fList)).distinct
   }
 
   /**
@@ -170,11 +153,13 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
          |WHERE $dateCol >= '${dateRange.from}' AND $dateCol <= '${dateRange.to}' AND $positionsCol[$pos] != 'null'
          |""".stripMargin)
       .fetchAsyncScala[(Date, String)])
-    queryResult.map { result =>
+    val list = queryResult.map { result =>
       val date = result._1
       val segmentId = result._2
       SegmentToM1Pos(date, segmentId, pos)
     }
+    val fList = list.map(s => withInstallDate(dateRange, s))
+    await(Future.sequence(fList)).distinct
   }
 
   //  def getNewlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]] = async {
