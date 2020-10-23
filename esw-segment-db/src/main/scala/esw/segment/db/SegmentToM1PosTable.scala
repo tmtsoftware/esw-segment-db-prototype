@@ -2,15 +2,12 @@ package esw.segment.db
 
 import java.sql.Date
 
-import org.jooq.{DSLContext, Record, ResultQuery}
+import org.jooq.DSLContext
 import csw.database.scaladsl.JooqExtentions._
 import SegmentToM1PosTable._
 
 import scala.async.Async._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.reflect.ClassTag
-import scala.jdk.CollectionConverters._
-import scala.compat.java8.FutureConverters.CompletionStageOps
 
 object SegmentToM1PosTable {
   val numSegments = 492
@@ -65,34 +62,34 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
         .query(s"INSERT INTO $tableName($dateCol, $positionsCol) VALUES ('${date.toString}', '{$positions}')")
         .executeAsyncScala()
     ) == 1
-
-
-    //    await(
-    //      dsl
-    //        .query(s"INSERT INTO $tableName($dateCol) VALUES ('${date.toString}')")
-    //        .executeAsyncScala()
-    //    ) == 1
   }
 
-  //  /**
-  //   * Return the input parameter with the date modified to reflect the install date of the segment at
-  //   * the given position.
-  //   */
-  //  private def withInstallDate(segmentToM1Pos: SegmentToM1Pos): SegmentToM1Pos = async {
-  //    val queryResult = await(dsl.resultQuery(
-  //      s"""
-  //         |SELECT $dateCol, $positionsCol[${segmentToM1Pos.pos}]
-  //         |FROM $tableName
-  //         |WHERE $positionsCol[${segmentToM1Pos.pos}] = '${segmentToM1Pos.id}'
-  //         |"""
-  //        .stripMargin)
-  //      .fetchAsyncScala[(Date, Array[String])])
-  //    val list = queryResult.flatMap { result =>
-  //      val date = result._1
-  //      val positions = result._2
-  //      positions.zipWithIndex.find(segmentId == _._1).map(p => SegmentToM1Pos(date, segmentId, p._2))
-  //    }
-  //  }
+  /**
+   * Return the input parameter with the date modified to reflect the install date of the segment at
+   * the given position.
+   */
+  private def withInstallDate(segmentToM1Pos: SegmentToM1Pos): Future[SegmentToM1Pos] = async {
+    val queryResult = await(dsl.resultQuery(
+      s"""
+         |SELECT w1.date
+         |FROM (
+         | SELECT
+         |  date,
+         |  positions[${segmentToM1Pos.pos}] as id,
+         |  LAG(positions[${segmentToM1Pos.pos}]) OVER (ORDER BY date) as next_id
+         | FROM
+         |  segment_to_m1_pos
+         | ORDER BY date DESC
+         |) as w1
+         |WHERE
+         |  w1.id = '${segmentToM1Pos.id}' AND w1.id IS DISTINCT FROM w1.next_id
+         |ORDER BY date DESC
+         |LIMIT 1;
+         |"""
+        .stripMargin)
+      .fetchAsyncScala[Date])
+    SegmentToM1Pos(queryResult.head, segmentToM1Pos.id, segmentToM1Pos.pos)
+  }
 
   /**
    * Sets or updates the date and position of the given segment in the table and returns true if successful
@@ -147,15 +144,15 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
          |FROM $tableName
          |WHERE $dateCol >= '${dateRange.from}' AND $dateCol <= '${dateRange.to}'
          |"""
-        .stripMargin)
-      .fetchAsyncScala[(Date, Array[String])])
+        .stripMargin
+    ).fetchAsyncScala[(Date, Array[String])])
     val list = queryResult.flatMap { result =>
       val date = result._1
       val positions = result._2
       positions.zipWithIndex.find(segmentId == _._1).map(p => SegmentToM1Pos(date, segmentId, p._2 + 1))
     }
-    //    list.map(withInstallDate).distinct
-    list
+    val fList = list.map(s => withInstallDate(s)).distinct
+    await(Future.sequence(fList))
   }
 
   /**
