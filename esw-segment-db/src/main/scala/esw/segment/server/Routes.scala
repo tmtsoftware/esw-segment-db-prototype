@@ -1,8 +1,9 @@
-package esw.segment.db
+package esw.segment.server
 
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.{Directives, Route}
 import esw.segment.db.SegmentToM1PosTable.SegmentToM1Pos
+import esw.segment.db.{JsonSupport, SegmentToM1PosTable}
 
 class Routes(db: SegmentToM1PosTable) extends Directives with JsonSupport {
   val route: Route =

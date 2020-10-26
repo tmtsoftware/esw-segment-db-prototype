@@ -1,4 +1,4 @@
-package esw.segment.db
+package esw.segment.server
 
 import akka.actor.typed.{ActorSystem, SpawnProtocol}
 import akka.http.scaladsl.Http
