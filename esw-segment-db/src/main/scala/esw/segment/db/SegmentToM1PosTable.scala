@@ -52,6 +52,7 @@ object SegmentToM1PosTable {
    */
   case class DateRange(from: Date, to: Date)
 
+  def currentDate(): Date = new Date(System.currentTimeMillis())
 }
 
 /**
@@ -196,7 +197,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
    * @param since the cutoff date for newly installed segments
    */
   def newlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]] = async {
-    val dateRange = DateRange(since, new Date(System.currentTimeMillis()))
+    val dateRange = DateRange(since, currentDate())
     val fList = (1 to numSegments).toList.map(pos => segmentIds(dateRange, pos))
     // await(Future.sequence(fList)).flatten.filter(_.date.after(since))
     await(Future.sequence(fList)).flatten.filter(_.date.getTime >= since.getTime)
@@ -206,11 +207,18 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
    * Returns the current segment positions, sorted by position
    * (Missing segments are not included in the returned list).
    */
-  def currentPositions(): Future[List[SegmentToM1Pos]] = async {
+  def currentPositions(): Future[List[SegmentToM1Pos]] = positionsOnDate(currentDate())
+
+  /**
+   * Returns the segment positions as they were on the given date, sorted by position
+   * (Missing segments are not included in the returned list).
+   */
+  def positionsOnDate(date: Date): Future[List[SegmentToM1Pos]] = async {
     val queryResult = await(dsl.resultQuery(
       s"""
          |SELECT $dateCol, $positionsCol
          |FROM $tableName
+         |WHERE date <= '$date'
          |ORDER BY date DESC
          |LIMIT 1
          |""".stripMargin)
@@ -224,14 +232,8 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
         .map(p => new SegmentToM1Pos(date, p._1, p._2 + 1))
     }
     val fList = list
-      .map(s => withInstallDate(new Date(new java.util.Date().getTime), s))
+      .map(s => withInstallDate(currentDate(), s))
     await(Future.sequence(fList)).distinct
   }
-
-  //  def getCurrentPositions(): Future[List[SegmentToM1Pos]] = async {
-  //  }
-
-  // XXX add method to get entire row for current date, or a given date
-  // XXX add method to get all rows added since a given date
 }
 
