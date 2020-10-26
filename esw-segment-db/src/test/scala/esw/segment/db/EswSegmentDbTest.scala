@@ -94,6 +94,15 @@ class EswSegmentDbTest extends AnyFunSuite {
         new SegmentToM1Pos(Date.valueOf("2020-10-22"), "SN0007", 123)
       ))
 
+      assert(await(posTable.currentSegmentPosition("SN0007"))
+        .contains(new SegmentToM1Pos(Date.valueOf("2020-10-22"), "SN0007", 123)))
+
+      assert(await(posTable.currentSegmentPosition("SN0004"))
+        .contains(new SegmentToM1Pos(Date.valueOf("2020-10-08"), "SN0004", 4)))
+
+      assert(await(posTable.currentSegmentPosition("SN0005"))
+        .contains(new SegmentToM1Pos(Date.valueOf("2020-10-22"), "SN0005", 23)))
+
       assert(await(posTable.positionsOnDate(Date.valueOf("2020-10-04"))) == List(
         new SegmentToM1Pos(Date.valueOf("2020-10-02"), "SN0003", 4),
       ))
@@ -102,6 +111,11 @@ class EswSegmentDbTest extends AnyFunSuite {
         new SegmentToM1Pos(Date.valueOf("2020-10-08"), "SN0004", 4),
         new SegmentToM1Pos(Date.valueOf("2020-10-21"), "SN0005", 5)
       ))
+
+      assert(await(posTable.segmentPositionOnDate("SN0003", Date.valueOf("2020-10-04")))
+        .contains(new SegmentToM1Pos(Date.valueOf("2020-10-02"), "SN0003", 4)))
+      assert(await(posTable.segmentPositionOnDate("SN0007", Date.valueOf("2020-10-21")))
+        .contains(new SegmentToM1Pos(Date.valueOf("2020-10-21"), "SN0007", 2)))
     }
     Await.result(doneF, 1000.seconds)
   }

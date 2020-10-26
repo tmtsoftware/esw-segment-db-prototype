@@ -167,7 +167,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
     await(Future.sequence(fList)).distinct.sortWith(_.pos < _.pos)
   }
 
-  /**
+    /**
    * Gets a list of segment ids that were in the given position in the given date range.
    *
    * @param dateRange the range of dates to search
@@ -210,6 +210,16 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
   def currentPositions(): Future[List[SegmentToM1Pos]] = positionsOnDate(currentDate())
 
   /**
+   * Gets the current segment position for the given segment id.
+   *
+   * @param segmentId the segment id to search for
+   * @return Some object indicating the positions of the given segment, or None if the segment is not installed
+   */
+  def currentSegmentPosition(segmentId: String): Future[Option[SegmentToM1Pos]] = async {
+    await(currentPositions()).find(_.maybeId.contains(segmentId))
+  }
+
+  /**
    * Returns the segment positions as they were on the given date, sorted by position
    * (Missing segments are not included in the returned list).
    */
@@ -235,5 +245,17 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
       .map(s => withInstallDate(currentDate(), s))
     await(Future.sequence(fList)).distinct
   }
+
+  /**
+   * Gets the segment position for the given segment id on the given date.
+   *
+   * @param segmentId the segment id to search for
+   * @param date the date that the segment was in the position
+   * @return Some object indicating the positions of the given segment, or None if the segment is not installed
+   */
+  def segmentPositionOnDate(segmentId: String, date: Date): Future[Option[SegmentToM1Pos]] = async {
+    await(positionsOnDate(date)).find(_.maybeId.contains(segmentId))
+  }
+
 }
 
