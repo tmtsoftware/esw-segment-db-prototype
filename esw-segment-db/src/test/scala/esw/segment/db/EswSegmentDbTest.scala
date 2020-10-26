@@ -33,7 +33,7 @@ class EswSegmentDbTest extends AnyFunSuite {
     assert(await(posTable.setPosition(new SegmentToM1Pos(Date.valueOf("2020-10-04"), "SN0003", 4))))
     assert(await(posTable.setPosition(new SegmentToM1Pos(Date.valueOf("2020-10-05"), "SN0004", 4))))
     assert(await(posTable.setPosition(new SegmentToM1Pos(Date.valueOf("2020-10-06"), "SN0004", 4))))
-    assert(await(posTable.setPosition(new SegmentToM1Pos(Date.valueOf("2020-10-07"), None, 4))))
+    assert(await(posTable.setPosition(SegmentToM1Pos(Date.valueOf("2020-10-07"), None, 4))))
     assert(await(posTable.setPosition(new SegmentToM1Pos(Date.valueOf("2020-10-08"), "SN0004", 4))))
     assert(await(posTable.setPosition(new SegmentToM1Pos(Date.valueOf("2020-10-09"), "SN0004", 4))))
     assert(await(posTable.setPosition(new SegmentToM1Pos(Date.valueOf("2020-10-21"), "SN0004", 4))))
