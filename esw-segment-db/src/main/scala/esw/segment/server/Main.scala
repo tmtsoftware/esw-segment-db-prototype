@@ -1,6 +1,4 @@
-package esw.segment.db
-
-import esw.segment.server.ServerWiring
+package esw.segment.server
 
 object Main extends App {
   val wiring = new ServerWiring()

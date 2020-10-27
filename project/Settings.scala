@@ -16,7 +16,6 @@ object Settings {
     scalaVersion := ScalaVersion,
     parallelExecution in Test := false,
     fork := true,
-    resolvers += Resolver.bintrayRepo("twtmt", "maven"),
     resolvers += "jitpack" at "https://jitpack.io",
     resolvers += "bintray" at "https://jcenter.bintray.com",
     updateOptions := updateOptions.value.withLatestSnapshots(false),

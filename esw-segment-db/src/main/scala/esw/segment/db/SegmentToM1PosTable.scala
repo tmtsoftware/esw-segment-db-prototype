@@ -24,13 +24,6 @@ object SegmentToM1PosTable {
   // Segment id for missing segments
   private val missingSegmentId = "null"
 
-  //  object SegmentToM1Pos {
-  //    def apply(date: Date, id: String, pos: Int): SegmentToM1Pos = {
-  //      val maybeId = if (id.startsWith(missingSegmentId)) None else Some(id)
-  //      this (date, maybeId, pos)
-  //    }
-  //  }
-
   /**
    * Position of a segment on a given date
    *
@@ -167,7 +160,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
     await(Future.sequence(fList)).distinct.sortWith(_.pos < _.pos)
   }
 
-    /**
+  /**
    * Gets a list of segment ids that were in the given position in the given date range.
    *
    * @param dateRange the range of dates to search
@@ -260,7 +253,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
    * Gets the segment position for the given segment id on the given date.
    *
    * @param segmentId the segment id to search for
-   * @param date the date that the segment was in the position
+   * @param date      the date that the segment was in the position
    * @return Some object indicating the positions of the given segment, or None if the segment is not installed
    */
   def segmentPositionOnDate(segmentId: String, date: Date): Future[Option[SegmentToM1Pos]] = async {
@@ -270,7 +263,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
   /**
    * Gets the id of the segment that was installed in the given position on the given date.
    *
-   * @param pos the segment position to search for
+   * @param pos  the segment position to search for
    * @param date the date that the segment was in the position
    * @return Some object indicating the id of the segment, or None if no segment was installed at that position on the given date
    */

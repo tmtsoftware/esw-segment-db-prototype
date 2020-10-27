@@ -11,7 +11,6 @@ import csw.logging.client.scaladsl.{GenericLoggerFactory, LoggingSystemFactory}
 import org.jooq.DSLContext
 import csw.database.scaladsl.JooqExtentions._
 
-
 import scala.async.Async.await
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
