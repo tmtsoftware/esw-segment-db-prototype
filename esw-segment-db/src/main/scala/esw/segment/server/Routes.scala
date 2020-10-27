@@ -36,6 +36,38 @@ class Routes(posTable: SegmentToM1PosTable)(implicit ec: ExecutionContext) exten
             entity(as[Date]) { date =>
               complete(posTable.newlyInstalledSegments(date))
             }
+          } ~
+          // Returns the current segment positions, sorted by position
+          path("currentPositions") {
+            complete(posTable.currentPositions())
+          } ~
+          // Gets the current segment position for the given segment id.
+          path("currentSegmentPosition" / Segment) { segmentId =>
+            complete(posTable.currentSegmentPosition(segmentId))
+          } ~
+          // Gets the id of the segment currently in the given position
+          path("currentSegmentAtPosition" / IntNumber) { pos =>
+            complete(posTable.currentSegmentAtPosition(pos))
+          } ~
+          // Returns the segment positions as they were on the given date, sorted by position
+          path("positionsOnDate") {
+            entity(as[Date]) { date =>
+              complete(posTable.positionsOnDate(date))
+            }
+          } ~
+          get {
+            // Gets the segment position for the given segment id on the given date.
+            path("segmentPositionOnDate" / Segment) { segmentId =>
+              entity(as[Date]) { date =>
+                complete(posTable.segmentPositionOnDate(date, segmentId))
+              }
+            } ~
+              // Gets the id of the segment that was installed in the given position on the given date
+              path("segmentAtPositionOnDate" / IntNumber) { pos =>
+                entity(as[Date]) { date =>
+                  complete(posTable.segmentAtPositionOnDate(date, pos))
+                }
+              }
           }
       }
 }

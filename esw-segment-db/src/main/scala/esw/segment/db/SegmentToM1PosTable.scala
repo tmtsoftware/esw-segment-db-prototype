@@ -252,22 +252,22 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
   /**
    * Gets the segment position for the given segment id on the given date.
    *
-   * @param segmentId the segment id to search for
    * @param date      the date that the segment was in the position
+   * @param segmentId the segment id to search for
    * @return Some object indicating the positions of the given segment, or None if the segment is not installed
    */
-  def segmentPositionOnDate(segmentId: String, date: Date): Future[Option[SegmentToM1Pos]] = async {
+  def segmentPositionOnDate(date: Date, segmentId: String): Future[Option[SegmentToM1Pos]] = async {
     await(positionsOnDate(date)).find(_.maybeId.contains(segmentId))
   }
 
   /**
    * Gets the id of the segment that was installed in the given position on the given date.
    *
-   * @param pos  the segment position to search for
    * @param date the date that the segment was in the position
+   * @param pos  the segment position to search for
    * @return Some object indicating the id of the segment, or None if no segment was installed at that position on the given date
    */
-  def segmentAtPositionOnDate(pos: Int, date: Date): Future[Option[SegmentToM1Pos]] = async {
+  def segmentAtPositionOnDate(date: Date, pos: Int): Future[Option[SegmentToM1Pos]] = async {
     await(positionsOnDate(date)).find(_.pos == pos)
   }
 
