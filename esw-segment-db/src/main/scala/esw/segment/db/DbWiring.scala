@@ -9,10 +9,8 @@ import csw.location.client.scaladsl.HttpLocationServiceFactory
 import csw.logging.api.scaladsl.Logger
 import csw.logging.client.scaladsl.{GenericLoggerFactory, LoggingSystemFactory}
 import org.jooq.DSLContext
-import csw.database.scaladsl.JooqExtentions._
 
-import scala.async.Async.await
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor}
 import scala.concurrent.duration._
 
 /**
@@ -28,14 +26,14 @@ class DbWiring(dbName: String = "esw_segment_db") {
   lazy val locationService: LocationService = HttpLocationServiceFactory.makeLocalClient(typedSystem)
   lazy val dbFactory = new DatabaseServiceFactory(typedSystem)
   lazy val timeout: FiniteDuration = 60.seconds
-  lazy val adminDsl: DSLContext = Await.result(dbFactory.makeDsl(locationService, "postgres",
-    "DB_WRITE_USERNAME", "DB_WRITE_PASSWORD"), timeout)
   lazy val dsl: DSLContext = Await.result(dbFactory.makeDsl(locationService, dbName,
     "DB_WRITE_USERNAME", "DB_WRITE_PASSWORD"), timeout)
-
   lazy val segmentToM1PosTable = new SegmentToM1PosTable(dsl)
 
-//  def dropDb(): Future[Unit] = {
+//    lazy val adminDsl: DSLContext = Await.result(dbFactory.makeDsl(locationService, "postgres",
+//      "DB_WRITE_USERNAME", "DB_WRITE_PASSWORD"), timeout)
+//
+//    def dropDb(): Future[Unit] = {
 //    await(
 //      adminDsl.dropDatabase("database").executeAsyncScala()
 //    )

@@ -14,7 +14,7 @@ object SegmentToM1PosTable {
    * Number of segments in the TMT primary mirror.
    * This is also the size of the positions array in the segment_to_m1_pos table.
    */
-  private val numSegments = 492
+  val numSegments = 492
 
   // Table and column names
   private val tableName = "segment_to_m1_pos"
@@ -22,7 +22,9 @@ object SegmentToM1PosTable {
   private val positionsCol = "positions"
 
   // Segment id for missing segments
-  private val missingSegmentId = "null"
+  private val missingSegmentId = "------"
+
+  private def quoted(s: String) = "\"" + s + "\""
 
   /**
    * Position of a segment on a given date
@@ -54,6 +56,18 @@ object SegmentToM1PosTable {
 class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
 
   /**
+   * Drops and recreates the database table (for testing)
+   */
+  private[db] def reset(): Future[Boolean] = async {
+    await(dsl.dropTableIfExists(tableName).executeAsyncScala())
+    await(
+      dsl
+        .query(s"CREATE TABLE $tableName (date DATE NOT NULL PRIMARY KEY, positions CHARACTER(6)[$numSegments])")
+        .executeAsyncScala()
+    ) == 0
+  }
+
+  /**
    * Returns true if there is an entry for the given date in the table
    *
    * @param date the date to search for
@@ -64,15 +78,54 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
   }
 
   /**
-   * Adds a row with only the date and returns true if successful
+   * Returns the current segment positions list as stored in the database,
+   * or a list of null entries, if there are no database rows yet.
+   */
+  private def rawCurrentPositions(): Future[Array[String]] = async {
+    import scala.jdk.CollectionConverters._
+    import scala.compat.java8.FutureConverters.CompletionStageOps
+
+    await(dsl.resultQuery(
+      s"""
+         |SELECT $positionsCol
+         |FROM $tableName
+         |WHERE date <= '${currentDate()}'
+         |ORDER BY date DESC
+         |LIMIT 1
+         |""".stripMargin)
+      // XXX FIXME: CSW's fetchAsyncScala does not handle array results!
+      .fetchAsync()
+      .toScala
+      .map(_.asScala.map(_.into(classOf[Object]).asInstanceOf[Array[String]]).toArray))
+      .headOption
+      .getOrElse((1 to numSegments).map(_ => missingSegmentId).toArray)
+  }
+
+  /**
+   * Adds a row with the given date and copies the segment positions from the latest entry,
+   * if found, or else a row of nulls.
    *
    * @param date the date to search for
+   * @return true if successful
    */
   private def addRow(date: Date): Future[Boolean] = async {
-    val positions = (1 to numSegments).map(_ => "\"null\"").toList.mkString(",")
+    val positions = await(rawCurrentPositions()).map(quoted).mkString(",")
     await(
       dsl
         .query(s"INSERT INTO $tableName($dateCol, $positionsCol) VALUES ('${date.toString}', '{$positions}')")
+        .executeAsyncScala()
+    ) == 1
+  }
+
+  /**
+   * Adds a row with only the given date and no positions and returns true if successful
+   *
+   * @param date the date to search for
+   */
+  private def addEmptyRow(date: Date): Future[Boolean] = async {
+    await(
+      dsl
+        .query(s"INSERT INTO $tableName($dateCol) VALUES ('${date.toString}')")
         .executeAsyncScala()
     ) == 1
   }
@@ -115,6 +168,23 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
   }
 
   /**
+   * Set the given segment ids as removed on the given date.
+   * (If you know the segment position, you can also call setPosition with segmentToM1Pos.maybeId set to None).
+   *
+   * @param date date for a row
+   * @param segmentIds list of segment ids to remove
+   * @return true if all ok
+   */
+  def removeSegmentIds(date: Date, segmentIds: List[String]): Future[Boolean] = async {
+    if (segmentIds.nonEmpty) {
+      val dateRange = DateRange(date, date)
+      val currentPositions = await(Future.sequence(segmentIds.map(id => segmentPositions(dateRange, id))).map(_.flatten))
+      val results = await(Future.sequence(currentPositions.map(p => setPosition(SegmentToM1Pos(date, None, p.pos)))))
+      results.forall(p => p)
+    } else true
+  }
+
+    /**
    * Sets or updates the date and position of the given segment in the table and returns true if successful
    *
    * @param segmentToM1Pos holds the date, id and pos
@@ -124,6 +194,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
     val rowStatus = await(rowExists(segmentToM1Pos.date)) || await(addRow(segmentToM1Pos.date))
 
     if (rowStatus) {
+      await(removeSegmentIds(segmentToM1Pos.date, segmentToM1Pos.maybeId.toList))
       await(dsl
         .query(
           s"""
@@ -132,6 +203,63 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
              |WHERE $dateCol = '${segmentToM1Pos.date}'
              |""".stripMargin)
         .executeAsyncScala()) == 1
+    } else rowStatus
+  }
+
+  /**
+   * Sets or updates the positions of the given segments for the given date in the table and returns true if successful.
+   *
+   * @param date      the date corresponding to the positions
+   * @param positions a list of pairs of (segment-id, position) for zero or more segments to be set/updated
+   *                  for the given date
+   * @return true if there were no problems
+   */
+  def setPositions(date: Date, positions: List[(Option[String], Int)]): Future[Boolean] = async {
+    val rowStatus = await(rowExists(date)) || await(addRow(date))
+    if (rowStatus) {
+      val ids = positions.flatMap(_._1)
+      removeSegmentIds(date, ids)
+      val setExpr = positions.map { p =>
+        val pos = p._2
+        val maybeId = p._1
+        s"$positionsCol[$pos] = '${maybeId.getOrElse(missingSegmentId)}'"
+      }.mkString(", ")
+      await(dsl
+        .query(
+          s"""
+             |UPDATE $tableName
+             |SET $setExpr
+             |WHERE $dateCol = '$date'
+             |""".stripMargin)
+        .executeAsyncScala()) == 1
+    } else rowStatus
+  }
+
+  /**
+   * Sets all of the segment positions for the given date and returns true if successful.
+   * The first item in the positions list is taken to be the segment position 1 and so on.
+   *
+   * @param date         the date corresponding to the positions
+   * @param allPositions list of all 492 segment positions (Missing segments should be None,
+   *                     present segments should be Some(segment-id)
+   * @return true if all is OK, false if the number of positions is less than 492 or the table row
+   *         could not be added or updated
+   */
+  def setAllPositions(date: Date, allPositions: List[Option[String]]): Future[Boolean] = async {
+    // Make sure the row exists
+    val rowStatus = allPositions.size == numSegments && (await(rowExists(date)) || await(addEmptyRow(date)))
+    if (rowStatus) {
+      val positions = allPositions.map(p => s"${quoted(p.getOrElse(missingSegmentId))}").mkString(",")
+      await(
+        dsl
+          .query(
+            s"""
+               |UPDATE $tableName
+               |SET $positionsCol = '{$positions}'
+               |WHERE $dateCol = '$date'
+               |""".stripMargin)
+          .executeAsyncScala()
+      ) == 1
     } else rowStatus
   }
 
@@ -172,7 +300,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
       s"""
          |SELECT $dateCol, $positionsCol[$pos]
          |FROM $tableName
-         |WHERE $dateCol >= '${dateRange.from}' AND $dateCol <= '${dateRange.to}' AND $positionsCol[$pos] != 'null'
+         |WHERE $dateCol >= '${dateRange.from}' AND $dateCol <= '${dateRange.to}' AND $positionsCol[$pos] != '$missingSegmentId'
          |""".stripMargin)
       .fetchAsyncScala[(Date, String)])
     val list = queryResult.map { result =>
