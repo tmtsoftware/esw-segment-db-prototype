@@ -2,22 +2,19 @@ package esw.segment.db
 
 import java.sql.Date
 
+import csw.database.scaladsl.JooqExtentions.RichQuery
 import csw.logging.api.scaladsl.Logger
 import esw.segment.db.SegmentToM1PosTable.{DateRange, SegmentToM1Pos}
-import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.funsuite.AsyncFunSuite
 
-import scala.concurrent.duration._
 import scala.async.Async.{async, await}
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
-class EswSegmentToM1PosTableTest extends AnyFunSuite {
-  // XXX TODO Create a new test database each time
-  //     val wiring = new DbWiring("test_segment_db")
-  val wiring = new DbWiring()
-
+class EswSegmentToM1PosTableTest extends AsyncFunSuite {
+  val wiring = new DbWiring("test_segment_db")
   import wiring.ec
 
-  val posTable: SegmentToM1PosTable = wiring.segmentToM1PosTable
+  lazy val posTable: SegmentToM1PosTable = wiring.segmentToM1PosTable
   val log: Logger = wiring.log
 
   private val dateRange1 = DateRange(Date.valueOf("2020-10-21"), Date.valueOf("2020-10-21"))
@@ -25,7 +22,12 @@ class EswSegmentToM1PosTableTest extends AnyFunSuite {
   private val dateRange3 = DateRange(Date.valueOf("2020-10-05"), Date.valueOf("2020-10-06"))
   private val dateRange4 = DateRange(Date.valueOf("2020-10-01"), Date.valueOf("2020-10-06"))
   private val dateRange5 = DateRange(Date.valueOf("2020-10-07"), Date.valueOf("2020-10-07"))
-  private val dateRange6 = DateRange(Date.valueOf("2020-10-23"), Date.valueOf("2020-10-23"))
+//  private val dateRange6 = DateRange(Date.valueOf("2020-10-23"), Date.valueOf("2020-10-23"))
+
+  // Drops and recreates the database tables for testing
+  private def resetTables(): Future[Boolean] = async {
+    await(wiring.dsl.truncate(SegmentToM1PosTable.tableName).executeAsyncScala()) >= 0
+  }
 
   private def populateSomeSegments(): Future[Unit] = async {
     assert(await(posTable.setPosition(new SegmentToM1Pos(Date.valueOf("2020-10-01"), "SN0002", 4))))
@@ -52,8 +54,8 @@ class EswSegmentToM1PosTableTest extends AnyFunSuite {
   }
 
   test("Test with all segment positions") {
-    val doneF = async {
-      assert(await(posTable.reset()))
+    async {
+      assert(await(resetTables()))
       await(populateAllSegments(dateRange1.from))
 
       assert(await(posTable.segmentPositions(dateRange1, "SN0007")) == List(
@@ -75,12 +77,11 @@ class EswSegmentToM1PosTableTest extends AnyFunSuite {
       // Previous "SN0007" position now empty
       assert(await(posTable.segmentIds(dateRange1, 7)).isEmpty)
     }
-    Await.result(doneF, 1000.seconds)
   }
 
   test("Test with single segment positions") {
-    val doneF = async {
-      assert(await(posTable.reset()))
+    async {
+      assert(await(resetTables()))
       await(populateSomeSegments())
 
       assert(await(posTable.segmentPositions(dateRange1, "SN0007")) == List(
@@ -166,6 +167,5 @@ class EswSegmentToM1PosTableTest extends AnyFunSuite {
       assert(await(posTable.segmentAtPositionOnDate(Date.valueOf("2020-10-21"), 2))
         .contains(new SegmentToM1Pos(Date.valueOf("2020-10-21"), "SN0007", 2)))
     }
-    Await.result(doneF, 1000.seconds)
   }
 }

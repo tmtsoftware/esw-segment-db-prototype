@@ -4,17 +4,20 @@ import java.net.InetAddress
 
 import akka.actor.typed.{ActorSystem, SpawnProtocol}
 import csw.database.DatabaseServiceFactory
+import csw.database.scaladsl.JooqExtentions.RichQuery
 import csw.location.api.scaladsl.LocationService
 import csw.location.client.scaladsl.HttpLocationServiceFactory
 import csw.logging.api.scaladsl.Logger
 import csw.logging.client.scaladsl.{GenericLoggerFactory, LoggingSystemFactory}
 import org.jooq.DSLContext
 
-import scala.concurrent.{Await, ExecutionContextExecutor}
+import scala.async.Async.{async, await}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 
 /**
  * Sets up the connection to the database.
+ *
  * @param dbName The database name
  */
 class DbWiring(dbName: String = "esw_segment_db") {
@@ -29,17 +32,4 @@ class DbWiring(dbName: String = "esw_segment_db") {
   lazy val dsl: DSLContext = Await.result(dbFactory.makeDsl(locationService, dbName,
     "DB_WRITE_USERNAME", "DB_WRITE_PASSWORD"), timeout)
   lazy val segmentToM1PosTable = new SegmentToM1PosTable(dsl)
-
-//    lazy val adminDsl: DSLContext = Await.result(dbFactory.makeDsl(locationService, "postgres",
-//      "DB_WRITE_USERNAME", "DB_WRITE_PASSWORD"), timeout)
-//
-//    def dropDb(): Future[Unit] = {
-//    await(
-//      adminDsl.dropDatabase("database").executeAsyncScala()
-//    )
-//  }
-//
-//  def initDb(): Future[Unit] = {
-//
-//  }
 }

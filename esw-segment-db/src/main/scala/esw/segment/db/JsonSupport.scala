@@ -3,7 +3,7 @@ package esw.segment.db
 import java.sql.Date
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import esw.segment.db.SegmentToM1PosTable.{DateRange, SegmentToM1Pos}
+import esw.segment.db.SegmentToM1PosTable.{AllSegmentPositions, DateRange, SegmentToM1Pos, SegmentToM1Positions}
 import spray.json.{DefaultJsonProtocol, DeserializationException, JsNumber, JsValue, RootJsonFormat}
 
 
@@ -21,4 +21,6 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val dateRangeFormat = jsonFormat2(DateRange)
   implicit val segmentToM1PosFormat = jsonFormat3(SegmentToM1Pos)
+  implicit val segmentToM1PositionsFormat = jsonFormat2(SegmentToM1Positions)
+  implicit val AllPositionsFormat = jsonFormat2(AllSegmentPositions)
 }

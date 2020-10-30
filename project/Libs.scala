@@ -23,3 +23,4 @@ object AkkaHttp { //ApacheV2
   val `akka-http-testkit` = "com.typesafe.akka" %% "akka-http-testkit" % Version
   val `akka-http-spray-json` = "com.typesafe.akka" %% "akka-http-spray-json" % Version
 }
+

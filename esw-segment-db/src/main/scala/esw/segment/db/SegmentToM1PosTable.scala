@@ -17,7 +17,7 @@ object SegmentToM1PosTable {
   val numSegments = 492
 
   // Table and column names
-  private val tableName = "segment_to_m1_pos"
+  private[db] val tableName = "segment_to_m1_pos"
   private val dateCol = "date"
   private val positionsCol = "positions"
 
@@ -40,6 +40,27 @@ object SegmentToM1PosTable {
   }
 
   /**
+   * Positions of a number of segments on a given date.
+   *
+   * @param date      date of record
+   * @param positions a list of pairs of (segment-id, maybe-position) for zero or more segments
+   *                  to be set/updated for the given date.
+   *                  index+1 is the position. The value is Some(segment-id) or None, if
+   *                  a segment is missing.
+   */
+  case class SegmentToM1Positions(date: Date, positions: List[(Option[String], Int)])
+
+  /**
+   * All of the segment positions for the given date.
+   * The first item in the positions list is taken to be the segment position 1 and so on.
+   *
+   * @param date         the date corresponding to the positions
+   * @param allPositions list of all 492 segment positions (Missing segments should be None,
+   *                     present segments should be Some(segment-id)
+   */
+  case class AllSegmentPositions(date: Date, allPositions: List[Option[String]])
+
+  /**
    * A range of dates
    *
    * @param from start of the date range
@@ -54,18 +75,6 @@ object SegmentToM1PosTable {
  * Provides operations on the segment_to_m1_pos database table.
  */
 class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
-
-  /**
-   * Drops and recreates the database table (for testing)
-   */
-  private[db] def reset(): Future[Boolean] = async {
-    await(dsl.dropTableIfExists(tableName).executeAsyncScala())
-    await(
-      dsl
-        .query(s"CREATE TABLE $tableName (date DATE NOT NULL PRIMARY KEY, positions CHARACTER(6)[$numSegments])")
-        .executeAsyncScala()
-    ) == 0
-  }
 
   /**
    * Returns true if there is an entry for the given date in the table
@@ -171,7 +180,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
    * Set the given segment ids as removed on the given date.
    * (If you know the segment position, you can also call setPosition with segmentToM1Pos.maybeId set to None).
    *
-   * @param date date for a row
+   * @param date       date for a row
    * @param segmentIds list of segment ids to remove
    * @return true if all ok
    */
@@ -184,7 +193,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
     } else true
   }
 
-    /**
+  /**
    * Sets or updates the date and position of the given segment in the table and returns true if successful
    *
    * @param segmentToM1Pos holds the date, id and pos
