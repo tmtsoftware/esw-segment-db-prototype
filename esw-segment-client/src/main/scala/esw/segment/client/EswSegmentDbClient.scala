@@ -103,6 +103,7 @@ object EswSegmentDbClient extends App {
     case Some(options) =>
       try {
         Await.ready(run(options), 60.seconds)
+        System.exit(0)
       }
       catch {
         case e: Throwable =>
