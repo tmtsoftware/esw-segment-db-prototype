@@ -20,4 +20,7 @@ lazy val `esw-segment-client` = project
   .enablePlugins(BuildInfoPlugin)
   .settings(appSettings: _*)
   .settings(libraryDependencies ++= `esw-segment-client-deps`)
-  .dependsOn(`esw-segment-shared` % "compile->compile;test->test")
+  .dependsOn(
+    `esw-segment-shared` % "compile->compile;test->test",
+    `esw-segment-db` % "test->test"
+  )
