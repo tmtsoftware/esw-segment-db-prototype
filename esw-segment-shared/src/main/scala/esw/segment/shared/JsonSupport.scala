@@ -1,11 +1,10 @@
-package esw.segment.db
+package esw.segment.shared
 
 import java.sql.Date
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import esw.segment.db.SegmentToM1PosTable.{AllSegmentPositions, DateRange, SegmentToM1Pos, SegmentToM1Positions}
-import spray.json.{DefaultJsonProtocol, DeserializationException, JsNumber, JsValue, RootJsonFormat}
-
+import esw.segment.shared.EswSegmentData._
+import spray.json._
 
 //noinspection TypeAnnotation
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {

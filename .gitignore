@@ -6,6 +6,6 @@
 /.idea/
 /.bsp/
 /project/target/
-/target/
+target/
 /esw-segment-db/target/
 /esw-segment-db/xxx.json

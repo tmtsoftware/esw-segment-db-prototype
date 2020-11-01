@@ -4,17 +4,14 @@ import java.sql.Date
 
 import org.jooq.DSLContext
 import csw.database.scaladsl.JooqExtentions._
+import esw.segment.shared.EswSegmentData._
 import SegmentToM1PosTable._
+import esw.segment.shared.SegmentToM1Api
 
 import scala.async.Async._
 import scala.concurrent.{ExecutionContext, Future}
 
 object SegmentToM1PosTable {
-  /**
-   * Number of segments in the TMT primary mirror.
-   * This is also the size of the positions array in the segment_to_m1_pos table.
-   */
-  val numSegments = 492
 
   // Table and column names
   private[db] val tableName = "segment_to_m1_pos"
@@ -26,55 +23,17 @@ object SegmentToM1PosTable {
 
   private def quoted(s: String) = "\"" + s + "\""
 
-  /**
-   * Position of a segment on a given date
-   *
-   * @param date    date of record
-   * @param maybeId the segment id, if the segment is present, None if it is missing
-   * @param pos     position of segment
-   */
-  case class SegmentToM1Pos(date: Date, maybeId: Option[String], pos: Int) {
-    def this(date: Date, id: String, pos: Int) = {
-      this(date, if (id.startsWith(missingSegmentId)) None else Some(id), pos)
-    }
+  private def currentDate(): Date = new Date(System.currentTimeMillis())
+
+  private def makeSegmentToM1Pos(date: Date, id: String, pos: Int): SegmentToM1Pos = {
+    SegmentToM1Pos(date, if (id.startsWith(missingSegmentId)) None else Some(id), pos)
   }
-
-  /**
-   * Positions of a number of segments on a given date.
-   *
-   * @param date      date of record
-   * @param positions a list of pairs of (segment-id, maybe-position) for zero or more segments
-   *                  to be set/updated for the given date.
-   *                  index+1 is the position. The value is Some(segment-id) or None, if
-   *                  a segment is missing.
-   */
-  case class SegmentToM1Positions(date: Date, positions: List[(Option[String], Int)])
-
-  /**
-   * All of the segment positions for the given date.
-   * The first item in the positions list is taken to be the segment position 1 and so on.
-   *
-   * @param date         the date corresponding to the positions
-   * @param allPositions list of all 492 segment positions (Missing segments should be None,
-   *                     present segments should be Some(segment-id)
-   */
-  case class AllSegmentPositions(date: Date, allPositions: List[Option[String]])
-
-  /**
-   * A range of dates
-   *
-   * @param from start of the date range
-   * @param to   end of the date range
-   */
-  case class DateRange(from: Date, to: Date)
-
-  def currentDate(): Date = new Date(System.currentTimeMillis())
 }
 
 /**
  * Provides operations on the segment_to_m1_pos database table.
  */
-class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
+class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extends SegmentToM1Api {
 
   /**
    * Returns true if there is an entry for the given date in the table
@@ -291,7 +250,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
     val list = queryResult.flatMap { result =>
       val date = result._1
       val positions = result._2
-      positions.zipWithIndex.find(segmentId == _._1).map(p => new SegmentToM1Pos(date, segmentId, p._2 + 1))
+      positions.zipWithIndex.find(segmentId == _._1).map(p => makeSegmentToM1Pos(date, segmentId, p._2 + 1))
     }
     val fList = list.map(s => withInstallDate(dateRange.to, s))
     await(Future.sequence(fList)).distinct.sortWith(_.pos < _.pos)
@@ -315,7 +274,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
     val list = queryResult.map { result =>
       val date = result._1
       val segmentId = result._2
-      new SegmentToM1Pos(date, segmentId, pos)
+      makeSegmentToM1Pos(date, segmentId, pos)
     }
     val fList = list.map(s => withInstallDate(dateRange.to, s))
     await(Future.sequence(fList)).distinct.sortWith(_.maybeId.get < _.maybeId.get)
@@ -379,7 +338,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
       positions
         .zipWithIndex
         .filter(p => !p._1.startsWith(missingSegmentId))
-        .map(p => new SegmentToM1Pos(date, p._1, p._2 + 1))
+        .map(p => makeSegmentToM1Pos(date, p._1, p._2 + 1))
     }
     val fList = list
       .map(s => withInstallDate(currentDate(), s))
@@ -406,6 +365,14 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) {
    */
   def segmentAtPositionOnDate(date: Date, pos: Int): Future[Option[SegmentToM1Pos]] = async {
     await(positionsOnDate(date)).find(_.pos == pos)
+  }
+
+  /**
+   * Drops and recreates the database tables (for testing)
+   * @return true if OK
+   */
+  def resetTables(): Future[Boolean] = async {
+    await(dsl.truncate(SegmentToM1PosTable.tableName).executeAsyncScala()) >= 0
   }
 
 }

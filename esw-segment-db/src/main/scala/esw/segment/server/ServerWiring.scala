@@ -1,9 +1,9 @@
 package esw.segment.server
 
 import esw.segment.db.DbWiring
+import DbWiring._
 
-class ServerWiring(maybePort: Option[Int] = None) extends DbWiring {
+class ServerWiring(port: Int, dbName: String = defaultDbName) extends DbWiring(dbName) {
   lazy val routes = new Routes(segmentToM1PosTable)
-  lazy val configs = new Configs(maybePort)
-  lazy val server = new Server(configs, routes)
+  lazy val server = new Server(port, routes)
 }
