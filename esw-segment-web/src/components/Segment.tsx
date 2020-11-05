@@ -9,7 +9,7 @@ export const Segment = ({id, pos, x, y}: SegmentProps): JSX.Element => {
   const labelXOffset = pos.length == 2 ? -3 : -5
 
   return (
-    <g id={pos} className={classNames} transform={`translate(${x}, ${y})`}>
+    <g id={pos} key={pos} className={classNames} transform={`translate(${x}, ${y})`}>
       <title>{id}</title>
       <polygon
         stroke="white"

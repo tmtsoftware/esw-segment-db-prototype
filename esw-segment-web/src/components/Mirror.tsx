@@ -6,9 +6,9 @@ export const Mirror = (): JSX.Element => {
 
   return (
       <div>
-        <svg viewBox="0 0 400 400">
+        <svg viewBox="0 0 600 600">
           <g className="sectors">
-            <rect x="0" y="0" width="400" height="400" />
+            <rect x="0" y="0" width="600" height="600" />
             <Sector sector="A"/>
             <Sector sector="B"/>
             <Sector sector="C"/>
