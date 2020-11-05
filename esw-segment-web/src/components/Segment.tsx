@@ -10,7 +10,7 @@ export const Segment = ({id, pos, x, y}: SegmentProps): JSX.Element => {
 
   return (
     <g id={pos} key={pos} className={classNames} transform={`translate(${x}, ${y})`}>
-      <title>{id}</title>
+      <title>Pos: {pos}, Segment ID: {id}</title>
       <polygon
         stroke="black"
         strokeWidth="0.5"
