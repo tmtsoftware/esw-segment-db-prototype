@@ -1,6 +1,13 @@
 
 export class Config {
-  static segmentRadius = 20
+  static segmentRadius = 12
+
+  static segmentPoints = [0, 1, 2, 3, 4, 5].map(i => {
+      const px = Config.segmentRadius * Math.cos(i * 60 * Math.PI / 180.0)
+      const py = Config.segmentRadius * Math.sin(i * 60 * Math.PI / 180.0)
+      return `${px},${py}`
+    }
+  ).join(" ")
 
   static sectorAngle(sector: string) {
     switch (sector) {

@@ -5,17 +5,13 @@ import {Config} from "./Config";
 type SectorProps = { sector: string }
 
 export const Sector = ({sector}: SectorProps): JSX.Element => {
-  // XXX TODO: Put in util
-  const r = Config.segmentRadius/2.0
-
-  const xInc = 3 * r
-  // const yInc = 2 * r - 1.4 // ?
+  const xInc = 3 * Config.segmentRadius / 2.0
   const yInc = Config.segmentRadius * Math.sin(60 * Math.PI / 180.0)
 
   const xOrigin = 200
   const yOrigin = 200
-  const xStart = xOrigin+xInc*2
-  const yStart = yOrigin-yInc*2
+  const xStart = xOrigin + xInc * 2
+  const yStart = yOrigin - yInc * 2
 
   const angle = Config.sectorAngle(sector)
 
@@ -38,6 +34,13 @@ export const Sector = ({sector}: SectorProps): JSX.Element => {
       <Segment id="SN001" pos={`${sector}12`} x={xStart + xInc * 3} y={yStart + yInc}/>
       <Segment id="SN001" pos={`${sector}13`} x={xStart + xInc * 3} y={yStart + yInc * 3}/>
       <Segment id="SN001" pos={`${sector}14`} x={xStart + xInc * 3} y={yStart + yInc * 5}/>
+
+      <Segment id="SN001" pos={`${sector}15`} x={xStart + xInc * 4} y={yStart - yInc * 4}/>
+      <Segment id="SN001" pos={`${sector}16`} x={xStart + xInc * 4} y={yStart - yInc * 2}/>
+      <Segment id="SN001" pos={`${sector}17`} x={xStart + xInc * 4} y={yStart}/>
+      <Segment id="SN001" pos={`${sector}18`} x={xStart + xInc * 4} y={yStart + yInc * 2}/>
+      <Segment id="SN001" pos={`${sector}19`} x={xStart + xInc * 4} y={yStart + yInc * 4}/>
+      <Segment id="SN001" pos={`${sector}20`} x={xStart + xInc * 4} y={yStart + yInc * 6}/>
     </g>
   )
 }
