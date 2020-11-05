@@ -12,6 +12,13 @@ object EswSegmentData {
   val numSegments = 492
 
 
+  /**
+   * The TMT requires a total of 574 segments comprising 7 sets of the 82 unique
+   * segments. 492 of these segments will form M1 and remaining 82 extra segments are used
+   * to facilitate re-coating of the primary mirror and for use as spares.
+   */
+  val totalSegments = 574
+
   implicit def toSqlDate(date: java.util.Date): java.sql.Date = {
     new java.sql.Date(date.getTime)
   }

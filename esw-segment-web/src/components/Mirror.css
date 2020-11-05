@@ -1,0 +1,49 @@
+.segment {
+  transition: 0.4s;
+  cursor: pointer;
+}
+.segment:hover {
+  fill: #000000;
+}
+
+.A {
+  fill: #eeda00;
+}
+.D {
+  fill: #eeda00;
+}
+.B {
+  fill: #ffbb7f;
+}
+.E {
+  fill: #ffbb7f;
+}
+.C {
+  fill: #6ed0d0;
+}
+.F {
+  fill: #6ed0d0;
+}
+svg {
+  width: 600px;
+  flex: 1;
+}
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  margin: 0;
+  height: 100vh;
+  font-weight: 700;
+  font-family: sans-serif;
+}
+a {
+  color: #ccc;
+  padding: 10px;
+  text-decoration: none;
+  transition: color 0.4s;
+}
+a:hover {
+  color: #333;
+}

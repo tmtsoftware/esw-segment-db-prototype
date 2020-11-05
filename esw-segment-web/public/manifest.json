@@ -1,0 +1,6 @@
+{
+  "short_name": "esw-segment-web",
+  "name": "esw-segment-web",
+  "start_url": "./index.html",
+  "display": "standalone"
+}
