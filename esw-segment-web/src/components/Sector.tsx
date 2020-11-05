@@ -15,27 +15,35 @@ export const Sector = ({sector}: SectorProps): JSX.Element => {
 
   const angle = Config.sectorAngle(sector)
 
-  function segmentRow(count: number, firstPos: number): Array<JSX.Element> {
+  function segmentRow(row: number, count: number, firstPos: number, offset: number = 0): Array<JSX.Element> {
     return [...Array(count).keys()].map(i => {
-      const pos = `SN0${sector}${firstPos+i}`
+      const id = `SN0${sector}${firstPos + i}`
       return <Segment
-        id={pos}
-        key={pos}
+        id={id}
+        key={id}
         pos={`${sector}${firstPos + i}`}
-        x={xStart + xInc * (count - 2)}
-        y={yStart + yInc * ((2 - count) + i * 2)}/>
+        x={xStart + xInc * row}
+        y={yStart + yInc * ((2 - count) + (i+offset/2.0) * 2)}
+      />
     })
   }
 
   function segmentRows(): Array<JSX.Element> {
-    return [...Array(10).keys()].flatMap(i => {
-      return segmentRow(i + 2, i * (i + 3) / 2 + 1)
+    return [...Array(12).keys()].flatMap(i => {
+      switch (i) {
+        case 10:
+          return segmentRow(10, 11, 66, 1)
+        case 11:
+          return segmentRow(11, 6, 77, 1)
+        default:
+          return segmentRow(i, i + 2, i * (i + 3) / 2 + 1)
+      }
     })
   }
 
   return (
     <g id={sector} transform={`rotate(${angle}, ${xOrigin}, ${yOrigin})`}>
-        {segmentRows()}
+      {segmentRows()}
     </g>
   )
 }

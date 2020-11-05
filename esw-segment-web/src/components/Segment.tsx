@@ -1,7 +1,7 @@
 import React from 'react'
 import {Config} from "./Config";
 
-type SegmentProps = { id: string, pos: string, x: number, y: number }
+type SegmentProps = { id: string, pos: string, x: number, y: number}
 
 export const Segment = ({id, pos, x, y}: SegmentProps): JSX.Element => {
   const sector = pos.charAt(0)
