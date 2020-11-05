@@ -3,7 +3,7 @@
   cursor: pointer;
 }
 .segment:hover {
-  fill: #000000;
+  fill: white;
 }
 
 .A {

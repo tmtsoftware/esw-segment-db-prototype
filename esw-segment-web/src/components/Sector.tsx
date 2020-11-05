@@ -8,10 +8,8 @@ export const Sector = ({sector}: SectorProps): JSX.Element => {
   const xInc = 3 * Config.segmentRadius / 2.0
   const yInc = Config.segmentRadius * Math.sin(60 * Math.PI / 180.0)
 
-  const xOrigin = 300
-  const yOrigin = 300
-  const xStart = xOrigin + xInc * 2
-  const yStart = yOrigin - yInc * 2
+  const xStart = Config.xOrigin + xInc * 2
+  const yStart = Config.yOrigin - yInc * 2
 
   const angle = Config.sectorAngle(sector)
 
@@ -23,7 +21,7 @@ export const Sector = ({sector}: SectorProps): JSX.Element => {
         key={id}
         pos={`${sector}${firstPos + i}`}
         x={xStart + xInc * row}
-        y={yStart + yInc * ((2 - count) + (i+offset/2.0) * 2)}
+        y={yStart + yInc * ((2 - count) + (i + offset / 2.0) * 2)}
       />
     })
   }
@@ -42,7 +40,7 @@ export const Sector = ({sector}: SectorProps): JSX.Element => {
   }
 
   return (
-    <g id={sector} transform={`rotate(${angle}, ${xOrigin}, ${yOrigin})`}>
+    <g id={sector} transform={`rotate(${angle}, ${Config.xOrigin}, ${Config.yOrigin})`}>
       {segmentRows()}
     </g>
   )

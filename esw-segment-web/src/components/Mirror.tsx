@@ -1,6 +1,7 @@
 import React from 'react'
 import './Mirror.css'
 import {Sector} from "./Sector";
+import {Config} from "./Config";
 
 export const Mirror = (): JSX.Element => {
 
@@ -8,7 +9,14 @@ export const Mirror = (): JSX.Element => {
       <div>
         <svg viewBox="0 0 600 600">
           <g className="sectors">
-            <rect x="0" y="0" width="600" height="600" />
+            <circle
+              cx={Config.xOrigin}
+              cy={Config.yOrigin}
+              r={Config.segmentRadius*2*10.5}
+              fill="none"
+              stroke="black"
+              strokeWidth="0.5"
+            />
             <Sector sector="A"/>
             <Sector sector="B"/>
             <Sector sector="C"/>
