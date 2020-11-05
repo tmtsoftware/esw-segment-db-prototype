@@ -1,6 +1,6 @@
 
 export class Config {
-  static segmentRadius = 10
+  static segmentRadius = 20
 
   static sectorAngle(sector: string) {
     switch (sector) {

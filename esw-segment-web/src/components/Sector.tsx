@@ -9,7 +9,8 @@ export const Sector = ({sector}: SectorProps): JSX.Element => {
   const r = Config.segmentRadius/2.0
 
   const xInc = 3 * r
-  const yInc = 2 * r - 1.4 // ?
+  // const yInc = 2 * r - 1.4 // ?
+  const yInc = Config.segmentRadius * Math.sin(60 * Math.PI / 180.0)
 
   const xOrigin = 200
   const yOrigin = 200

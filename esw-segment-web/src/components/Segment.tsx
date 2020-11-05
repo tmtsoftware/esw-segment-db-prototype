@@ -27,13 +27,14 @@ export const Segment = ({id, pos, x, y}: SegmentProps): JSX.Element => {
   const classNames = `segment ${sector}`
   const labelXOffset = pos.length == 2 ? -3 : -5
 
-  const points = [0, 1, 2, 3, 4, 5].map(a => {
-      const px = Config.segmentRadius * Math.cos(a * 60 * Math.PI / 180.0)
-      const py = Config.segmentRadius * Math.sin(a * 60 * Math.PI / 180.0)
+  const points = [0, 1, 2, 3, 4, 5].map(i => {
+      const px = Config.segmentRadius * Math.cos(i * 60 * Math.PI / 180.0)
+      const py = Config.segmentRadius * Math.sin(i * 60 * Math.PI / 180.0)
       return `${px},${py}`
     }
   ).join(" ")
 
+  console.log(`XXX points = ${points}`)
   return (
     <g id={pos} className={classNames} transform={`translate(${x}, ${y})`}>
       <title>{id}</title>
