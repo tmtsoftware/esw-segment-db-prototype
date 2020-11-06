@@ -13,7 +13,7 @@ case class EswSegmentClientOptions(
     from: Date = new Date(),
     to: Date = new Date(),
     segmentId: Option[String] = None,
-    position: Option[Int] = None,
+    position: Option[String] = None,
     setPosition: Option[Unit] = None,
     segmentPositions: Option[Unit] = None,
     segmentIds: Option[Unit] = None,

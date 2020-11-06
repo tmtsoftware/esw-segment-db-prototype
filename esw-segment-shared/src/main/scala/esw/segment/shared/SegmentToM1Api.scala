@@ -19,23 +19,22 @@ trait SegmentToM1Api {
    * Sets or updates the positions of the given segments for the given date in the table and returns true if successful.
    *
    * @param date      the date corresponding to the positions
-   * @param positions a list of pairs of (segment-id, position) for zero or more segments to be set/updated
-   *                  for the given date
+   * @param positions a list of pairs of (segment-id, segment-position) for zero or more segments to be set/updated
+   *                  for the given date. segment-id can be None if missing. Segment positions are from A1 to F82.
    * @return true if there were no problems
    */
-  def setPositions(date: Date, positions: List[(Option[String], Int)]): Future[Boolean]
+  def setPositions(date: Date, positions: List[(Option[String], String)]): Future[Boolean]
 
   /**
-   * Sets all of the segment positions for the given date and returns true if successful.
-   * The first item in the positions list is taken to be the segment position 1 and so on.
+   * Sets all 492 segment ids for the given date and returns true if successful.
    *
    * @param date         the date corresponding to the positions
-   * @param allPositions list of all 492 segment positions (Missing segments should be None,
-   *                     present segments should be Some(segment-id)
+   * @param allSegmentIds list of all 492 segment ids (In order for segments A1 to F82, Missing segments should be None,
+   *                     present segments should be Some(segment-id))
    * @return true if all is OK, false if the number of positions is less than 492 or the table row
    *         could not be added or updated
    */
-  def setAllPositions(date: Date, allPositions: List[Option[String]]): Future[Boolean]
+  def setAllPositions(date: Date, allSegmentIds: List[Option[String]]): Future[Boolean]
 
   /**
    * Gets a list of segments positions for the given segment id in the given date range.
@@ -47,13 +46,13 @@ trait SegmentToM1Api {
   def segmentPositions(dateRange: DateRange, segmentId: String): Future[List[SegmentToM1Pos]]
 
   /**
-   * Gets a list of segment ids that were in the given position in the given date range.
+   * Gets a list of segment ids that were in the given position (A1 to F82) in the given date range.
    *
    * @param dateRange the range of dates to search
-   * @param pos       the segment position to search for
+   * @param position the segment position to search for (A1 to F82)
    * @return a list of segments at the given position in the given date range (sorted by id)
    */
-  def segmentIds(dateRange: DateRange, pos: Int): Future[List[SegmentToM1Pos]]
+  def segmentIds(dateRange: DateRange, position: String): Future[List[SegmentToM1Pos]]
 
   /**
    * Returns a list of segments that were installed since the given date
@@ -79,10 +78,10 @@ trait SegmentToM1Api {
   /**
    * Gets the id of the segment currently in the given position.
    *
-   * @param pos the segment position to search for
+   * @param position the segment position to search for (A1 to F82)
    * @return Some object indicating the id of the segment, or None if no segment is installed at that position
    */
-  def currentSegmentAtPosition(pos: Int): Future[Option[SegmentToM1Pos]]
+  def currentSegmentAtPosition(position: String): Future[Option[SegmentToM1Pos]]
 
   /**
    * Returns the segment positions as they were on the given date, sorted by position
@@ -103,10 +102,10 @@ trait SegmentToM1Api {
    * Gets the id of the segment that was installed in the given position on the given date.
    *
    * @param date the date that the segment was in the position
-   * @param pos  the segment position to search for
+   * @param position  the segment position to search for
    * @return Some object indicating the id of the segment, or None if no segment was installed at that position on the given date
    */
-  def segmentAtPositionOnDate(date: Date, pos: Int): Future[Option[SegmentToM1Pos]]
+  def segmentAtPositionOnDate(date: Date, position: String): Future[Option[SegmentToM1Pos]]
 
   /**
    * Drops and recreates the database tables (for testing)

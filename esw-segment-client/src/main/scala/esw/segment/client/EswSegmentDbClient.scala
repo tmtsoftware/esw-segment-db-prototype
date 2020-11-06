@@ -36,7 +36,7 @@ object EswSegmentDbClient extends App {
       c.copy(port = x)
     } text s"The port number to use for the server (default: $defaultPort)"
 
-    opt[Date]('d', "date") valueName dateFormat.toPattern action { (x, c) =>
+    opt[Date]("date") valueName dateFormat.toPattern action { (x, c) =>
       c.copy(date = x)
     } text s"The date to use (default: current date)"
 
@@ -52,9 +52,9 @@ object EswSegmentDbClient extends App {
       c.copy(segmentId = Some(x))
     } text s"The segment id to use"
 
-    opt[Int]('p', "position") valueName "<number>" action { (x, c) =>
+    opt[String]('p', "position") valueName "<A1 to F82>" action { (x, c) =>
       c.copy(position = Some(x))
-    } text s"The segment position to use (number in range 1 to 492)"
+    } text s"The segment position to use (A1 to F82)"
 
     opt[Unit]("setPosition") action { (_, c) =>
       c.copy(setPosition = Some(()))
@@ -119,7 +119,7 @@ object EswSegmentDbClient extends App {
   }
 
   private def showResults(result: List[SegmentToM1Pos]): Unit = {
-    result.foreach(r => println(s"${dateFormat.format(r.date)} ${r.maybeId.getOrElse("------")} ${r.pos}"))
+    result.foreach(r => println(s"${dateFormat.format(r.date)} ${r.maybeId.getOrElse("------")} ${r.position}"))
   }
 
   // Run the application

@@ -63,20 +63,20 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
     postSet(Uri(s"$baseUri/setPosition"), segmentToM1Pos.toJson.compactPrint)
   }
 
-  override def setPositions(date: Date, positions: List[(Option[String], Int)]): Future[Boolean] = {
+  override def setPositions(date: Date, positions: List[(Option[String], String)]): Future[Boolean] = {
     postSet(Uri(s"$baseUri/setPositions"), SegmentToM1Positions(date, positions).toJson.compactPrint)
   }
 
-  override def setAllPositions(date: Date, allPositions: List[Option[String]]): Future[Boolean] = {
-    postSet(Uri(s"$baseUri/setAllPositions"), AllSegmentPositions(date, allPositions).toJson.compactPrint)
+  override def setAllPositions(date: Date, allSegmentIds: List[Option[String]]): Future[Boolean] = {
+    postSet(Uri(s"$baseUri/setAllPositions"), AllSegmentPositions(date, allSegmentIds).toJson.compactPrint)
   }
 
   override def segmentPositions(dateRange: DateRange, segmentId: String): Future[List[SegmentToM1Pos]] = {
     postGetList(Uri(s"$baseUri/segmentPositions/$segmentId"), dateRange.toJson.compactPrint)
   }
 
-  override def segmentIds(dateRange: DateRange, pos: Int): Future[List[SegmentToM1Pos]] = {
-    postGetList(Uri(s"$baseUri/segmentIds/$pos"), dateRange.toJson.compactPrint)
+  override def segmentIds(dateRange: DateRange, position: String): Future[List[SegmentToM1Pos]] = {
+    postGetList(Uri(s"$baseUri/segmentIds/$position"), dateRange.toJson.compactPrint)
   }
 
   override def newlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]] = {
@@ -91,8 +91,8 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
     postGetOption(Uri(s"$baseUri/segmentPositionOnDate/$segmentId"), date.toJson.compactPrint)
   }
 
-  override def segmentAtPositionOnDate(date: Date, pos: Int): Future[Option[SegmentToM1Pos]] = {
-    postGetOption(Uri(s"$baseUri/segmentAtPositionOnDate/$pos"), date.toJson.compactPrint)
+  override def segmentAtPositionOnDate(date: Date, position: String): Future[Option[SegmentToM1Pos]] = {
+    postGetOption(Uri(s"$baseUri/segmentAtPositionOnDate/$position"), date.toJson.compactPrint)
   }
 
   override def currentPositions(): Future[List[SegmentToM1Pos]] =
@@ -107,8 +107,8 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
     getOption(Uri(s"$baseUri/currentSegmentPosition/$segmentId"))
   }
 
-  override def currentSegmentAtPosition(pos: Int): Future[Option[SegmentToM1Pos]] = {
-    getOption(Uri(s"$baseUri/currentSegmentAtPosition/$pos"))
+  override def currentSegmentAtPosition(position: String): Future[Option[SegmentToM1Pos]] = {
+    getOption(Uri(s"$baseUri/currentSegmentAtPosition/$position"))
   }
 
   /**

@@ -39,12 +39,12 @@ class Routes(posTable: SegmentToM1PosTable)(implicit ec: ExecutionContext) exten
                 complete(posTable.segmentPositions(dateRange, segmentId))
             }
         } ~
-        // Gets a list of segment ids that were in the given position in the given date range.
-        path("segmentIds" / IntNumber) {
-          pos =>
+        // Gets a list of segment ids that were in the given location in the given date range.
+        path("segmentIds" / Segment) {
+          loc =>
             entity(as[DateRange]) {
               dateRange =>
-                complete(posTable.segmentIds(dateRange, pos))
+                complete(posTable.segmentIds(dateRange, loc))
             }
         } ~
         // Returns a list of segments that were installed since the given date
@@ -69,12 +69,12 @@ class Routes(posTable: SegmentToM1PosTable)(implicit ec: ExecutionContext) exten
                 complete(posTable.segmentPositionOnDate(date, segmentId))
             }
         } ~
-        // Gets the id of the segment that was installed in the given position on the given date
-        path("segmentAtPositionOnDate" / IntNumber) {
-          pos =>
+        // Gets the id of the segment that was installed in the given location on the given date
+        path("segmentAtPositionOnDate" / Segment) {
+          loc =>
             entity(as[Date]) {
               date =>
-                complete(posTable.segmentAtPositionOnDate(date, pos))
+                complete(posTable.segmentAtPositionOnDate(date, loc))
             }
         } ~
         // Drops and recreates the database tables (for testing)
@@ -92,10 +92,10 @@ class Routes(posTable: SegmentToM1PosTable)(implicit ec: ExecutionContext) exten
             segmentId =>
               complete(posTable.currentSegmentPosition(segmentId))
           } ~
-          // Gets the id of the segment currently in the given position
-          path("currentSegmentAtPosition" / IntNumber) {
-            pos =>
-              complete(posTable.currentSegmentAtPosition(pos))
+          // Gets the id of the segment currently in the given location
+          path("currentSegmentAtPosition" / Segment) {
+            loc =>
+              complete(posTable.currentSegmentAtPosition(loc))
           }
       }
 }
