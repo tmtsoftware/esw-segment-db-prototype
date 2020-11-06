@@ -7,11 +7,12 @@ import akka.http.scaladsl.server.{Directives, Route}
 import esw.segment.db.SegmentToM1PosTable
 import esw.segment.shared.EswSegmentData._
 import esw.segment.shared.JsonSupport
+import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 
 import scala.concurrent.ExecutionContext
 
 class Routes(posTable: SegmentToM1PosTable)(implicit ec: ExecutionContext) extends Directives with JsonSupport {
-  val route: Route =
+  val route: Route = cors() {
     post {
       // Insert/update segment to M1 positions
       path("setPosition") {
@@ -98,4 +99,5 @@ class Routes(posTable: SegmentToM1PosTable)(implicit ec: ExecutionContext) exten
               complete(posTable.currentSegmentAtPosition(loc))
           }
       }
+  }
 }

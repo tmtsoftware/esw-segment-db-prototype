@@ -8,6 +8,7 @@ object Dependencies {
     AkkaHttp.`akka-http`,
     AkkaHttp.`akka-http-core`,
     AkkaHttp.`akka-http-spray-json`,
+    AkkaHttp.`akka-http-cors`,
     Libs.`scopt`,
     Libs.`scalaTest` % Test
   )

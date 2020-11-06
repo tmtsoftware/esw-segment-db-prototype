@@ -2,8 +2,12 @@ import React from 'react'
 import './Mirror.css'
 import {Sector} from "./Sector";
 import {Config} from "./Config";
+import {SegmentData} from "./SegmentData";
 
 export const Mirror = (): JSX.Element => {
+
+  // XXX
+  SegmentData.currentPositions()
 
   return (
       <div>
