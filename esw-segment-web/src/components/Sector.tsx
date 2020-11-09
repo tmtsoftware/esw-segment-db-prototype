@@ -8,6 +8,12 @@ type SectorProps = {
   posMap: Map<string, SegmentToM1Pos>
 }
 
+/**
+ * Represents a sector of the mirror
+ * @param sector A to F
+ * @param posMap a map of pos (A1 to F82) to SegmentToM1Pos object
+ * @constructor
+ */
 export const Sector = ({sector, posMap}: SectorProps): JSX.Element => {
   const xInc = 3 * Config.segmentRadius / 2.0
   const yInc = Config.segmentRadius * Math.sin(60 * Math.PI / 180.0)
@@ -21,7 +27,6 @@ export const Sector = ({sector, posMap}: SectorProps): JSX.Element => {
     if (posMap.size != 0) {
       return [...Array(count).keys()].map(i => {
         const pos = `${sector}${firstPos + i}`
-        console.log(`XXX pos = ${pos}`)
         const segmentToM1Pos = posMap.get(pos)
         const id = segmentToM1Pos ? segmentToM1Pos.maybeId || "" : ""
         const date = segmentToM1Pos ? new Date(segmentToM1Pos.date).toDateString() || "" : ""

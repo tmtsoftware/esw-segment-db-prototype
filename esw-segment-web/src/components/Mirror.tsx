@@ -3,7 +3,12 @@ import './Mirror.css'
 import {Sector} from "./Sector";
 import {Config} from "./Config";
 import {SegmentData, SegmentToM1Pos} from "./SegmentData";
+import {SegmentModal} from "./SegmentModal";
 
+/**
+ * Represents the TMT mirror
+ * @constructor
+ */
 export const Mirror = (): JSX.Element => {
 
   const [posMap, setPosMap] = useState<Map<string, SegmentToM1Pos>>(new Map());

@@ -3,6 +3,15 @@ import {Config} from "./Config";
 
 type SegmentProps = { id: string, pos: string, date: string, x: number, y: number}
 
+/**
+ * Represents one of the 492 segments of the mirror
+ * @param id the segment id
+ * @param pos A1 to F82
+ * @param date date the segment was installed
+ * @param x x offset
+ * @param y y offset
+ * @constructor
+ */
 export const Segment = ({id, pos, date, x, y}: SegmentProps): JSX.Element => {
   const sector = pos.charAt(0)
   const classNames = id ? `segment ${sector}` : `segment ${sector} empty`
@@ -17,10 +26,6 @@ export const Segment = ({id, pos, date, x, y}: SegmentProps): JSX.Element => {
       return `Pos: ${pos}, Segment ID: ${id}, Date: ${date}`
     return `Pos: ${pos}: Empty`
   }
-
-  // function fill(): string {
-  //   return id ? "black" : "red"
-  // }
 
   return (
     <g id={pos} key={pos} className={classNames} transform={`translate(${x}, ${y})`}>
