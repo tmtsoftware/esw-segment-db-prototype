@@ -1,10 +1,14 @@
 import React from 'react'
 import {Segment} from "./Segment";
 import {Config} from "./Config";
+import {SegmentToM1Pos} from "./SegmentData";
 
-type SectorProps = { sector: string }
+type SectorProps = {
+  sector: string,
+  posMap: Map<string, SegmentToM1Pos>
+}
 
-export const Sector = ({sector}: SectorProps): JSX.Element => {
+export const Sector = ({sector, posMap}: SectorProps): JSX.Element => {
   const xInc = 3 * Config.segmentRadius / 2.0
   const yInc = Config.segmentRadius * Math.sin(60 * Math.PI / 180.0)
 
@@ -14,16 +18,25 @@ export const Sector = ({sector}: SectorProps): JSX.Element => {
   const angle = Config.sectorAngle(sector)
 
   function segmentRow(row: number, count: number, firstPos: number, offset: number = 0): Array<JSX.Element> {
-    return [...Array(count).keys()].map(i => {
-      const id = `SN0${sector}${firstPos + i}`
-      return <Segment
-        id={id}
-        key={id}
-        pos={`${sector}${firstPos + i}`}
-        x={xStart + xInc * row}
-        y={yStart + yInc * ((2 - count) + (i + offset / 2.0) * 2)}
-      />
-    })
+    if (posMap.size != 0) {
+      return [...Array(count).keys()].map(i => {
+        const pos = `${sector}${firstPos + i}`
+        console.log(`XXX pos = ${pos}`)
+        const segmentToM1Pos = posMap.get(pos)
+        const id = segmentToM1Pos ? segmentToM1Pos.maybeId || "" : ""
+        const date = segmentToM1Pos ? new Date(segmentToM1Pos.date).toDateString() || "" : ""
+        return <Segment
+          id={id}
+          pos={pos}
+          date={date}
+          key={id}
+          x={xStart + xInc * row}
+          y={yStart + yInc * ((2 - count) + (i + offset / 2.0) * 2)}
+        />
+      })
+    } else {
+      return [];
+    }
   }
 
   function segmentRows(): Array<JSX.Element> {

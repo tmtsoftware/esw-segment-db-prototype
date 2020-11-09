@@ -3,7 +3,7 @@
   cursor: pointer;
 }
 .segment:hover {
-  fill: white;
+  fill: #4169dc;
 }
 
 .A {
@@ -13,16 +13,19 @@
   fill: #eeda00;
 }
 .B {
-  fill: #ffbb7f;
+  fill: #ffcc99;
 }
 .E {
-  fill: #ffbb7f;
+  fill: #ffcc99;
 }
 .C {
-  fill: #6ed0d0;
+  fill: #bbe0e3;
 }
 .F {
-  fill: #6ed0d0;
+  fill: #bbe0e3;
+}
+.empty {
+  fill: whitesmoke;
 }
 svg {
   width: 1000px;

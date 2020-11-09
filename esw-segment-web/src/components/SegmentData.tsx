@@ -1,5 +1,10 @@
 // These should match the JSON output of the classes on the server side in EswSegmentData.scala
 
+export class SegmentData {
+  // TODO: Configure
+  static baseUri = "http://localhost:9192"
+}
+
 export interface SegmentToM1Pos {
   date: number
   maybeId?: string
@@ -26,20 +31,3 @@ export interface SegmentToM1Positions {
   positions: Array<Array<string>>
 }
 
-export class SegmentData {
-  // TODO: Configure
-  static baseUri = "http://localhost:9192"
-
-  // Get the current mirror positions from the server
-  static currentPositions() {
-    const uri = `${SegmentData.baseUri}/currentPositions`
-    fetch(uri)
-      .then(response => response.json())
-      .then(data => {
-        const currentPositions: Array<SegmentToM1Pos> = data
-        for (const p of currentPositions) {
-          console.log(`XXX ${p.date}, ${p.maybeId}, ${p.position}`)
-        }
-      });
-  }
-}
