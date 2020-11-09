@@ -3,7 +3,7 @@ import './Mirror.css'
 import {Sector} from "./Sector";
 import {Config} from "./Config";
 import {SegmentData, SegmentToM1Pos} from "./SegmentData";
-import {SegmentModal} from "./SegmentModal";
+// import {SegmentModal} from "./SegmentModal";
 
 /**
  * Represents the TMT mirror
