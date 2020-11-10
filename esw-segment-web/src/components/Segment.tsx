@@ -2,6 +2,7 @@ import React, {useState} from 'react'
 import {Config} from "./Config";
 import 'react-responsive-modal/styles.css';
 import { Modal } from 'react-responsive-modal';
+import {SegmentModal} from "./SegmentModal";
 
 
 type SegmentProps = { id: string, pos: string, date: string, x: number, y: number}
@@ -59,7 +60,7 @@ export const Segment = ({id, pos, date, x, y}: SegmentProps): JSX.Element => {
         {pos}
       </text>
       <Modal open={open} onClose={onCloseModal} center>
-        <h2>Simple centered modal</h2>
+        <SegmentModal id={id} pos={pos} date={date}/>
       </Modal>
     </g>
   )
