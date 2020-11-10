@@ -108,6 +108,13 @@ trait SegmentToM1Api {
   def segmentAtPositionOnDate(date: Date, position: String): Future[Option[SegmentToM1Pos]]
 
   /**
+   * Gets a list of segment-ids that can be installed at the given position
+   * @param position A1 to F82
+   * @return a list of ids of spare or available segments compatible with the given position
+   */
+  def availableSegmentIdsForPos(position: String): Future[List[String]]
+
+  /**
    * Drops and recreates the database tables (for testing)
    *
    * @return true if OK

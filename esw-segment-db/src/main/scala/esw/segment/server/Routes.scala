@@ -42,10 +42,10 @@ class Routes(posTable: SegmentToM1PosTable)(implicit ec: ExecutionContext) exten
         } ~
         // Gets a list of segment ids that were in the given location in the given date range.
         path("segmentIds" / Segment) {
-          loc =>
+          position =>
             entity(as[DateRange]) {
               dateRange =>
-                complete(posTable.segmentIds(dateRange, loc))
+                complete(posTable.segmentIds(dateRange, position))
             }
         } ~
         // Returns a list of segments that were installed since the given date
@@ -72,10 +72,10 @@ class Routes(posTable: SegmentToM1PosTable)(implicit ec: ExecutionContext) exten
         } ~
         // Gets the id of the segment that was installed in the given location on the given date
         path("segmentAtPositionOnDate" / Segment) {
-          loc =>
+          position =>
             entity(as[Date]) {
               date =>
-                complete(posTable.segmentAtPositionOnDate(date, loc))
+                complete(posTable.segmentAtPositionOnDate(date, position))
             }
         } ~
         // Drops and recreates the database tables (for testing)
@@ -95,8 +95,13 @@ class Routes(posTable: SegmentToM1PosTable)(implicit ec: ExecutionContext) exten
           } ~
           // Gets the id of the segment currently in the given location
           path("currentSegmentAtPosition" / Segment) {
-            loc =>
-              complete(posTable.currentSegmentAtPosition(loc))
+            position =>
+              complete(posTable.currentSegmentAtPosition(position))
+          } ~
+          // Gets a list of segment-ids that can be installed at the given position
+          path("availableSegmentIdsForPos" / Segment) {
+            position =>
+              complete(posTable.availableSegmentIdsForPos(position))
           }
       }
   }

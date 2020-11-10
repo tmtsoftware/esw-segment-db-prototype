@@ -166,7 +166,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       else true
     }
 
-  def setPosition(segmentToM1Pos: SegmentToM1Pos): Future[Boolean] =
+  override def setPosition(segmentToM1Pos: SegmentToM1Pos): Future[Boolean] =
     async {
       // Make sure the row exists
       val rowStatus = await(rowExists(segmentToM1Pos.date)) || await(addRow(segmentToM1Pos.date))
@@ -186,7 +186,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       else rowStatus
     }
 
-  def setPositions(date: Date, positions: List[(Option[String], String)]): Future[Boolean] =
+  override def setPositions(date: Date, positions: List[(Option[String], String)]): Future[Boolean] =
     async {
       val dbPositions = positions.map(p => (p._1, toDbPosition(p._2)))
       val rowStatus   = await(rowExists(date)) || await(addRow(date))
@@ -213,7 +213,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       else rowStatus
     }
 
-  def setAllPositions(date: Date, allSegmentIds: List[Option[String]]): Future[Boolean] =
+  override def setAllPositions(date: Date, allSegmentIds: List[Option[String]]): Future[Boolean] =
     async {
       // Make sure the row exists
       val rowStatus = allSegmentIds.size == numSegments && (await(rowExists(date)) || await(addEmptyRow(date)))
@@ -232,7 +232,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       else rowStatus
     }
 
-  def segmentPositions(dateRange: DateRange, segmentId: String): Future[List[SegmentToM1Pos]] =
+  override def segmentPositions(dateRange: DateRange, segmentId: String): Future[List[SegmentToM1Pos]] =
     async {
       val queryResult = await(
         dsl
@@ -254,7 +254,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       await(Future.sequence(fList)).distinct.sortWith(_.dbPos < _.dbPos)
     }
 
-  def segmentIds(dateRange: DateRange, position: String): Future[List[SegmentToM1Pos]] =
+  override def segmentIds(dateRange: DateRange, position: String): Future[List[SegmentToM1Pos]] =
     async {
       val dbPos = toDbPosition(position)
       val queryResult = await(
@@ -275,7 +275,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       await(Future.sequence(fList)).distinct.sortWith(_.maybeId.get < _.maybeId.get)
     }
 
-  def newlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]] =
+  override def newlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]] =
     async {
       val dateRange = DateRange(since, currentDate())
       val fList     = (1 to numSegments).toList.map(pos => segmentIds(dateRange, toPosition(pos)))
@@ -283,20 +283,20 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       await(Future.sequence(fList)).flatten.filter(_.date.getTime >= since.getTime)
     }
 
-  def currentPositions(): Future[List[SegmentToM1Pos]] = positionsOnDate(currentDate())
+  override def currentPositions(): Future[List[SegmentToM1Pos]] = positionsOnDate(currentDate())
 
-  def currentSegmentPosition(segmentId: String): Future[Option[SegmentToM1Pos]] =
+  override def currentSegmentPosition(segmentId: String): Future[Option[SegmentToM1Pos]] =
     async {
       await(currentPositions()).find(_.maybeId.contains(segmentId))
     }
 
-  def currentSegmentAtPosition(position: String): Future[Option[SegmentToM1Pos]] =
+  override def currentSegmentAtPosition(position: String): Future[Option[SegmentToM1Pos]] =
     async {
       val dbPos = toDbPosition(position)
       await(currentPositions()).find(_.dbPos == dbPos)
     }
 
-  def positionsOnDate(date: Date): Future[List[SegmentToM1Pos]] =
+  override def positionsOnDate(date: Date): Future[List[SegmentToM1Pos]] =
     async {
       val queryResult = await(
         dsl
@@ -321,18 +321,24 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       await(Future.sequence(fList)).distinct
     }
 
-  def segmentPositionOnDate(date: Date, segmentId: String): Future[Option[SegmentToM1Pos]] =
+  override def segmentPositionOnDate(date: Date, segmentId: String): Future[Option[SegmentToM1Pos]] =
     async {
       await(positionsOnDate(date)).find(_.maybeId.contains(segmentId))
     }
 
-  def segmentAtPositionOnDate(date: Date, position: String): Future[Option[SegmentToM1Pos]] =
+  override def segmentAtPositionOnDate(date: Date, position: String): Future[Option[SegmentToM1Pos]] =
     async {
       val dbPos = toDbPosition(position)
       await(positionsOnDate(date)).find(_.dbPos == dbPos)
     }
 
-  def resetTables(): Future[Boolean] =
+  override def availableSegmentIdsForPos(position: String): Future[List[String]] =
+    async {
+      // TODO: Filter out segment-ids already in use
+      compatibleSegmentIdsForPos(position.tail.toInt)
+    }
+
+  override def resetTables(): Future[Boolean] =
     async {
       await(dsl.truncate(SegmentToM1PosTable.tableName).executeAsyncScala()) >= 0
     }

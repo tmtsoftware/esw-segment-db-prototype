@@ -96,4 +96,19 @@ object EswSegmentData {
    */
   case class DateRange(from: Date, to: Date)
 
+  /**
+   * A segment of any particular type can be mounted for use in any one of the six sectors.
+   * One spare segment of each type will be produced to allow segments to be swapped out for recoating.
+   *
+   * This function returns a list of segment-ids that are compatible a given position in any sector.
+   * (Note that six of them may already be in use.)
+   *
+   * @param pos a value in the range 1 to 82
+   * @return a list of seven possible segment-ids for the given position
+   */
+  def compatibleSegmentIdsForPos(pos: Int): List[String] = {
+    // TODO: Get the actual list
+    (1 to 7).toList.map(n => s"SN$pos-$n")
+  }
+
 }

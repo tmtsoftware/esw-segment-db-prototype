@@ -23,5 +23,6 @@ case class EswSegmentClientOptions(
     currentSegmentAtPosition: Option[Unit] = None,
     positionsOnDate: Option[Unit] = None,
     segmentPositionOnDate: Option[Unit] = None,
-    segmentAtPositionOnDate: Option[Unit] = None
+    segmentAtPositionOnDate: Option[Unit] = None,
+    availableSegmentIdsForPos: Option[Unit] = None
 )

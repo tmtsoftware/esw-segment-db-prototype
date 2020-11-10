@@ -14,7 +14,7 @@ export const Mirror = (): JSX.Element => {
 
   function update() {
     useEffect(() => {
-      const x = fetch(`${SegmentData.baseUri}/currentPositions`)
+      fetch(`${SegmentData.baseUri}/currentPositions`)
         .then(response => response.json())
         .then(data => {
           const currentPositions: Array<SegmentToM1Pos> = data

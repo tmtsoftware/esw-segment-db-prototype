@@ -95,6 +95,15 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
     postGetOption(Uri(s"$baseUri/segmentAtPositionOnDate/$position"), date.toJson.compactPrint)
   }
 
+  override def availableSegmentIdsForPos(position: String): Future[List[String]] = {
+    async {
+      val uri = Uri(s"$baseUri/availableSegmentIdsForPos/$position")
+      val request  = HttpRequest(HttpMethods.GET, uri = uri)
+      val response = await(Http().singleRequest(request))
+      await(Unmarshal(response).to[List[String]])
+    }
+  }
+
   override def currentPositions(): Future[List[SegmentToM1Pos]] =
     async {
       val uri      = Uri(s"$baseUri/currentPositions")

@@ -177,5 +177,11 @@ object EswSegmentDbClient extends App {
         if (position.isEmpty) error("--position option is required")
         showResults(await(client.segmentAtPositionOnDate(date, position.get)).toList)
       }
+
+      if (options.availableSegmentIdsForPos.isDefined) {
+        if (position.isEmpty) error("--position option is required")
+        val result = await(client.availableSegmentIdsForPos(position.get))
+        result.foreach(println)
+      }
     }
 }
