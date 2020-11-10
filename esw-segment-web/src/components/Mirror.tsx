@@ -3,7 +3,6 @@ import './Mirror.css'
 import {Sector} from "./Sector";
 import {Config} from "./Config";
 import {SegmentData, SegmentToM1Pos} from "./SegmentData";
-// import {SegmentModal} from "./SegmentModal";
 
 /**
  * Represents the TMT mirror
@@ -29,9 +28,10 @@ export const Mirror = (): JSX.Element => {
 
   update()
 
+  const d = Config.mirrorDiameter
   return (
-    <div>
-      <svg viewBox="0 0 600 600">
+    <div className="mirror-container">
+      <svg className="mirror-svg" viewBox={`0 0 ${d} ${d}`} preserveAspectRatio="xMidYMin slice">
         <g className="sectors">
           <circle
             cx={Config.xOrigin}

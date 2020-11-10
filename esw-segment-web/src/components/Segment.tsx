@@ -1,5 +1,8 @@
-import React from 'react'
+import React, {useState} from 'react'
 import {Config} from "./Config";
+import 'react-responsive-modal/styles.css';
+import { Modal } from 'react-responsive-modal';
+
 
 type SegmentProps = { id: string, pos: string, date: string, x: number, y: number}
 
@@ -13,12 +16,23 @@ type SegmentProps = { id: string, pos: string, date: string, x: number, y: numbe
  * @constructor
  */
 export const Segment = ({id, pos, date, x, y}: SegmentProps): JSX.Element => {
+
   const sector = pos.charAt(0)
   const classNames = id ? `segment ${sector}` : `segment ${sector} empty`
   const labelXOffset = pos.length == 2 ? -3 : -5
 
+  const [open, setOpen] = useState<boolean>(false);
+
+  function onOpenModal() {
+    setOpen(true)
+  }
+  function onCloseModal() {
+    setOpen(false)
+  }
+
   function mousePressed() {
     console.log(`Selected segment: id=${id}, pos=${pos}, sector=${sector}`)
+    onOpenModal()
   }
 
   function toolTip(): string {
@@ -44,6 +58,9 @@ export const Segment = ({id, pos, date, x, y}: SegmentProps): JSX.Element => {
         fill={"black"}>
         {pos}
       </text>
+      <Modal open={open} onClose={onCloseModal} center>
+        <h2>Simple centered modal</h2>
+      </Modal>
     </g>
   )
 }

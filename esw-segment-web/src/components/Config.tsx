@@ -5,9 +5,11 @@ export class Config {
   // Radius of a single segment
   static segmentRadius = 12
 
+  static mirrorDiameter = 23 * Config.segmentRadius * 2
+
   // Center of the mirror
-  static xOrigin = 300
-  static yOrigin = 300
+  static xOrigin = Config.mirrorDiameter / 2
+  static yOrigin = Config.mirrorDiameter / 2 - Config.segmentRadius
 
   // Calculated points for a hexagon with the given radius
   static segmentPoints = [...Array(6).keys()].map(i => {
@@ -19,6 +21,6 @@ export class Config {
 
   // Returns the angle for the given sector (each one is rotated by 60 deg)
   static sectorAngle(sector: string) {
-    return -60 * (sector.charCodeAt(0)-"A".charCodeAt(0) + 1)
+    return -60 * (sector.charCodeAt(0) - "A".charCodeAt(0) + 1)
   }
 }

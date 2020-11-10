@@ -29,12 +29,13 @@ export const Sector = ({sector, posMap}: SectorProps): JSX.Element => {
         const pos = `${sector}${firstPos + i}`
         const segmentToM1Pos = posMap.get(pos)
         const id = segmentToM1Pos ? segmentToM1Pos.maybeId || "" : ""
+        const key = pos
         const date = segmentToM1Pos ? new Date(segmentToM1Pos.date).toDateString() || "" : ""
         return <Segment
           id={id}
           pos={pos}
           date={date}
-          key={id}
+          key={key}
           x={xStart + xInc * row}
           y={yStart + yInc * ((2 - count) + (i + offset / 2.0) * 2)}
         />

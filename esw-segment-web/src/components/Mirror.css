@@ -27,10 +27,6 @@
 .empty {
   fill: whitesmoke;
 }
-svg {
-  width: 1000px;
-  flex: 1;
-}
 body {
   display: flex;
   justify-content: center;
@@ -49,4 +45,20 @@ a {
 }
 a:hover {
   color: #333;
+}
+
+.mirror-container {
+  position: relative;
+  height: 0;
+  width: 100%;
+  padding: 0;
+  padding-bottom: 95%;
+}
+
+.mirror-svg {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  left: 0;
+  top: 0;
 }
