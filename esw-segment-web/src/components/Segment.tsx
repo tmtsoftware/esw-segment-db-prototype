@@ -5,7 +5,7 @@ import {Modal} from 'react-responsive-modal';
 import {SegmentDetails} from "./SegmentDetails";
 
 type SegmentProps = {
-  id: string,
+  id?: string,
   pos: string,
   date?: number,
   mostRecentChange: number,
@@ -91,7 +91,7 @@ export const Segment = ({id, pos, date, mostRecentChange, showSegmentIds, x, y, 
         {label}
       </text>
       <Modal open={open} onClose={onCloseModal} center>
-        <SegmentDetails id={id} pos={pos} date={dateStr} updateDisplay={updateDisplay}/>
+        <SegmentDetails id={id} pos={pos} date={date} updateDisplay={updateDisplay}/>
       </Modal>
     </g>
   )
