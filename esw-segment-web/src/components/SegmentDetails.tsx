@@ -26,6 +26,7 @@ const useStyles = makeStyles((theme: Theme) =>
 export const SegmentDetails = ({id, pos, date}: SegmentDetailsProps): JSX.Element => {
 
   const [availableSegmentIds, setAvailableSegmentIds] = useState<Array<string>>([]);
+  const [segmentId, setSegmentId] = React.useState(id ? id : "empty");
 
   const classes = useStyles();
 
@@ -34,7 +35,7 @@ export const SegmentDetails = ({id, pos, date}: SegmentDetailsProps): JSX.Elemen
       fetch(`${SegmentData.baseUri}/availableSegmentIdsForPos/${pos}`)
         .then(response => response.json())
         .then(data => {
-          const list = id ? [...data, id] : [...data, "empty"];
+          const list = id ? [...data, id, "empty"] : [...data, "empty"];
           setAvailableSegmentIds(list)
         });
       // empty dependency array means this effect will only run once
@@ -45,6 +46,7 @@ export const SegmentDetails = ({id, pos, date}: SegmentDetailsProps): JSX.Elemen
 
   const changeSegmentId = (event: React.ChangeEvent<{ value: unknown }>) => {
     const newId = event.target.value as string
+    setSegmentId(newId)
     console.log(`XXX changeSegmentId to ${newId}`)
   };
 
@@ -58,7 +60,7 @@ export const SegmentDetails = ({id, pos, date}: SegmentDetailsProps): JSX.Elemen
           <FormControl className={classes.formControl}>
             <InputLabel>Segment ID</InputLabel>
             <Select
-              value={id ? id : "empty"}
+              value={segmentId}
               onChange={changeSegmentId}
             >
               {availableSegmentIds.map(segId => {
