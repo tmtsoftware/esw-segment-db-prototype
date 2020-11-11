@@ -4,29 +4,48 @@ import {Sector} from "./Sector";
 import {Config} from "./Config";
 import {SegmentData, SegmentToM1Pos} from "./SegmentData";
 
+type MirrorProps = {
+  showSegmentIds: boolean,
+}
+
 /**
  * Represents the TMT mirror
  * @constructor
  */
-export const Mirror = (): JSX.Element => {
+export const Mirror = ({showSegmentIds}: MirrorProps): JSX.Element => {
 
   const [posMap, setPosMap] = useState<Map<string, SegmentToM1Pos>>(new Map());
+  const [mostRecentChange, setMostRecentChange] = useState<number>(0);
 
-  function update() {
-    useEffect(() => {
+
+  async function fetchData() {
+    const [mostRecentChangeResponse, currentPositionsResponse] = await Promise.all([
+      fetch(`${SegmentData.baseUri}/mostRecentChange`),
       fetch(`${SegmentData.baseUri}/currentPositions`)
-        .then(response => response.json())
-        .then(data => {
-          const currentPositions: Array<SegmentToM1Pos> = data
-          const posMap: Map<string, SegmentToM1Pos> = currentPositions
-            .reduce((map, obj) => map.set(obj.position, obj), new Map())
-          setPosMap(posMap)
-        });
-      // empty dependency array means this effect will only run once
-    }, []);
+    ]);
+
+    const mostRecentChange: number = await mostRecentChangeResponse.json()
+    const currentPositions: Array<SegmentToM1Pos> = await currentPositionsResponse.json()
+
+    return {
+      mostRecentChange,
+      currentPositions
+    };
   }
 
-  update()
+  function updateDisplay() {
+    fetchData().then(({mostRecentChange, currentPositions}) => {
+      const posMap: Map<string, SegmentToM1Pos> = currentPositions
+        .reduce((map, obj) => map.set(obj.position, obj), new Map())
+      setPosMap(posMap)
+      setMostRecentChange(mostRecentChange)
+    });
+
+  }
+
+  useEffect(() => {
+    updateDisplay()
+  }, []);
 
   const d = Config.mirrorDiameter
   return (
@@ -41,12 +60,18 @@ export const Mirror = (): JSX.Element => {
             stroke="black"
             strokeWidth="0.5"
           />
-          <Sector sector="A" posMap={posMap}/>
-          <Sector sector="B" posMap={posMap}/>
-          <Sector sector="C" posMap={posMap}/>
-          <Sector sector="D" posMap={posMap}/>
-          <Sector sector="E" posMap={posMap}/>
-          <Sector sector="F" posMap={posMap}/>
+          <Sector sector="A" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
+                  updateDisplay={updateDisplay}/>
+          <Sector sector="B" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
+                  updateDisplay={updateDisplay}/>
+          <Sector sector="C" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
+                  updateDisplay={updateDisplay}/>
+          <Sector sector="D" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
+                  updateDisplay={updateDisplay}/>
+          <Sector sector="E" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
+                  updateDisplay={updateDisplay}/>
+          <Sector sector="F" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
+                  updateDisplay={updateDisplay}/>
         </g>
       </svg>
     </div>

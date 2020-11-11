@@ -1,32 +1,31 @@
 .segment {
-  transition: 0.4s;
+  /*transition: 0.4s;*/
   cursor: pointer;
 }
-.segment:hover {
-  fill: #4169dc;
+.A, .D {
+  fill: #eeda00;
+}
+.A.empty, .D.empty {
+  fill: #f8ee92;
 }
 
-.A {
-  fill: #eeda00;
-}
-.D {
-  fill: #eeda00;
-}
-.B {
+.B, .E {
   fill: #ffcc99;
 }
-.E {
-  fill: #ffcc99;
+.B.empty, .E.empty {
+  fill: #ffefe0;
 }
-.C {
+
+.C, .F {
   fill: #bbe0e3;
 }
-.F {
-  fill: #bbe0e3;
+.C.empty, .F.empty {
+  fill: #e2ecec;
 }
-.empty {
-  fill: whitesmoke;
+.segment:hover {
+  fill: #7192f5;
 }
+
 body {
   display: flex;
   justify-content: center;

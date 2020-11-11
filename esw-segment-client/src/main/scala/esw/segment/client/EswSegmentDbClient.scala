@@ -5,7 +5,6 @@ import java.util.Date
 import akka.actor.ActorSystem
 import buildinfo.BuildInfo
 import esw.segment.shared.EswSegmentData._
-import EswSegmentClientOptions._
 import scopt.Read.reads
 import scopt.Read
 
@@ -30,71 +29,79 @@ object EswSegmentDbClient extends App {
 
     opt[String]("host") valueName "<hostname>" action { (x, c) =>
       c.copy(host = x)
-    } text s"The host name where the ESW Segment DB HTTP server is running (default: localhost)"
+    } text "The host name where the ESW Segment DB HTTP server is running (default: localhost)"
 
     opt[Int]("port") valueName "<number>" action { (x, c) =>
       c.copy(port = x)
-    } text s"The port number to use for the server (default: $defaultPort)"
+    } text "The port number to use for the server (default: $defaultPort)"
 
     opt[Date]("date") valueName dateFormat.toPattern action { (x, c) =>
       c.copy(date = x)
-    } text s"The date to use (default: current date)"
+    } text "The date to use (default: current date)"
 
     opt[Date]("from") valueName dateFormat.toPattern action { (x, c) =>
       c.copy(from = x)
-    } text s"The starting date to use for a date range (default: current date)"
+    } text "The starting date to use for a date range (default: current date)"
 
     opt[Date]("to") valueName dateFormat.toPattern action { (x, c) =>
       c.copy(to = x)
-    } text s"The ending date to use for a date range (default: current date)"
+    } text "The ending date to use for a date range (default: current date)"
 
     opt[String]('s', "segmentId") valueName "<id>" action { (x, c) =>
       c.copy(segmentId = Some(x))
-    } text s"The segment id to use"
+    } text "The segment id to use"
 
     opt[String]('p', "position") valueName "<A1 to F82>" action { (x, c) =>
       c.copy(position = Some(x))
-    } text s"The segment position to use (A1 to F82)"
+    } text "The segment position to use (A1 to F82)"
 
     opt[Unit]("setPosition") action { (_, c) =>
       c.copy(setPosition = Some(()))
-    } text s"Sets or updates the date and position of the given segment (Requires --position, --segmentId if segment is present)"
+    } text "Sets or updates the date and position of the given segment (Requires --position, --segmentId if segment is present)"
 
     opt[Unit]("segmentPositions") action { (_, c) =>
       c.copy(segmentPositions = Some(()))
-    } text s"Gets a list of segments positions for the given segment id in the given date range (Requires --segmentId)"
+    } text "Gets a list of segments positions for the given segment id in the given date range (Requires --segmentId)"
 
     opt[Unit]("segmentIds") action { (_, c) =>
       c.copy(segmentIds = Some(()))
-    } text s"Gets a list of segment ids that were in the given position in the given date range (Requires --position)"
+    } text "Gets a list of segment ids that were in the given position in the given date range (Requires --position)"
 
     opt[Unit]("newlyInstalledSegments") action { (_, c) =>
       c.copy(newlyInstalledSegments = Some(()))
-    } text s"Gets a list of segments that were installed since the given date (Requires --date)"
+    } text "Gets a list of segments that were installed since the given date (Requires --date)"
 
     opt[Unit]("currentPositions") action { (_, c) =>
       c.copy(currentPositions = Some(()))
-    } text s"Gets the current segment positions, sorted by position"
+    } text "Gets the current segment positions, sorted by position"
 
     opt[Unit]("currentSegmentPosition") action { (_, c) =>
       c.copy(currentSegmentPosition = Some(()))
-    } text s"Gets the current segment position for the given segment id (Requires --segmentId)"
+    } text "Gets the current segment position for the given segment id (Requires --segmentId)"
 
     opt[Unit]("currentSegmentAtPosition") action { (_, c) =>
       c.copy(currentSegmentAtPosition = Some(()))
-    } text s"Gets the id of the segment currently in the given position (Requires --position)"
+    } text "Gets the id of the segment currently in the given position (Requires --position)"
 
     opt[Unit]("positionsOnDate") action { (_, c) =>
       c.copy(positionsOnDate = Some(()))
-    } text s"Gets the segment positions as they were on the given date, sorted by position"
+    } text "Gets the segment positions as they were on the given date, sorted by position"
+
+    opt[Unit]("mostRecentChange") action { (_, c) =>
+      c.copy(mostRecentChange = Some(()))
+    } text "Gets the most recent date that segments were changed"
 
     opt[Unit]("segmentPositionOnDate") action { (_, c) =>
       c.copy(segmentPositionOnDate = Some(()))
-    } text s"Gets the segment position for the given segment id on the given date (Requires --segmentId)"
+    } text "Gets the segment position for the given segment id on the given date (Requires --segmentId)"
 
     opt[Unit]("segmentAtPositionOnDate") action { (_, c) =>
       c.copy(segmentAtPositionOnDate = Some(()))
-    } text s"Gets the id of the segment that was installed in the given position on the given date (Requires --position)"
+    } text "Gets the id of the segment that was installed in the given position on the given date (Requires --position)"
+
+    opt[Unit]("resetTables") action { (_, c) =>
+      c.copy(resetTables = Some(()))
+    } text "Drops and recreates the database tables (for testing)"
 
   }
 
@@ -136,6 +143,12 @@ object EswSegmentDbClient extends App {
           error(s"setPosition failed for date: $date, segmentId: ${segmentId.getOrElse("None")}, position: ${position.get}")
       }
 
+      if (options.resetTables.isDefined) {
+        val result = await(client.resetTables())
+        if (!result)
+          error(s"resetTables failed")
+      }
+
       if (options.segmentPositions.isDefined) {
         if (segmentId.isEmpty) error("--segmentId option is required")
         showResults(await(client.segmentPositions(DateRange(from, to), segmentId.get)))
@@ -166,6 +179,12 @@ object EswSegmentDbClient extends App {
 
       if (options.positionsOnDate.isDefined) {
         showResults(await(client.positionsOnDate(date)))
+      }
+
+      // TODO: FIXME
+      if (options.mostRecentChange.isDefined) {
+        val result = await(client.mostRecentChange())
+        println(result.toString)
       }
 
       if (options.segmentPositionOnDate.isDefined) {

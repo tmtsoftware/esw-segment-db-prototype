@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react'
 import 'react-responsive-modal/styles.css';
-import {SegmentData} from "./SegmentData";
+import {SegmentData, SegmentToM1Pos} from "./SegmentData";
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
@@ -8,8 +8,15 @@ import FormHelperText from '@material-ui/core/FormHelperText';
 import Select from '@material-ui/core/Select';
 import {createStyles, makeStyles, Theme} from '@material-ui/core/styles';
 
-
-type SegmentDetailsProps = { id: string, pos: string, date: string }
+/**
+ * Segment-id, pos (A1 to F82), date installed
+ */
+type SegmentDetailsProps = {
+  id: string,
+  pos: string,
+  date: string,
+  updateDisplay: () => void
+}
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -23,35 +30,62 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-export const SegmentDetails = ({id, pos, date}: SegmentDetailsProps): JSX.Element => {
+/**
+ * Displays details about the selected segment
+ *
+ * @param id segment id
+ * @param pos A1 to F82
+ * @param date date the segment was installed
+ * @param updateDisplay function to update the display after a DB change
+ * @constructor
+ */
+export const SegmentDetails = ({id, pos, date, updateDisplay}: SegmentDetailsProps): JSX.Element => {
 
+  const emptyId = "empty"
   const [availableSegmentIds, setAvailableSegmentIds] = useState<Array<string>>([]);
-  const [segmentId, setSegmentId] = React.useState(id ? id : "empty");
+  const [selectedSegmentId, setSelectedSegmentId] = useState(id ? id : emptyId);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const classes = useStyles();
 
+  // Gets the list of available segment ids for this position
   function update() {
-    useEffect(() => {
-      fetch(`${SegmentData.baseUri}/availableSegmentIdsForPos/${pos}`)
-        .then(response => response.json())
-        .then(data => {
-          const list = id ? [...data, id, "empty"] : [...data, "empty"];
-          setAvailableSegmentIds(list)
-        });
-      // empty dependency array means this effect will only run once
-    }, []);
+    fetch(`${SegmentData.baseUri}/availableSegmentIdsForPos/${pos}`)
+      .then(response => response.json())
+      .then(data => {
+        const ids: Array<string> = id ? [...data, id, emptyId] : [...data, emptyId]
+        const uniqueIds = [...new Set(ids)]
+        setAvailableSegmentIds(uniqueIds)
+      });
   }
 
-  update()
+  useEffect(() => {
+    update()
+  }, []);
 
+  // Called when a new segment id is selected from the menu: Update the DB with the new id
   const changeSegmentId = (event: React.ChangeEvent<{ value: unknown }>) => {
-    const newId = event.target.value as string
-    setSegmentId(newId)
-    console.log(`XXX changeSegmentId to ${newId}`)
-  };
+    const selectedId = (event.target.value as string).trim()
+    const newId = selectedId == emptyId ? undefined : selectedId
+    setSelectedSegmentId(selectedId)
+    const today = new Date().getTime()
+    const segmentToM1Pos: SegmentToM1Pos = {date: today, maybeId: newId, position: pos}
+    const requestOptions = {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(segmentToM1Pos)
+    };
+    fetch(`${SegmentData.baseUri}/setPosition`, requestOptions)
+      .then(response => response.status)
+      .then(status => {
+        setErrorMessage(status == 200 ? "" : "Error: Failed to update the database")
+        updateDisplay()
+      });
+  }
 
   const helpText = id ? `Installed on: ${date}` : "Empty: Select new ID"
 
+  console.log(`availableSegmentIds=${availableSegmentIds}, selectedSegmentId=${selectedSegmentId}`)
   if (availableSegmentIds.length != 0)
     return (
       <div>
@@ -60,23 +94,23 @@ export const SegmentDetails = ({id, pos, date}: SegmentDetailsProps): JSX.Elemen
           <FormControl className={classes.formControl}>
             <InputLabel>Segment ID</InputLabel>
             <Select
-              value={segmentId}
+              value={selectedSegmentId}
               onChange={changeSegmentId}
             >
               {availableSegmentIds.map(segId => {
+                console.log(`segId = ${segId}`)
                 return <MenuItem key={segId} value={segId}>{segId}</MenuItem>
               })
               }
             </Select>
           </FormControl>
           <FormHelperText>{helpText}</FormHelperText>
+          <FormHelperText>{errorMessage}</FormHelperText>
         </div>
       </div>
     )
   else return (
     <div>
-      <strong>Segment {pos}</strong>
-      <p><em>Currently empty</em></p>
     </div>
   )
 }

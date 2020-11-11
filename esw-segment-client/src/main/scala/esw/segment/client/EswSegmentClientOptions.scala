@@ -22,7 +22,9 @@ case class EswSegmentClientOptions(
     currentSegmentPosition: Option[Unit] = None,
     currentSegmentAtPosition: Option[Unit] = None,
     positionsOnDate: Option[Unit] = None,
+    mostRecentChange: Option[Unit] = None,
     segmentPositionOnDate: Option[Unit] = None,
     segmentAtPositionOnDate: Option[Unit] = None,
-    availableSegmentIdsForPos: Option[Unit] = None
+    availableSegmentIdsForPos: Option[Unit] = None,
+    resetTables: Option[Unit] = None
 )

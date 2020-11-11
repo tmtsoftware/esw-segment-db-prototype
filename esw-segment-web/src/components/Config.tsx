@@ -19,6 +19,14 @@ export class Config {
     }
   ).join(" ")
 
+  // An inner hexagon used to highlight a segment
+  static innerSegmentPoints = [...Array(6).keys()].map(i => {
+      const px = (Config.segmentRadius-1) * Math.cos(i * 60 * Math.PI / 180.0)
+      const py = (Config.segmentRadius-1) * Math.sin(i * 60 * Math.PI / 180.0)
+      return `${px},${py}`
+    }
+  ).join(" ")
+
   // Returns the angle for the given sector (each one is rotated by 60 deg)
   static sectorAngle(sector: string) {
     return -60 * (sector.charCodeAt(0) - "A".charCodeAt(0) + 1)

@@ -20,89 +20,80 @@ class Routes(posTable: SegmentToM1PosTable)(implicit ec: ExecutionContext) exten
           complete(posTable.setPosition(segmentToM1Pos).map(if (_) OK else BadRequest))
         }
       } ~
-        // Set positions of a number of segments on a given date
-        path("setPositions") {
-          entity(as[SegmentToM1Positions]) { p =>
-            complete(posTable.setPositions(p.date, p.positions).map(if (_) OK else BadRequest))
-          }
-        } ~
-        // Set all segment positions
-        path("setAllPositions") {
-          entity(as[AllSegmentPositions]) { p =>
-            complete(posTable.setAllPositions(p.date, p.allPositions).map(if (_) OK else BadRequest))
-          }
-        } ~
-        // Gets a list of segments positions for the given segment id in the given date range.
-        path("segmentPositions" / Segment) {
-          segmentId =>
-            entity(as[DateRange]) {
-              dateRange =>
-                complete(posTable.segmentPositions(dateRange, segmentId))
-            }
-        } ~
-        // Gets a list of segment ids that were in the given location in the given date range.
-        path("segmentIds" / Segment) {
-          position =>
-            entity(as[DateRange]) {
-              dateRange =>
-                complete(posTable.segmentIds(dateRange, position))
-            }
-        } ~
-        // Returns a list of segments that were installed since the given date
-        path("newlyInstalledSegments") {
-          entity(as[Date]) {
-            date =>
-              complete(posTable.newlyInstalledSegments(date))
-          }
-        } ~
-        // Returns the segment positions as they were on the given date, sorted by position
-        path("positionsOnDate") {
-          entity(as[Date]) {
-            date =>
-              complete(posTable.positionsOnDate(date))
-          }
-        } ~
-        // Gets the segment position for the given segment id on the given date.
-        path("segmentPositionOnDate" / Segment) {
-          segmentId =>
-            entity(as[Date]) {
-              date =>
-                complete(posTable.segmentPositionOnDate(date, segmentId))
-            }
-        } ~
-        // Gets the id of the segment that was installed in the given location on the given date
-        path("segmentAtPositionOnDate" / Segment) {
-          position =>
-            entity(as[Date]) {
-              date =>
-                complete(posTable.segmentAtPositionOnDate(date, position))
-            }
-        } ~
-        // Drops and recreates the database tables (for testing)
-        path("resetTables") {
-          complete(posTable.resetTables().map(if (_) OK else BadRequest))
+      // Set positions of a number of segments on a given date
+      path("setPositions") {
+        entity(as[SegmentToM1Positions]) { p =>
+          complete(posTable.setPositions(p.date, p.positions).map(if (_) OK else BadRequest))
         }
-    } ~
-      get {
-        // Returns the current segment positions, sorted by position
-        path("currentPositions") {
-          complete(posTable.currentPositions())
-        } ~
-          // Gets the current segment position for the given segment id.
-          path("currentSegmentPosition" / Segment) {
-            segmentId =>
-              complete(posTable.currentSegmentPosition(segmentId))
-          } ~
-          // Gets the id of the segment currently in the given location
-          path("currentSegmentAtPosition" / Segment) {
-            position =>
-              complete(posTable.currentSegmentAtPosition(position))
-          } ~
-          // Gets a list of segment-ids that can be installed at the given position
-          path("availableSegmentIdsForPos" / Segment) {
-            position =>
-              complete(posTable.availableSegmentIdsForPos(position))
-          }
+      } ~
+      // Set all segment positions
+      path("setAllPositions") {
+        entity(as[AllSegmentPositions]) { p =>
+          complete(posTable.setAllPositions(p.date, p.allPositions).map(if (_) OK else BadRequest))
+        }
+      } ~
+      // Gets a list of segments positions for the given segment id in the given date range.
+      path("segmentPositions" / Segment) { segmentId =>
+        entity(as[DateRange]) { dateRange =>
+          complete(posTable.segmentPositions(dateRange, segmentId))
+        }
+      } ~
+      // Gets a list of segment ids that were in the given location in the given date range.
+      path("segmentIds" / Segment) { position =>
+        entity(as[DateRange]) { dateRange =>
+          complete(posTable.segmentIds(dateRange, position))
+        }
+      } ~
+      // Returns a list of segments that were installed since the given date
+      path("newlyInstalledSegments") {
+        entity(as[Date]) { date =>
+          complete(posTable.newlyInstalledSegments(date))
+        }
+      } ~
+      // Returns the segment positions as they were on the given date, sorted by position
+      path("positionsOnDate") {
+        entity(as[Date]) { date =>
+          complete(posTable.positionsOnDate(date))
+        }
+      } ~
+      // Gets the segment position for the given segment id on the given date.
+      path("segmentPositionOnDate" / Segment) { segmentId =>
+        entity(as[Date]) { date =>
+          complete(posTable.segmentPositionOnDate(date, segmentId))
+        }
+      } ~
+      // Gets the id of the segment that was installed in the given location on the given date
+      path("segmentAtPositionOnDate" / Segment) { position =>
+        entity(as[Date]) { date =>
+          complete(posTable.segmentAtPositionOnDate(date, position))
+        }
+      } ~
+      // Drops and recreates the database tables (for testing)
+      path("resetTables") {
+        complete(posTable.resetTables().map(if (_) OK else BadRequest))
       }
+    } ~
+    get {
+      // Returns the current segment positions, sorted by position
+      path("currentPositions") {
+        complete(posTable.currentPositions())
+      } ~
+      // Gets the current segment position for the given segment id.
+      path("currentSegmentPosition" / Segment) { segmentId =>
+        complete(posTable.currentSegmentPosition(segmentId))
+      } ~
+      // Gets the id of the segment currently in the given location
+      path("currentSegmentAtPosition" / Segment) { position =>
+        complete(posTable.currentSegmentAtPosition(position))
+      } ~
+      // Gets a list of segment-ids that can be installed at the given position
+      path("availableSegmentIdsForPos" / Segment) { position =>
+        complete(posTable.availableSegmentIdsForPos(position))
+      } ~
+      // Returns the most recent date that segments were changed, or the current date
+      path("mostRecentChange") {
+        complete(posTable.mostRecentChange())
+      }
+    }
   }
 }

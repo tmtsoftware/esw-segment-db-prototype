@@ -321,6 +321,21 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       await(Future.sequence(fList)).distinct
     }
 
+  override def mostRecentChange(): Future[Date] =
+    async {
+      await(
+        dsl
+          .resultQuery(s"""
+         |SELECT $dateCol
+         |FROM $tableName
+         |ORDER BY date DESC
+         |LIMIT 1
+         |""".stripMargin)
+          .fetchAsyncScala[(Date)]
+      ).headOption.getOrElse(currentDate())
+
+    }
+
   override def segmentPositionOnDate(date: Date, segmentId: String): Future[Option[SegmentToM1Pos]] =
     async {
       await(positionsOnDate(date)).find(_.maybeId.contains(segmentId))
@@ -341,6 +356,6 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
   override def resetTables(): Future[Boolean] =
     async {
       await(dsl.truncate(SegmentToM1PosTable.tableName).executeAsyncScala()) >= 0
+//      await(setPosition(SegmentToM1Pos(currentDate(), None, "A1")))
     }
-
 }

@@ -90,6 +90,12 @@ trait SegmentToM1Api {
   def positionsOnDate(date: Date): Future[List[SegmentToM1Pos]]
 
   /**
+   * Returns the most recent date that segments were changed, or the current date,
+   * if there are no segments installed yet.
+   */
+  def mostRecentChange(): Future[Date]
+
+  /**
    * Gets the segment position for the given segment id on the given date.
    *
    * @param date      the date that the segment was in the position
