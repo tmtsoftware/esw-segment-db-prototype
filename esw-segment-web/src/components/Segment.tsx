@@ -47,26 +47,28 @@ export const Segment = ({id, pos, date, mostRecentChange, showSegmentIds, x, y, 
 
   // Pop up a modal dialog on mouse press
   function mousePressed() {
-    console.log(`Selected segment: id=${id}, pos=${pos}, sector=${sector}`)
     openDialog()
   }
 
   // Tool tip to display over a segment
   function toolTip(): string {
     if (id)
-      return `Pos: ${pos}, Segment ID: ${id}, Date: ${dateStr}`
-    return `Pos: ${pos}: Empty`
+      return `Pos: ${pos}, Segment ID: ${id}, Installed: ${dateStr}`
+    return `Pos: ${pos}: Empty since: ${dateStr}`
   }
 
   // Returns a hexagon figure to display marking recently changed segments
   function innerHexagon(): JSX.Element | undefined {
-    if (!date || date < mostRecentChange) return undefined
-    else
+    if (!date || date < mostRecentChange)
+      return undefined
+    else {
+      console.log(`XXX recent segment (before ${new Date(mostRecentChange)}): pos: ${pos} on date ${new Date(date)} with id ${idStr}`)
       return <polygon
         stroke="black"
         strokeWidth="1.0"
         onClick={mousePressed}
         points={Config.innerSegmentPoints}/>
+    }
 
   }
 

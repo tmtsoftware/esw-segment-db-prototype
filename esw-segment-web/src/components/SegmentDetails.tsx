@@ -118,7 +118,6 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
       .then(data => {
         const ids: Array<string> = id ? [...data, id, emptyId] : [...data, emptyId]
         const uniqueIds = [...new Set(ids)]
-        console.log(`DB Query avail seg ids: pos=${pos}`)
         setAvailableSegmentIds(uniqueIds)
       })
   }

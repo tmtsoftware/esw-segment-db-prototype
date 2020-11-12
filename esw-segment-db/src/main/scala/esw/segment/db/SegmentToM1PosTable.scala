@@ -118,9 +118,9 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
    */
   private def withInstallDate(date: Date, segmentToM1Pos: SegmentToM1Pos): Future[SegmentToM1Pos] =
     async {
-      if (segmentToM1Pos.maybeId.isEmpty)
-        segmentToM1Pos
-      else {
+//      if (segmentToM1Pos.maybeId.isEmpty)
+//        segmentToM1Pos
+//      else {
         val dbPos = segmentToM1Pos.dbPos
         val queryResult = await(
           dsl
@@ -137,14 +137,14 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
            | ORDER BY date DESC
            |) as w1
            |WHERE
-           |  w1.id = '${segmentToM1Pos.maybeId.get}' AND w1.id IS DISTINCT FROM w1.next_id
+           |  w1.id = '${segmentToM1Pos.maybeId.getOrElse(missingSegmentId)}' AND w1.id IS DISTINCT FROM w1.next_id
            |ORDER BY date DESC
            |LIMIT 1;
            |""".stripMargin)
             .fetchAsyncScala[Date]
         )
         SegmentToM1Pos(queryResult.head, segmentToM1Pos.maybeId, segmentToM1Pos.position)
-      }
+//      }
     }
 
   /**
@@ -313,7 +313,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
         val date        = result._1
         val dbPositions = result._2
         dbPositions.zipWithIndex
-          .filter(p => !p._1.startsWith(missingSegmentId))
+//          .filter(p => !p._1.startsWith(missingSegmentId))
           .map(p => makeSegmentToM1Pos(date, p._1, p._2 + 1))
       }
       val fList = list
