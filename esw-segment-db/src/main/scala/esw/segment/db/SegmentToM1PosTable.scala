@@ -21,13 +21,21 @@ object SegmentToM1PosTable {
   // Segment id for missing segments
   private val missingSegmentId = "------"
 
+  // Segment id for segments where the state is unknown (when adding a new empty row)
+  private val unknownSegmentId = "??????"
+
+  // Return None for missing or unknown segments
+  private def idOption(id: String): Option[String] = {
+    if (id.startsWith(missingSegmentId) || id.startsWith(unknownSegmentId)) None else Some(id)
+  }
+
   private def quoted(s: String) = "\"" + s + "\""
 
   private def currentDate(): Date = new Date(System.currentTimeMillis())
 
   private def makeSegmentToM1Pos(date: Date, id: String, dbPos: Int): SegmentToM1Pos = {
     val position = toPosition(dbPos)
-    SegmentToM1Pos(date, if (id.startsWith(missingSegmentId)) None else Some(id), position)
+    SegmentToM1Pos(date, idOption(id), position)
   }
 }
 
@@ -52,7 +60,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
 
   /**
    * Returns an array of all 492 current segment ids list as stored in the database,
-   * or a list of missingSegmentId entries, if there are no database rows yet.
+   * or a list of unknown segment id entries, if there are no database rows yet.
    */
   private def rawCurrentPositions(): Future[Array[String]] =
     async {
@@ -73,7 +81,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .toScala
           .map(_.asScala.map(_.into(classOf[Object]).asInstanceOf[Array[String]]).toArray)
       ).headOption
-        .getOrElse((1 to numSegments).map(_ => missingSegmentId).toArray)
+        .getOrElse((1 to numSegments).map(_ => unknownSegmentId).toArray)
     }
 
   /**
@@ -134,7 +142,9 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
            | ORDER BY date DESC
            |) as w1
            |WHERE
-           |  w1.id = '${segmentToM1Pos.maybeId.getOrElse(missingSegmentId)}' AND w1.id IS DISTINCT FROM w1.next_id
+           |  (w1.id = '${segmentToM1Pos.maybeId.getOrElse(missingSegmentId)}'
+           |  OR w1.id = '${segmentToM1Pos.maybeId.getOrElse(unknownSegmentId)}')
+           |  AND w1.id IS DISTINCT FROM w1.next_id
            |ORDER BY date DESC
            |LIMIT 1;
            |""".stripMargin)
@@ -258,7 +268,9 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .resultQuery(s"""
          |SELECT $dateCol, $positionsCol[$dbPos]
          |FROM $tableName
-         |WHERE $dateCol >= '${dateRange.from}' AND $dateCol <= '${dateRange.to}' AND $positionsCol[$dbPos] != '$missingSegmentId'
+         |WHERE $dateCol >= '${dateRange.from}'
+         |AND $dateCol <= '${dateRange.to}'
+         |AND $positionsCol[$dbPos] NOT IN ('$missingSegmentId', '$unknownSegmentId')
          |""".stripMargin)
           .fetchAsyncScala[(Date, String)]
       )
