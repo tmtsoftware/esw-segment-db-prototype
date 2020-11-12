@@ -1,7 +1,5 @@
 import React, {useState} from 'react'
 import {Config} from "./Config";
-import 'react-responsive-modal/styles.css';
-import {Modal} from 'react-responsive-modal';
 import {SegmentDetails} from "./SegmentDetails";
 
 type SegmentProps = {
@@ -39,18 +37,18 @@ export const Segment = ({id, pos, date, mostRecentChange, showSegmentIds, x, y, 
 
   const [open, setOpen] = useState<boolean>(false);
 
-  function onOpenModal() {
+  function openDialog() {
     setOpen(true)
   }
 
-  function onCloseModal() {
+  function closeDialog() {
     setOpen(false)
   }
 
   // Pop up a modal dialog on mouse press
   function mousePressed() {
     console.log(`Selected segment: id=${id}, pos=${pos}, sector=${sector}`)
-    onOpenModal()
+    openDialog()
   }
 
   // Tool tip to display over a segment
@@ -90,9 +88,7 @@ export const Segment = ({id, pos, date, mostRecentChange, showSegmentIds, x, y, 
         fill={"black"}>
         {label}
       </text>
-      <Modal open={open} onClose={onCloseModal} center>
-        <SegmentDetails id={id} pos={pos} date={date} updateDisplay={updateDisplay}/>
-      </Modal>
+      <SegmentDetails id={id} pos={pos} date={date} open={open} closeDialog={closeDialog} updateDisplay={updateDisplay}/>
     </g>
   )
 }

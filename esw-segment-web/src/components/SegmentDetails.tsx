@@ -1,15 +1,22 @@
 import React, {useEffect, useState} from 'react'
-import 'react-responsive-modal/styles.css'
 import {SegmentData, SegmentToM1Pos} from "./SegmentData"
 import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
 import FormHelperText from '@material-ui/core/FormHelperText'
 import Select from '@material-ui/core/Select'
-import {createStyles, makeStyles, Theme} from '@material-ui/core/styles'
 import {MuiPickersUtilsProvider, KeyboardDatePicker} from '@material-ui/pickers'
 import Grid from '@material-ui/core/Grid'
 import DateFnsUtils from '@date-io/date-fns'
+import Button from '@material-ui/core/Button';
+import Dialog from '@material-ui/core/Dialog';
+import MuiDialogTitle from '@material-ui/core/DialogTitle';
+import MuiDialogContent from '@material-ui/core/DialogContent';
+import MuiDialogActions from '@material-ui/core/DialogActions';
+import IconButton from '@material-ui/core/IconButton';
+import CloseIcon from '@material-ui/icons/Close';
+import {createStyles, makeStyles, Theme, withStyles, WithStyles} from '@material-ui/core/styles';
+import Typography from '@material-ui/core/Typography';
 
 /**
  * Segment-id, pos (A1 to F82), date installed
@@ -18,6 +25,8 @@ type SegmentDetailsProps = {
   id?: string,
   pos: string,
   date?: number,
+  open: boolean,
+  closeDialog: () => void,
   updateDisplay: () => void
 }
 
@@ -33,61 +42,101 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 )
 
+const styles = (theme: Theme) =>
+  createStyles({
+    root: {
+      margin: 0,
+      padding: theme.spacing(2),
+    },
+    closeButton: {
+      position: 'absolute',
+      right: theme.spacing(1),
+      top: theme.spacing(1),
+      color: theme.palette.grey[500],
+    },
+  });
+
+export interface DialogTitleProps extends WithStyles<typeof styles> {
+  id: string;
+  children: React.ReactNode;
+  onClose: () => void;
+}
+
+const DialogTitle = withStyles(styles)((props: DialogTitleProps) => {
+  const { children, classes, onClose, ...other } = props;
+  return (
+    <MuiDialogTitle disableTypography className={classes.root} {...other}>
+      <Typography variant="h6">{children}</Typography>
+      {onClose ? (
+        <IconButton aria-label="close" className={classes.closeButton} onClick={onClose}>
+          <CloseIcon />
+        </IconButton>
+      ) : null}
+    </MuiDialogTitle>
+  );
+});
+
+const DialogContent = withStyles((theme: Theme) => ({
+  root: {
+    padding: theme.spacing(2),
+  },
+}))(MuiDialogContent);
+
+const DialogActions = withStyles((theme: Theme) => ({
+  root: {
+    margin: 0,
+    padding: theme.spacing(1),
+  },
+}))(MuiDialogActions);
+
+
 /**
  * Displays details about the selected segment
  *
  * @param id segment id
  * @param pos A1 to F82
  * @param date date the segment was installed
+ * @param open true if dialog is open
+ * @param closeDialog function to close the dialog
  * @param updateDisplay function to update the display after a DB change
  * @constructor
  */
-export const SegmentDetails = ({id, pos, date, updateDisplay}: SegmentDetailsProps): JSX.Element => {
-
+export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}: SegmentDetailsProps): JSX.Element => {
   const emptyId = "empty"
   const [availableSegmentIds, setAvailableSegmentIds] = useState<Array<string>>([])
-  const [selectedSegmentId, setSelectedSegmentId] = useState(id ? id : emptyId)
+  const [selectedSegmentId, setSelectedSegmentId] = useState(id || emptyId)
   const [errorMessage, setErrorMessage] = useState("")
   const [selectedDate, setSelectedDate] = useState<Date>(date ? new Date(date) : new Date())
+  const [saveEnabled, setSaveEnbled] = useState(false)
 
   const classes = useStyles()
 
   // Gets the list of available segment ids for this position
-  function update() {
+  function updateAvailableSegmentIds() {
     fetch(`${SegmentData.baseUri}/availableSegmentIdsForPos/${pos}`)
       .then(response => response.json())
       .then(data => {
         const ids: Array<string> = id ? [...data, id, emptyId] : [...data, emptyId]
         const uniqueIds = [...new Set(ids)]
+        console.log(`DB Query avail seg ids: pos=${pos}`)
         setAvailableSegmentIds(uniqueIds)
       })
   }
 
   useEffect(() => {
-    update()
+    updateAvailableSegmentIds()
   }, [])
 
   // Called when a new segment id is selected from the menu: Update the DB with the new id
   const changeSegmentId = (event: React.ChangeEvent<{ value: unknown }>) => {
     const selectedId = (event.target.value as string).trim()
-    const newId = selectedId == emptyId ? undefined : selectedId
     setSelectedSegmentId(selectedId)
-    const today = new Date().getTime()
-    // XXX TODO: Get from datepicker
-    const segmentToM1Pos: SegmentToM1Pos = {date: today, maybeId: newId, position: pos}
-    const requestOptions = {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(segmentToM1Pos)
-    }
-    fetch(`${SegmentData.baseUri}/setPosition`, requestOptions)
-      .then(response => response.status)
-      .then(status => {
-        setErrorMessage(status == 200 ? "" : "Error: Failed to update the database")
-        updateDisplay()
-      })
+    // Default to current date, since the segment id changed
+    setSelectedDate(new Date())
+    setSaveEnbled(true)
   }
 
+  // A menu of available segment ids for this position
   function segmentIdSelector(): JSX.Element {
     return <div>
       <FormControl className={classes.formControl}>
@@ -106,10 +155,12 @@ export const SegmentDetails = ({id, pos, date, updateDisplay}: SegmentDetailsPro
     </div>
   }
 
-  const handleDateChange = (date: Date | null) => {
-    setSelectedDate(date || new Date())
+  const handleDateChange = (newDate: Date | null) => {
+    setSelectedDate(newDate || new Date())
+    setSaveEnbled(true)
   }
 
+  // Display/edit the installation date
   function datePicker(): JSX.Element {
     const helpText = id ? `Installed on` : "Select date installed"
     return <MuiPickersUtilsProvider utils={DateFnsUtils}>
@@ -131,13 +182,47 @@ export const SegmentDetails = ({id, pos, date, updateDisplay}: SegmentDetailsPro
     </MuiPickersUtilsProvider>
   }
 
+  function saveChanges() {
+    const date = selectedDate.getTime()
+    const maybeId = selectedSegmentId == emptyId ? undefined : selectedSegmentId
+    const segmentToM1Pos: SegmentToM1Pos = {date: date, maybeId: maybeId, position: pos}
+    const requestOptions = {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(segmentToM1Pos)
+    }
+    fetch(`${SegmentData.baseUri}/setPosition`, requestOptions)
+      .then(response => response.status)
+      .then(status => {
+        setErrorMessage(status == 200 ? "" : "Error: Failed to update the database")
+        updateDisplay()
+        if (status == 200)
+          closeDialog()
+      })
+  }
+
+  function cancelChanges() {
+    setSelectedSegmentId(id || emptyId)
+    setSelectedDate(date ? new Date(date) : new Date())
+    closeDialog()
+  }
+
   if (availableSegmentIds.length != 0)
     return (
-      <div>
-        <h3>Segment {pos}</h3>
-        {segmentIdSelector()}
-        {datePicker()}
-      </div>
+      <Dialog onClose={cancelChanges} aria-labelledby="customized-dialog-title" open={open}>
+        <DialogTitle id="customized-dialog-title" onClose={cancelChanges}>
+          Segment {pos}
+        </DialogTitle>
+        <DialogContent dividers>
+            {segmentIdSelector()}
+            {datePicker()}
+        </DialogContent>
+        <DialogActions>
+          <Button autoFocus onClick={saveChanges} color="primary" disabled={!saveEnabled}>
+            Save changes
+          </Button>
+        </DialogActions>
+      </Dialog>
     )
   else return (
     <div>

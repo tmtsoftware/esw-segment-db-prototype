@@ -47,34 +47,38 @@ export const Mirror = ({showSegmentIds}: MirrorProps): JSX.Element => {
     updateDisplay()
   }, []);
 
-  const d = Config.mirrorDiameter
-  return (
-    <div className="mirror-container">
-      <svg className="mirror-svg" viewBox={`0 0 ${d} ${d}`} preserveAspectRatio="xMidYMin slice">
-        <g className="sectors">
-          <circle
-            cx={Config.xOrigin}
-            cy={Config.yOrigin}
-            r={Config.segmentRadius * 2 * 10.5}
-            fill="none"
-            stroke="black"
-            strokeWidth="0.5"
-          />
-          <Sector sector="A" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
-                  updateDisplay={updateDisplay}/>
-          <Sector sector="B" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
-                  updateDisplay={updateDisplay}/>
-          <Sector sector="C" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
-                  updateDisplay={updateDisplay}/>
-          <Sector sector="D" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
-                  updateDisplay={updateDisplay}/>
-          <Sector sector="E" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
-                  updateDisplay={updateDisplay}/>
-          <Sector sector="F" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
-                  updateDisplay={updateDisplay}/>
-        </g>
-      </svg>
-    </div>
-  )
+  if (posMap.size == 0) {
+    return <div></div>
+  } else {
+    const d = Config.mirrorDiameter
+    return (
+      <div className="mirror-container">
+        <svg className="mirror-svg" viewBox={`0 0 ${d} ${d}`} preserveAspectRatio="xMidYMin slice">
+          <g className="sectors">
+            <circle
+              cx={Config.xOrigin}
+              cy={Config.yOrigin}
+              r={Config.segmentRadius * 2 * 10.5}
+              fill="none"
+              stroke="black"
+              strokeWidth="0.5"
+            />
+            <Sector sector="A" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
+                    updateDisplay={updateDisplay}/>
+            <Sector sector="B" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
+                    updateDisplay={updateDisplay}/>
+            <Sector sector="C" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
+                    updateDisplay={updateDisplay}/>
+            <Sector sector="D" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
+                    updateDisplay={updateDisplay}/>
+            <Sector sector="E" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
+                    updateDisplay={updateDisplay}/>
+            <Sector sector="F" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
+                    updateDisplay={updateDisplay}/>
+          </g>
+        </svg>
+      </div>
+    )
+  }
 }
 
