@@ -38,7 +38,6 @@ export const Mirror = ({showSegmentIds}: MirrorProps): JSX.Element => {
       const posMap: Map<string, SegmentToM1Pos> = currentPositions
         .reduce((map, obj) => map.set(obj.position, obj), new Map())
       setPosMap(posMap)
-      console.log(`XXX most recent change: ${new Date(mostRecentChange)}`)
       setMostRecentChange(mostRecentChange)
     });
 

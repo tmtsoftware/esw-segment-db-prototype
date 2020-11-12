@@ -118,9 +118,6 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
    */
   private def withInstallDate(date: Date, segmentToM1Pos: SegmentToM1Pos): Future[SegmentToM1Pos] =
     async {
-//      if (segmentToM1Pos.maybeId.isEmpty)
-//        segmentToM1Pos
-//      else {
         val dbPos = segmentToM1Pos.dbPos
         val queryResult = await(
           dsl
@@ -144,7 +141,6 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
             .fetchAsyncScala[Date]
         )
         SegmentToM1Pos(queryResult.head, segmentToM1Pos.maybeId, segmentToM1Pos.position)
-//      }
     }
 
   /**
@@ -313,7 +309,6 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
         val date        = result._1
         val dbPositions = result._2
         dbPositions.zipWithIndex
-//          .filter(p => !p._1.startsWith(missingSegmentId))
           .map(p => makeSegmentToM1Pos(date, p._1, p._2 + 1))
       }
       val fList = list
@@ -331,7 +326,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
          |ORDER BY date DESC
          |LIMIT 1
          |""".stripMargin)
-          .fetchAsyncScala[(Date)]
+          .fetchAsyncScala[Date]
       ).headOption.getOrElse(currentDate())
 
     }
@@ -356,6 +351,5 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
   override def resetTables(): Future[Boolean] =
     async {
       await(dsl.truncate(SegmentToM1PosTable.tableName).executeAsyncScala()) >= 0
-//      await(setPosition(SegmentToM1Pos(currentDate(), None, "A1")))
     }
 }

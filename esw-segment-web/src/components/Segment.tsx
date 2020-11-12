@@ -62,7 +62,6 @@ export const Segment = ({id, pos, date, mostRecentChange, showSegmentIds, x, y, 
     if (!date || date < mostRecentChange)
       return undefined
     else {
-      console.log(`XXX recent segment (before ${new Date(mostRecentChange)}): pos: ${pos} on date ${new Date(date)} with id ${idStr}`)
       return <polygon
         stroke="black"
         strokeWidth="1.0"
