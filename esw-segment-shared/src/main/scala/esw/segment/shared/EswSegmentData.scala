@@ -108,7 +108,7 @@ object EswSegmentData {
    */
   def compatibleSegmentIdsForPos(pos: Int): List[String] = {
     // TODO: Get the actual list
-    (1 to 7).toList.map(n => s"SN$pos-$n")
+    (1 to 7).toList.map(n => f"SN$pos%02d-$n")
   }
 
 }
