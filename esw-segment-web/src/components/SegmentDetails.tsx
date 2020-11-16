@@ -131,7 +131,9 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
     const selectedId = (event.target.value as string).trim()
     setSelectedSegmentId(selectedId)
     // Default to current date, since the segment id changed
-    setSelectedDate(new Date())
+    if (date == selectedDate.getTime()) {
+      setSelectedDate(new Date())
+    }
     setSaveEnbled(true)
   }
 
@@ -185,6 +187,7 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
     const date = selectedDate.getTime()
     const maybeId = selectedSegmentId == emptyId ? undefined : selectedSegmentId
     const segmentToM1Pos: SegmentToM1Pos = {date: date, maybeId: maybeId, position: pos}
+    console.log(`XXX date = ${selectedDate}, id = ${maybeId}, pos = ${pos})`)
     const requestOptions = {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -202,6 +205,7 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
 
   function cancelChanges() {
     setSelectedSegmentId(id || emptyId)
+    console.log(`XXX cancelChanges(): Reset date to previous`)
     setSelectedDate(date ? new Date(date) : new Date())
     closeDialog()
   }

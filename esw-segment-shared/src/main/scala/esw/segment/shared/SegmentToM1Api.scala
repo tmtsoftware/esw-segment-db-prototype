@@ -41,7 +41,7 @@ trait SegmentToM1Api {
    *
    * @param dateRange the range of dates to search
    * @param segmentId the segment id to search for
-   * @return a list of objects indicating the positions of the given segment id in the given date range (sorted by position)
+   * @return a list of objects indicating the positions of the given segment id in the given date range (sorted by date)
    */
   def segmentPositions(dateRange: DateRange, segmentId: String): Future[List[SegmentToM1Pos]]
 
@@ -50,7 +50,7 @@ trait SegmentToM1Api {
    *
    * @param dateRange the range of dates to search
    * @param position the segment position to search for (A1 to F82)
-   * @return a list of segments at the given position in the given date range (sorted by id)
+   * @return a list of segments at the given position in the given date range (sorted by date)
    */
   def segmentIds(dateRange: DateRange, position: String): Future[List[SegmentToM1Pos]]
 

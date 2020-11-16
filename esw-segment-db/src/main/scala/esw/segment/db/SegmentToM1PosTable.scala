@@ -76,7 +76,6 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
          |ORDER BY date DESC
          |LIMIT 1
          |""".stripMargin)
-          // XXX FIXME: CSW's fetchAsyncScala does not handle array results!
           .fetchAsync()
           .toScala
           .map(_.asScala.map(_.into(classOf[Object]).asInstanceOf[Array[String]]).toArray)
@@ -126,10 +125,10 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
    */
   private def withInstallDate(date: Date, segmentToM1Pos: SegmentToM1Pos): Future[SegmentToM1Pos] =
     async {
-        val dbPos = segmentToM1Pos.dbPos
-        val queryResult = await(
-          dsl
-            .resultQuery(s"""
+      val dbPos = segmentToM1Pos.dbPos
+      val queryResult = await(
+        dsl
+          .resultQuery(s"""
            |SELECT w1.date
            |FROM (
            | SELECT
@@ -146,11 +145,11 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
            |  OR w1.id = '${segmentToM1Pos.maybeId.getOrElse(unknownSegmentId)}')
            |  AND w1.id IS DISTINCT FROM w1.next_id
            |ORDER BY date DESC
-           |LIMIT 1;
+           |LIMIT 1
            |""".stripMargin)
-            .fetchAsyncScala[Date]
-        )
-        SegmentToM1Pos(queryResult.head, segmentToM1Pos.maybeId, segmentToM1Pos.position)
+          .fetchAsyncScala[Date]
+      )
+      SegmentToM1Pos(queryResult.head, segmentToM1Pos.maybeId, segmentToM1Pos.position)
     }
 
   /**
@@ -172,6 +171,41 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       else true
     }
 
+  /**
+   * Update any "unknown" segment ids in rows after the given pos (up to the first known value)
+   * @param segmentToM1Pos the position being inserted
+   * @return true if OK
+   */
+  private def updatePositionsAfter(segmentToM1Pos: SegmentToM1Pos): Future[Boolean] =
+    async {
+      // If inserting before the most recent row, need to update any following "unknown" segment-ids for this pos
+      val date = await(mostRecentChange())
+      if (segmentToM1Pos.date.before(date)) {
+        val dateRange = DateRange(segmentToM1Pos.date, date)
+        val list = await(rawSegmentIds(dateRange, segmentToM1Pos.position, includeEmpty = true))
+          .drop(1)
+          .takeWhile(_.maybeId.isEmpty)
+        if (list.nonEmpty) {
+          val dateRange2 = DateRange(list.head.date, list.reverse.head.date)
+          await(
+            dsl
+              .query(s"""
+                   |UPDATE $tableName
+                   |SET $positionsCol[${segmentToM1Pos.dbPos}] = '${segmentToM1Pos.maybeId.getOrElse(missingSegmentId)}'
+                   |WHERE $positionsCol[${segmentToM1Pos.dbPos}] = '$unknownSegmentId'
+                   |AND $dateCol >= '${dateRange2.from}' AND $dateCol <= '${dateRange2.to}'
+                   |""".stripMargin)
+              .executeAsyncScala()
+          )
+        }
+      }
+      true
+    }
+
+  private def sortByDate(list: List[SegmentToM1Pos]) = {
+    list.sortWith((p, q) => p.date.before(q.date))
+  }
+
   override def setPosition(segmentToM1Pos: SegmentToM1Pos): Future[Boolean] =
     async {
       // Make sure the row exists
@@ -179,7 +213,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
 
       if (rowStatus) {
         await(removeSegmentIds(segmentToM1Pos.date, segmentToM1Pos.maybeId.toList))
-        await(
+        val insertStatus = await(
           dsl
             .query(s"""
              |UPDATE $tableName
@@ -188,6 +222,8 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
              |""".stripMargin)
             .executeAsyncScala()
         ) == 1
+        val updateStatus = await(updatePositionsAfter(segmentToM1Pos))
+        insertStatus && updateStatus
       }
       else rowStatus
     }
@@ -257,21 +293,31 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
         dbPositions.zipWithIndex.find(segmentId == _._1).map(p => makeSegmentToM1Pos(date, segmentId, p._2 + 1))
       }
       val fList = list.map(s => withInstallDate(dateRange.to, s))
-      await(Future.sequence(fList)).distinct.sortWith(_.dbPos < _.dbPos)
+      sortByDate(await(Future.sequence(fList)).distinct)
     }
 
-  override def segmentIds(dateRange: DateRange, position: String): Future[List[SegmentToM1Pos]] =
+  /**
+   * Gets a list of segment ids that were in the given position (A1 to F82) in the given date range.
+   * (This internal version returns objects with the row's date (not the installation date for a segment)
+   *
+   * @param dateRange the range of dates to search
+   * @param position the segment position to search for (A1 to F82)
+   * @param includeEmpty also return empty positions (default: return only positions with a segment-id)
+   * @return a list of segments at the given position in the given date range (sorted by date)
+   */
+  private def rawSegmentIds(dateRange: DateRange, position: String, includeEmpty: Boolean = false): Future[List[SegmentToM1Pos]] =
     async {
       val dbPos = toDbPosition(position)
+      val cond  = if (includeEmpty) "" else s"AND $positionsCol[$dbPos] NOT IN ('$missingSegmentId', '$unknownSegmentId')"
       val queryResult = await(
         dsl
           .resultQuery(s"""
-         |SELECT $dateCol, $positionsCol[$dbPos]
-         |FROM $tableName
-         |WHERE $dateCol >= '${dateRange.from}'
-         |AND $dateCol <= '${dateRange.to}'
-         |AND $positionsCol[$dbPos] NOT IN ('$missingSegmentId', '$unknownSegmentId')
-         |""".stripMargin)
+                          |SELECT $dateCol, $positionsCol[$dbPos]
+                          |FROM $tableName
+                          |WHERE $dateCol >= '${dateRange.from}'
+                          |AND $dateCol <= '${dateRange.to}'
+                          |$cond
+                          |""".stripMargin)
           .fetchAsyncScala[(Date, String)]
       )
       val list = queryResult.map { result =>
@@ -279,8 +325,14 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
         val segmentId = result._2
         makeSegmentToM1Pos(date, segmentId, dbPos)
       }
+      sortByDate(list.distinct)
+    }
+
+  override def segmentIds(dateRange: DateRange, position: String): Future[List[SegmentToM1Pos]] =
+    async {
+      val list  = await(rawSegmentIds(dateRange, position))
       val fList = list.map(s => withInstallDate(dateRange.to, s))
-      await(Future.sequence(fList)).distinct.sortWith(_.maybeId.get < _.maybeId.get)
+      sortByDate(await(Future.sequence(fList)).distinct)
     }
 
   override def newlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]] =
@@ -317,15 +369,20 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
          |""".stripMargin)
           .fetchAsyncScala[(Date, Array[String])]
       )
-      val list = queryResult.flatMap { result =>
-        val date        = result._1
-        val dbPositions = result._2
-        dbPositions.zipWithIndex
-          .map(p => makeSegmentToM1Pos(date, p._1, p._2 + 1))
+      if (queryResult.isEmpty) {
+        // If the results are empty, return a row with empty ids
+        (1 to numSegments).toList.map(pos => SegmentToM1Pos(date, None, toPosition(pos)))
+      } else {
+        val list = queryResult.flatMap { result =>
+          val date        = result._1
+          val dbPositions = result._2
+          dbPositions.zipWithIndex
+            .map(p => makeSegmentToM1Pos(date, p._1, p._2 + 1))
+        }
+        val fList = list
+          .map(s => withInstallDate(currentDate(), s))
+        sortByDate(await(Future.sequence(fList)).distinct)
       }
-      val fList = list
-        .map(s => withInstallDate(currentDate(), s))
-      await(Future.sequence(fList)).distinct
     }
 
   override def mostRecentChange(): Future[Date] =
