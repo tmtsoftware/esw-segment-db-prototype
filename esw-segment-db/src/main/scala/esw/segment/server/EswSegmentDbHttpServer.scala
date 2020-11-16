@@ -6,8 +6,8 @@ object EswSegmentDbHttpServer extends App {
 
   case class Options(port: Int = 9192, testMode: Boolean = false)
 
-  private val parser = new scopt.OptionParser[Options]("esw-segment-db-http-server") {
-    head("esw-segment-db-http-server", BuildInfo.version)
+  private val parser = new scopt.OptionParser[Options]("esw-segment-db") {
+    head("esw-segment-db", BuildInfo.version)
 
     opt[Int]("port") valueName "<number>" action { (x, c) =>
       c.copy(port = x)

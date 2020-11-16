@@ -4,6 +4,7 @@ import java.util.Date
 
 import akka.actor.ActorSystem
 import buildinfo.BuildInfo
+import esw.segment.client.EswSegmentClientOptions.defaultPort
 import esw.segment.shared.EswSegmentData._
 import scopt.Read.reads
 import scopt.Read
@@ -33,7 +34,7 @@ object EswSegmentDbClient extends App {
 
     opt[Int]("port") valueName "<number>" action { (x, c) =>
       c.copy(port = x)
-    } text "The port number to use for the server (default: $defaultPort)"
+    } text s"The port number to use for the server (default: $defaultPort)"
 
     opt[Date]("date") valueName dateFormat.toPattern action { (x, c) =>
       c.copy(date = x)
