@@ -93,6 +93,10 @@ class Routes(posTable: SegmentToM1PosTable)(implicit ec: ExecutionContext) exten
       // Returns the most recent date that segments were changed, or the current date
       path("mostRecentChange") {
         complete(posTable.mostRecentChange())
+      } ~
+      // Gets a list of all segment ids that were in the given location.
+      path("allSegmentIds" / Segment) { position =>
+        complete(posTable.allSegmentIds(position))
       }
     }
   }

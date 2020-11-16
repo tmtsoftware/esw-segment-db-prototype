@@ -55,6 +55,14 @@ trait SegmentToM1Api {
   def segmentIds(dateRange: DateRange, position: String): Future[List[SegmentToM1Pos]]
 
   /**
+   * Gets a list of segment ids that were in the given position (A1 to F82).
+   *
+   * @param position the segment position to search for (A1 to F82)
+   * @return a list of segments at the given position in the given date range (sorted by date)
+   */
+  def allSegmentIds(position: String): Future[List[SegmentToM1Pos]]
+
+  /**
    * Returns a list of segments that were installed since the given date
    *
    * @param since the cutoff date for newly installed segments

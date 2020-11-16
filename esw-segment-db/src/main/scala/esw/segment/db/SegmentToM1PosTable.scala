@@ -335,6 +335,14 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       sortByDate(await(Future.sequence(fList)).distinct)
     }
 
+  override def allSegmentIds(position: String): Future[List[SegmentToM1Pos]] =
+    async {
+      val dateRange = DateRange(new Date(0), currentDate())
+      val list  = await(rawSegmentIds(dateRange, position, includeEmpty = true))
+      val fList = list.map(s => withInstallDate(dateRange.to, s))
+      sortByDate(await(Future.sequence(fList)).distinct)
+    }
+
   override def newlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]] =
     async {
       val dateRange = DateRange(since, currentDate())

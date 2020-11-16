@@ -17,6 +17,7 @@ import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 import {createStyles, makeStyles, Theme, withStyles, WithStyles} from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
+import {PositionHistory} from "./PositionHistory";
 
 /**
  * Segment-id, pos (A1 to F82), date installed
@@ -63,13 +64,13 @@ export interface DialogTitleProps extends WithStyles<typeof styles> {
 }
 
 const DialogTitle = withStyles(styles)((props: DialogTitleProps) => {
-  const { children, classes, onClose, ...other } = props;
+  const {children, classes, onClose, ...other} = props;
   return (
     <MuiDialogTitle disableTypography className={classes.root} {...other}>
       <Typography variant="h6">{children}</Typography>
       {onClose ? (
         <IconButton aria-label="close" className={classes.closeButton} onClick={onClose}>
-          <CloseIcon />
+          <CloseIcon/>
         </IconButton>
       ) : null}
     </MuiDialogTitle>
@@ -168,6 +169,7 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
       <Grid container justify="space-around">
         <KeyboardDatePicker
           disableToolbar
+          fullWidth
           variant="inline"
           format="MMM dd, yyyy"
           margin="normal"
@@ -215,8 +217,12 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
           Segment {pos}
         </DialogTitle>
         <DialogContent dividers>
-            {segmentIdSelector()}
-            {datePicker()}
+          {segmentIdSelector()}
+          {datePicker()}
+          <div>
+            <h4>History</h4>
+            <PositionHistory pos={pos}/>
+          </div>
         </DialogContent>
         <DialogActions>
           <Button autoFocus onClick={saveChanges} color="primary" disabled={!saveEnabled}>
