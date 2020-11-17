@@ -137,6 +137,21 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
     updateAvailableSegmentIds()
   }, [])
 
+  // Gets the date of the nost recent segment change
+  function updateSelectedDate() {
+    fetch(`${SegmentData.baseUri}/currentSegmentAtPosition/${pos}`)
+      .then(response => response.json())
+      .then(data => {
+        const segmentToM1Pos: SegmentToM1Pos = data
+        setSelectedDate(new Date(segmentToM1Pos.date))
+      })
+  }
+  //
+  // // Seems to be needed to update the selected date after setting a date before the most current one
+  // useEffect(() => {
+  //   updateSelectedDate()
+  // }, [])
+
   // Called when a new segment id is selected from the menu: Update the DB with the new id
   const changeSegmentId = (event: React.ChangeEvent<{ value: unknown }>) => {
     const selectedId = (event.target.value as string).trim()
@@ -208,8 +223,10 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
       .then(status => {
         setErrorMessage(status == 200 ? "" : "Error: Failed to update the database")
         updateDisplay()
-        if (status == 200)
+        if (status == 200) {
           closeDialog()
+          updateSelectedDate()
+        }
       })
   }
 
