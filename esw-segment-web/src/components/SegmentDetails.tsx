@@ -18,6 +18,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import {createStyles, makeStyles, Theme, withStyles, WithStyles} from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import {PositionHistory} from "./PositionHistory";
+import {FormLabel} from "@material-ui/core";
 
 /**
  * Segment-id, pos (A1 to F82), date installed
@@ -34,7 +35,9 @@ type SegmentDetailsProps = {
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     formControl: {
-      margin: theme.spacing(1),
+      // margin: theme.spacing(1),
+      marginLeft: 1,
+      paddingBottom: 20,
       minWidth: 120,
     },
     selectEmpty: {
@@ -42,6 +45,10 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     history: {
       marginBottom: 3,
+    },
+    datePicker: {
+      // maxWidth: 150
+      paddingBottom: 20,
     }
   }),
 )
@@ -169,13 +176,12 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
   function datePicker(): JSX.Element {
     const helpText = id ? `Installed on` : "Select date installed"
     return <MuiPickersUtilsProvider utils={DateFnsUtils}>
-      <Grid container justify="space-around">
+      <Grid container>
         <KeyboardDatePicker
+          className={classes.datePicker}
           disableToolbar
-          fullWidth
           variant="inline"
-          format="MMM dd, yyyy"
-          margin="normal"
+          format="MM/dd/yyyy"
           id="date-picker-inline"
           label={helpText}
           value={selectedDate}
@@ -223,7 +229,8 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
           {segmentIdSelector()}
           {datePicker()}
           <div>
-            <h4 className={classes.history}>History</h4>
+            {/*<h4 className={classes.history}>History</h4>*/}
+            <InputLabel>History</InputLabel>
             <PositionHistory pos={pos}/>
           </div>
         </DialogContent>

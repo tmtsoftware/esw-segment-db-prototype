@@ -30,7 +30,7 @@ export const Segment = ({id, pos, date, mostRecentChange, showSegmentIds, x, y, 
   const sector = pos.charAt(0)
   const classNames = `segment ${sector}` + (id ? "" : " empty")
   const labelXOffset = pos.length == 2 ? -4 : -6
-  const dateStr = date ? new Date(date).toDateString() : ""
+  const dateStr = date ? new Date(date).toLocaleDateString('en-US') : ""
   const idStr = id ? id : ""
   const label = showSegmentIds ? idStr.substr(2) : pos
   const fontSize = showSegmentIds ? 6 : 7

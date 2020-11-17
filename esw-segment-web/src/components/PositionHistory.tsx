@@ -6,9 +6,10 @@ import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
 import TableContainer from '@material-ui/core/TableContainer'
 import TableHead from '@material-ui/core/TableHead'
-import TablePagination from '@material-ui/core/TablePagination'
 import TableRow from '@material-ui/core/TableRow'
 import {SegmentData, SegmentToM1Pos} from "./SegmentData";
+import InputLabel from "@material-ui/core/InputLabel";
+import FormControl from "@material-ui/core/FormControl";
 
 
 type PositionHistoryProps = {
@@ -16,7 +17,7 @@ type PositionHistoryProps = {
 }
 
 interface Column {
-  id: 'date' | 'segmentId' | 'position'
+  id: 'date' | 'segmentId'
   label: string
   minWidth?: number
   align?: 'right'
@@ -24,9 +25,8 @@ interface Column {
 }
 
 const columns: Column[] = [
-  {id: 'date', label: 'Date', minWidth: 80, format: (value: Date) => value.toDateString()},
-  {id: 'segmentId', label: 'Segment ID', minWidth: 60},
-  {id: 'position', label: 'Position', minWidth: 50},
+  {id: 'date', label: 'Date', minWidth: 80, format: (value: Date) => value.toLocaleDateString('en-US')},
+  {id: 'segmentId', label: 'Segment ID', minWidth: 60}
 ]
 
 const useStyles = makeStyles({
@@ -65,7 +65,6 @@ export const PositionHistory = ({pos}: PositionHistoryProps): JSX.Element => {
     getHistoryData()
   }, [])
 
-
   return (
     <Paper className={classes.root}>
       <TableContainer className={classes.container}>
@@ -79,7 +78,8 @@ export const PositionHistory = ({pos}: PositionHistoryProps): JSX.Element => {
                   align={column.align}
                   style={{minWidth: column.minWidth}}
                 >
-                  <strong>{column.label}</strong>
+                  {/*<InputLabel>{column.label}</InputLabel>*/}
+                  {column.label}
                 </TableCell>
               ))}
             </TableRow>
@@ -89,13 +89,10 @@ export const PositionHistory = ({pos}: PositionHistoryProps): JSX.Element => {
               return (
                 <TableRow hover key={row.date}>
                   <TableCell key="date" className={classes.tableCell}>
-                    {new Date(row.date).toDateString()}
+                    {new Date(row.date).toLocaleDateString('en-US')}
                   </TableCell>
                   <TableCell key="segmentId" className={classes.tableCell}>
                     {row.maybeId ? row.maybeId : <em>removed</em>}
-                  </TableCell>
-                  <TableCell key="position" className={classes.tableCell}>
-                    {row.position}
                   </TableCell>
                 </TableRow>
               )
