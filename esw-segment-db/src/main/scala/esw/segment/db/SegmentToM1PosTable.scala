@@ -59,10 +59,10 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
     }
 
   /**
-   * Returns an array of all 492 current segment ids list as stored in the database,
+   * Returns an array of all 492 segment ids as of the given date as stored in the database,
    * or a list of unknown segment id entries, if there are no database rows yet.
    */
-  private def rawCurrentPositions(): Future[Array[String]] =
+  private def rawPositions(date: Date): Future[Array[String]] =
     async {
       import scala.jdk.CollectionConverters._
       import scala.compat.java8.FutureConverters.CompletionStageOps
@@ -72,7 +72,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .resultQuery(s"""
          |SELECT $positionsCol
          |FROM $tableName
-         |WHERE date <= '${currentDate()}'
+         |WHERE date <= '$date'
          |ORDER BY date DESC
          |LIMIT 1
          |""".stripMargin)
@@ -92,7 +92,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
    */
   private def addRow(date: Date): Future[Boolean] =
     async {
-      val allSegmentIdsStr = await(rawCurrentPositions()).map(quoted).mkString(",")
+      val allSegmentIdsStr = await(rawPositions(date)).map(quoted).mkString(",")
       await(
         dsl
           .query(s"INSERT INTO $tableName($dateCol, $positionsCol) VALUES ('${date.toString}', '{$allSegmentIdsStr}')")

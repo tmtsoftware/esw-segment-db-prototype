@@ -229,7 +229,6 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
           {segmentIdSelector()}
           {datePicker()}
           <div>
-            {/*<h4 className={classes.history}>History</h4>*/}
             <InputLabel>History</InputLabel>
             <PositionHistory pos={pos}/>
           </div>
