@@ -24,9 +24,9 @@ interface Column {
 }
 
 const columns: Column[] = [
-  {id: 'date', label: 'Date', minWidth: 120, format: (value: Date) => value.toDateString()},
-  {id: 'segmentId', label: 'Segment ID', minWidth: 100},
-  {id: 'position', label: 'Position', minWidth: 170},
+  {id: 'date', label: 'Date', minWidth: 80, format: (value: Date) => value.toDateString()},
+  {id: 'segmentId', label: 'Segment ID', minWidth: 60},
+  {id: 'position', label: 'Position', minWidth: 50},
 ]
 
 const useStyles = makeStyles({
@@ -36,14 +36,20 @@ const useStyles = makeStyles({
   container: {
     maxHeight: 230,
   },
+  tableCell:  {
+    paddingTop: 5,
+    paddingBottom: 5,
+  },
 })
 
-// export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}: SegmentDetailsProps): JSX.Element => {
+/**
+ * Displays a table showing when segments were added or removed
+ * @param pos the segment position
+ * @constructor
+ */
 export const PositionHistory = ({pos}: PositionHistoryProps): JSX.Element => {
   const classes = useStyles()
   const [data, setData] = useState<Array<SegmentToM1Pos>>([])
-  const [page, setPage] = useState<number>(0)
-  const [rowsPerPage, setRowsPerPage] = useState<number>(10)
 
   // Gets the list of available segment ids for this position
   function getHistoryData() {
@@ -60,17 +66,6 @@ export const PositionHistory = ({pos}: PositionHistoryProps): JSX.Element => {
   }, [])
 
 
-  const handleChangePage = (event: unknown, newPage: number) => {
-    // XXX
-    const x = event
-    setPage(newPage)
-  }
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(+event.target.value)
-    setPage(0)
-  }
-
   return (
     <Paper className={classes.root}>
       <TableContainer className={classes.container}>
@@ -79,26 +74,27 @@ export const PositionHistory = ({pos}: PositionHistoryProps): JSX.Element => {
             <TableRow>
               {columns.map((column) => (
                 <TableCell
+                  className={classes.tableCell}
                   key={column.id}
                   align={column.align}
                   style={{minWidth: column.minWidth}}
                 >
-                  {column.label}
+                  <strong>{column.label}</strong>
                 </TableCell>
               ))}
             </TableRow>
           </TableHead>
           <TableBody>
-            {data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+            {data.map((row) => {
               return (
-                <TableRow hover role="checkbox" tabIndex={-1} key={row.date}>
-                  <TableCell key="date">
+                <TableRow hover key={row.date}>
+                  <TableCell key="date" className={classes.tableCell}>
                     {new Date(row.date).toDateString()}
                   </TableCell>
-                  <TableCell key="segmentId">
+                  <TableCell key="segmentId" className={classes.tableCell}>
                     {row.maybeId ? row.maybeId : <em>removed</em>}
                   </TableCell>
-                  <TableCell key="position">
+                  <TableCell key="position" className={classes.tableCell}>
                     {row.position}
                   </TableCell>
                 </TableRow>
@@ -107,15 +103,6 @@ export const PositionHistory = ({pos}: PositionHistoryProps): JSX.Element => {
           </TableBody>
         </Table>
       </TableContainer>
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 50, 100]}
-        component="div"
-        count={data.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onChangePage={handleChangePage}
-        onChangeRowsPerPage={handleChangeRowsPerPage}
-      />
     </Paper>
   )
 }

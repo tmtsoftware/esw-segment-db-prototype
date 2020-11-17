@@ -120,10 +120,9 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
    * before each row to see if the segment id changed, in order to get the date that the segment was
    * installed.
    *
-   * @param date           Use the last install date before this one
    * @param segmentToM1Pos the segment position to use
    */
-  private def withInstallDate(date: Date, segmentToM1Pos: SegmentToM1Pos): Future[SegmentToM1Pos] =
+  private def withInstallDate(segmentToM1Pos: SegmentToM1Pos): Future[SegmentToM1Pos] =
     async {
       val dbPos = segmentToM1Pos.dbPos
       val queryResult = await(
@@ -137,7 +136,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
            |  LAG(positions[$dbPos]) OVER (ORDER BY date) as next_id
            | FROM
            |  segment_to_m1_pos
-           | WHERE date <= '$date'
+           | WHERE date <= '${segmentToM1Pos.date}'
            | ORDER BY date DESC
            |) as w1
            |WHERE
@@ -202,8 +201,11 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       true
     }
 
-  private def sortByDate(list: List[SegmentToM1Pos]) = {
-    list.sortWith((p, q) => p.date.before(q.date))
+  private def sortByDate(list: List[SegmentToM1Pos], desc: Boolean = false) = {
+    if (desc)
+      list.sortWith((p, q) => q.date.before(p.date))
+    else
+      list.sortWith((p, q) => p.date.before(q.date))
   }
 
   override def setPosition(segmentToM1Pos: SegmentToM1Pos): Future[Boolean] =
@@ -292,7 +294,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
         val dbPositions = result._2
         dbPositions.zipWithIndex.find(segmentId == _._1).map(p => makeSegmentToM1Pos(date, segmentId, p._2 + 1))
       }
-      val fList = list.map(s => withInstallDate(dateRange.to, s))
+      val fList = list.map(s => withInstallDate(s))
       sortByDate(await(Future.sequence(fList)).distinct)
     }
 
@@ -331,16 +333,16 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
   override def segmentIds(dateRange: DateRange, position: String): Future[List[SegmentToM1Pos]] =
     async {
       val list  = await(rawSegmentIds(dateRange, position))
-      val fList = list.map(s => withInstallDate(dateRange.to, s))
+      val fList = list.map(s => withInstallDate(s))
       sortByDate(await(Future.sequence(fList)).distinct)
     }
 
   override def allSegmentIds(position: String): Future[List[SegmentToM1Pos]] =
     async {
       val dateRange = DateRange(new Date(0), currentDate())
-      val list  = await(rawSegmentIds(dateRange, position, includeEmpty = true))
-      val fList = list.map(s => withInstallDate(dateRange.to, s))
-      sortByDate(await(Future.sequence(fList)).distinct)
+      val list      = await(rawSegmentIds(dateRange, position, includeEmpty = true))
+      val fList     = list.map(s => withInstallDate(s))
+      sortByDate(await(Future.sequence(fList)).distinct, desc = true)
     }
 
   override def newlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]] =
@@ -380,7 +382,8 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       if (queryResult.isEmpty) {
         // If the results are empty, return a row with empty ids
         (1 to numSegments).toList.map(pos => SegmentToM1Pos(date, None, toPosition(pos)))
-      } else {
+      }
+      else {
         val list = queryResult.flatMap { result =>
           val date        = result._1
           val dbPositions = result._2
@@ -388,7 +391,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
             .map(p => makeSegmentToM1Pos(date, p._1, p._2 + 1))
         }
         val fList = list
-          .map(s => withInstallDate(currentDate(), s))
+          .map(s => withInstallDate(s))
         sortByDate(await(Future.sequence(fList)).distinct)
       }
     }

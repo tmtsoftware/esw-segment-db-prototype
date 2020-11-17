@@ -40,6 +40,9 @@ const useStyles = makeStyles((theme: Theme) =>
     selectEmpty: {
       marginTop: theme.spacing(2),
     },
+    history: {
+      marginBottom: 3,
+    }
   }),
 )
 
@@ -220,7 +223,7 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
           {segmentIdSelector()}
           {datePicker()}
           <div>
-            <h4>History</h4>
+            <h4 className={classes.history}>History</h4>
             <PositionHistory pos={pos}/>
           </div>
         </DialogContent>
