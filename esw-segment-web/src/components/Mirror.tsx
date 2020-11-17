@@ -6,13 +6,17 @@ import {SegmentData, SegmentToM1Pos} from "./SegmentData";
 
 type MirrorProps = {
   showSegmentIds: boolean,
+  refDate: Date
 }
 
 /**
  * Represents the TMT mirror
+ *
+ * @param showSegmentIds if true, display segment ids instead of positions in the segments
+ * @param refDate the reference date to use for the display (default: current date)
  * @constructor
  */
-export const Mirror = ({showSegmentIds}: MirrorProps): JSX.Element => {
+export const Mirror = ({showSegmentIds, refDate}: MirrorProps): JSX.Element => {
 
   const [posMap, setPosMap] = useState<Map<string, SegmentToM1Pos>>(new Map());
   const [mostRecentChange, setMostRecentChange] = useState<number>(0);
@@ -20,6 +24,7 @@ export const Mirror = ({showSegmentIds}: MirrorProps): JSX.Element => {
 
   async function fetchData() {
     const [mostRecentChangeResponse, currentPositionsResponse] = await Promise.all([
+      // XXX TODO: Pass refDate, use positionsOnDate
       fetch(`${SegmentData.baseUri}/mostRecentChange`),
       fetch(`${SegmentData.baseUri}/currentPositions`)
     ]);

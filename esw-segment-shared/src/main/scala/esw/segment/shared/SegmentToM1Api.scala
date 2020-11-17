@@ -100,6 +100,8 @@ trait SegmentToM1Api {
   /**
    * Returns the most recent date that segments were changed, or the current date,
    * if there are no segments installed yet.
+   *
+   * XXX TODO FIXME: Add refDate param
    */
   def mostRecentChange(): Future[Date]
 

@@ -118,7 +118,7 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
   const [selectedSegmentId, setSelectedSegmentId] = useState(id || emptyId)
   const [errorMessage, setErrorMessage] = useState("")
   const [selectedDate, setSelectedDate] = useState<Date>(date ? new Date(date) : new Date())
-  const [saveEnabled, setSaveEnbled] = useState(false)
+  const [saveEnabled, setSaveEnabled] = useState(false)
 
   const classes = useStyles()
 
@@ -137,7 +137,7 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
     updateAvailableSegmentIds()
   }, [])
 
-  // Gets the date of the nost recent segment change
+  // Gets the date of the most recent segment change
   function updateSelectedDate() {
     fetch(`${SegmentData.baseUri}/currentSegmentAtPosition/${pos}`)
       .then(response => response.json())
@@ -146,11 +146,6 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
         setSelectedDate(new Date(segmentToM1Pos.date))
       })
   }
-  //
-  // // Seems to be needed to update the selected date after setting a date before the most current one
-  // useEffect(() => {
-  //   updateSelectedDate()
-  // }, [])
 
   // Called when a new segment id is selected from the menu: Update the DB with the new id
   const changeSegmentId = (event: React.ChangeEvent<{ value: unknown }>) => {
@@ -160,7 +155,7 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
     if (date == selectedDate.getTime()) {
       setSelectedDate(new Date())
     }
-    setSaveEnbled(true)
+    setSaveEnabled(true)
   }
 
   // A menu of available segment ids for this position
@@ -184,12 +179,12 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
 
   const handleDateChange = (newDate: Date | null) => {
     setSelectedDate(newDate || new Date())
-    setSaveEnbled(true)
+    setSaveEnabled(true)
   }
 
   // Display/edit the installation date
   function datePicker(): JSX.Element {
-    const helpText = id ? `Installed on` : "Select date installed"
+    const helpText = id ? `Installed on` : "Date installed"
     return <MuiPickersUtilsProvider utils={DateFnsUtils}>
       <Grid container>
         <KeyboardDatePicker
