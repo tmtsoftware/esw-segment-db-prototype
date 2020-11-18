@@ -16,6 +16,7 @@ type SectorProps = {
  * @param sector A to F
  * @param posMap a map of pos (A1 to F82) to SegmentToM1Pos object
  * @param mostRecentChange date of most recent segment change
+ * @param showSegmentIds if true display segment ids in teh segments instead of the position
  * @param updateDisplay function to update the display after a DB change
  * @constructor
  */

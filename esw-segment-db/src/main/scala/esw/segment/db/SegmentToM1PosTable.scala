@@ -178,7 +178,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
   private def updatePositionsAfter(segmentToM1Pos: SegmentToM1Pos): Future[Boolean] =
     async {
       // If inserting before the most recent row, need to update any following "unknown" segment-ids for this pos
-      val date = await(mostRecentChange())
+      val date = await(mostRecentChange(currentDate()))
       if (segmentToM1Pos.date.before(date)) {
         val dateRange = DateRange(segmentToM1Pos.date, date)
         val list = await(rawSegmentIds(dateRange, segmentToM1Pos.position, includeEmpty = true))
@@ -396,19 +396,19 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       }
     }
 
-  override def mostRecentChange(): Future[Date] =
+  override def mostRecentChange(date: Date): Future[Date] =
     async {
       await(
         dsl
           .resultQuery(s"""
          |SELECT $dateCol
          |FROM $tableName
+         |WHERE date <= '$date'
          |ORDER BY date DESC
          |LIMIT 1
          |""".stripMargin)
           .fetchAsyncScala[Date]
       ).headOption.getOrElse(currentDate())
-
     }
 
   override def segmentPositionOnDate(date: Date, segmentId: String): Future[Option[SegmentToM1Pos]] =

@@ -71,6 +71,12 @@ class Routes(posTable: SegmentToM1PosTable)(implicit ec: ExecutionContext) exten
       // Drops and recreates the database tables (for testing)
       path("resetTables") {
         complete(posTable.resetTables().map(if (_) OK else BadRequest))
+      } ~
+      // Returns the most recent date that segments were changed up to the given date, or the current date
+      path("mostRecentChange") {
+        entity(as[Date]) { date =>
+          complete(posTable.mostRecentChange(date))
+        }
       }
     } ~
     get {
@@ -89,10 +95,6 @@ class Routes(posTable: SegmentToM1PosTable)(implicit ec: ExecutionContext) exten
       // Gets a list of segment-ids that can be installed at the given position
       path("availableSegmentIdsForPos" / Segment) { position =>
         complete(posTable.availableSegmentIdsForPos(position))
-      } ~
-      // Returns the most recent date that segments were changed, or the current date
-      path("mostRecentChange") {
-        complete(posTable.mostRecentChange())
       } ~
       // Gets a list of all segment ids that were in the given location.
       path("allSegmentIds" / Segment) { position =>

@@ -184,7 +184,7 @@ object EswSegmentDbClient extends App {
 
       // TODO: FIXME
       if (options.mostRecentChange.isDefined) {
-        val result = await(client.mostRecentChange())
+        val result = await(client.mostRecentChange(options.date))
         println(result.toString)
       }
 
