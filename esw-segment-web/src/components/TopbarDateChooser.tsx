@@ -94,6 +94,7 @@ export const TopbarDateChooser = ({mostRecentChange, updateDisplay}: TopbarDateC
       title="Go forward to the next segment change">
       <ChevronRightRounded/>
     </IconButton>
+    {/*// XXX TODO FIXME: Doesn't display most recent date if segment changed and this item was on previous most recent date */}
     <Typography className={classes.formControlLabel}>{selectedDate.toLocaleDateString('en-US')}</Typography>
   </div>
 }

@@ -46,7 +46,7 @@ class SegmentToM1ApiTestBase(posTable: SegmentToM1Api) extends AsyncFunSuite {
 
   private def populateAllSegments(date: Date): Future[Unit] =
     async {
-      val positions = (1 to numSegments).toList.map{ n =>
+      val positions = (1 to numSegments).toList.map { n =>
         val sectorOffset = (n - 1) / 82 + 1
         val pos          = (n - 1) % segmentsPerSector + 1
         Some(f"SN$pos%02d-$sectorOffset")
@@ -211,23 +211,22 @@ class SegmentToM1ApiTestBase(posTable: SegmentToM1Api) extends AsyncFunSuite {
 
       assert(await(posTable.mostRecentChange(currentDate())) == dateRange1.from)
 
-      assert(await(posTable.segmentPositions(dateRange1, "SN07-1")) == List(
-        new SegmentToM1Pos(dateRange1.from, "SN07-1", "A7")))
-      assert(await(posTable.segmentPositions(dateRange1, "SN82-1")) == List(
-        new SegmentToM1Pos(dateRange1.from, "SN82-1", "A82")))
+      assert(await(posTable.segmentPositions(dateRange1, "SN07-1")) == List(new SegmentToM1Pos(dateRange1.from, "SN07-1", "A7")))
+      assert(await(posTable.segmentPositions(dateRange1, "SN82-1")) == List(new SegmentToM1Pos(dateRange1.from, "SN82-1", "A82")))
 
-      assert(await(posTable.segmentIds(dateRange1, "A6")) == List(
-        new SegmentToM1Pos(dateRange1.from, "SN06-1", "A6")))
+      assert(await(posTable.segmentIds(dateRange1, "A6")) == List(new SegmentToM1Pos(dateRange1.from, "SN06-1", "A6")))
 
       // Set some more segment positions (the previous positions are automatically inherited/removed as needed)
       await(populateSomeSegments())
-      assert(await(posTable.segmentPositions(dateRange1, "SN07-1")) == List(
-        new SegmentToM1Pos(Date.valueOf("2020-10-21"), "SN07-1", "A2")))
+      assert(
+        await(posTable.segmentPositions(dateRange1, "SN07-1")) == List(
+          new SegmentToM1Pos(Date.valueOf("2020-10-21"), "SN07-1", "A2")
+        )
+      )
       // "SN02-1" was replaced with "SN07-1 (A2)"
       assert(await(posTable.segmentPositions(dateRange1, "SN02-1")).isEmpty)
       // Previous "SN07-1" position now empty
       assert(await(posTable.segmentIds(dateRange1, "A7")).isEmpty)
     }
   }
-
 }

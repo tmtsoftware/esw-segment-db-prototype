@@ -28,6 +28,7 @@ class DbWiring(dbName: String = defaultDbName) {
   lazy val host: String                                             = InetAddress.getLocalHost.getHostName
   implicit lazy val typedSystem: ActorSystem[SpawnProtocol.Command] = ActorSystem(SpawnProtocol(), "EswSegmentDb")
   implicit lazy val ec: ExecutionContextExecutor                    = typedSystem.executionContext
+
   LoggingSystemFactory.start("EswSegmentDb", "0.1", host, typedSystem)
   lazy val log: Logger                      = GenericLoggerFactory.getLogger
   lazy val locationService: LocationService = HttpLocationServiceFactory.makeLocalClient(typedSystem)
