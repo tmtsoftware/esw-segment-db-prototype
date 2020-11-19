@@ -16,6 +16,8 @@ class SegmentToM1ApiTestBase(posTable: SegmentToM1Api) extends AsyncFunSuite {
   private val dateRange4 = DateRange(Date.valueOf("2020-10-01"), Date.valueOf("2020-10-06"))
   private val dateRange5 = DateRange(Date.valueOf("2020-10-07"), Date.valueOf("2020-10-07"))
 
+  private def currentDate(): Date = new Date(System.currentTimeMillis())
+
   private def populateSomeSegments(): Future[Unit] =
     async {
       assert(await(posTable.setPosition(new SegmentToM1Pos(Date.valueOf("2020-10-01"), "SN01-2", "A4"))))
@@ -57,7 +59,7 @@ class SegmentToM1ApiTestBase(posTable: SegmentToM1Api) extends AsyncFunSuite {
       assert(await(posTable.resetTables()))
       await(populateSomeSegments())
 
-      assert(await(posTable.mostRecentChange()) == Date.valueOf("2020-10-23"))
+      assert(await(posTable.mostRecentChange(currentDate())) == Date.valueOf("2020-10-23"))
 
       assert(
         await(posTable.segmentPositions(dateRange1, "SN07-1")) == List(
@@ -207,7 +209,7 @@ class SegmentToM1ApiTestBase(posTable: SegmentToM1Api) extends AsyncFunSuite {
       assert(await(posTable.resetTables()))
       await(populateAllSegments(dateRange1.from))
 
-      assert(await(posTable.mostRecentChange()) == dateRange1.from)
+      assert(await(posTable.mostRecentChange(currentDate())) == dateRange1.from)
 
       assert(await(posTable.segmentPositions(dateRange1, "SN07-1")) == List(
         new SegmentToM1Pos(dateRange1.from, "SN07-1", "A7")))

@@ -77,6 +77,18 @@ class Routes(posTable: SegmentToM1PosTable)(implicit ec: ExecutionContext) exten
         entity(as[Date]) { date =>
           complete(posTable.mostRecentChange(date))
         }
+      } ~
+      // Returns the next date after the given one where segments were changed, or the current date, if there are no newer changes.
+      path("nextChange") {
+        entity(as[Date]) { date =>
+          complete(posTable.nextChange(date))
+        }
+      } ~
+      // Returns the previous date before the given one where segments were changed, or the first date, if there are no older changes.
+      path("prevChange") {
+        entity(as[Date]) { date =>
+          complete(posTable.prevChange(date))
+        }
       }
     } ~
     get {

@@ -42,6 +42,15 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
       await(Unmarshal(response).to[List[SegmentToM1Pos]])
     }
 
+  private def postGetDate(uri: Uri, date: Date) =
+    async {
+      val json     = date.toJson.compactPrint
+      val entity   = HttpEntity(ContentTypes.`application/json`, json)
+      val request  = HttpRequest(HttpMethods.POST, uri = uri, entity = entity)
+      val response = await(Http().singleRequest(request))
+      await(Unmarshal(response).to[Date])
+    }
+
   private def postGetOption(uri: Uri, json: String): Future[Option[SegmentToM1Pos]] =
     async {
       val entity   = HttpEntity(ContentTypes.`application/json`, json)
@@ -95,14 +104,15 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
   }
 
   override def mostRecentChange(date: Date): Future[Date] = {
-    async {
-      val json = date.toJson.compactPrint
-      val entity   = HttpEntity(ContentTypes.`application/json`, json)
-      val uri = Uri(s"$baseUri/mostRecentChange")
-      val request  = HttpRequest(HttpMethods.POST, uri = uri, entity = entity)
-      val response = await(Http().singleRequest(request))
-      await(Unmarshal(response).to[Date])
-    }
+    postGetDate(Uri(s"$baseUri/mostRecentChange"), date)
+  }
+
+  override def nextChange(date: Date): Future[Date] = {
+    postGetDate(Uri(s"$baseUri/nextChange"), date)
+  }
+
+  override def prevChange(date: Date): Future[Date] = {
+    postGetDate(Uri(s"$baseUri/prevChange"), date)
   }
 
   override def segmentPositionOnDate(date: Date, segmentId: String): Future[Option[SegmentToM1Pos]] = {
@@ -115,7 +125,7 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
 
   override def availableSegmentIdsForPos(position: String): Future[List[String]] = {
     async {
-      val uri = Uri(s"$baseUri/availableSegmentIdsForPos/$position")
+      val uri      = Uri(s"$baseUri/availableSegmentIdsForPos/$position")
       val request  = HttpRequest(HttpMethods.GET, uri = uri)
       val response = await(Http().singleRequest(request))
       await(Unmarshal(response).to[List[String]])

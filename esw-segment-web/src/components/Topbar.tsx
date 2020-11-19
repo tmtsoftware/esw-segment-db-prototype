@@ -6,9 +6,10 @@ import MenuIcon from '@material-ui/icons/Menu'
 import FormControlLabel from "@material-ui/core/FormControlLabel"
 import Checkbox from "@material-ui/core/Checkbox"
 import {makeStyles} from "@material-ui/core/styles"
-import {TopbarDatePicker} from "./TopbarDatePicker"
+import {TopbarDateChooser} from "./TopbarDateChooser"
 
 type TopbarProps = {
+  mostRecentChange: Date,
   updateDisplay: (showSegmentIds: boolean, refDate: Date) => void
 }
 
@@ -16,22 +17,23 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     checkbox: {
       color: 'inherit',
-      paddingLeft: theme.spacing(7),
+      paddingLeft: theme.spacing(10),
     },
     appBar: {
       background : '#2E3B55'
     },
     formControlLabel: {
       fontSize: 14,
-      paddingTop: 4
+      paddingTop: 4,
+      paddingRight: 300
     }
   }),
 )
 
-export const Topbar = ({updateDisplay}: TopbarProps): JSX.Element => {
+export const Topbar = ({mostRecentChange, updateDisplay}: TopbarProps): JSX.Element => {
 
   const [showSegmentIds, setShowSegmentIds] = React.useState(false)
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date>(mostRecentChange)
 
   const showSegmentIdsChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
     setShowSegmentIds(event.target.checked)
@@ -77,9 +79,7 @@ export const Topbar = ({updateDisplay}: TopbarProps): JSX.Element => {
           TMT Segment Database
         </Typography>
         <div>{showSegmentIdsCheckbox()}</div>
-        <div>
-          <TopbarDatePicker updateDisplay={refDateChanged}/>
-        </div>
+        <div><TopbarDateChooser mostRecentChange={mostRecentChange} updateDisplay={refDateChanged}/></div>
       </Toolbar>
     </AppBar>
   )

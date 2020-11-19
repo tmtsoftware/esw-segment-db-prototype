@@ -11,11 +11,11 @@ const App = (): JSX.Element => {
   const [posMap, setPosMap] = useState<Map<string, SegmentToM1Pos>>(new Map());
   const [mostRecentChange, setMostRecentChange] = useState<number>(0);
 
-  async function fetchData() {
+  async function fetchData(refDate: Date) {
     const requestOptions = {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(selectedDate.getTime())
+      body: JSON.stringify(refDate.getTime())
     }
 
     const [mostRecentChangeResponse, positionsOnDateResponse] = await Promise.all([
@@ -32,31 +32,40 @@ const App = (): JSX.Element => {
     };
   }
 
-  function updateData() {
-    fetchData().then(({mostRecentChange, positionsOnDate}) => {
+  function updateDataNow(refDate: Date) {
+    fetchData(refDate).then(({mostRecentChange, positionsOnDate}) => {
       const posMap: Map<string, SegmentToM1Pos> = positionsOnDate
         .reduce((map, obj) => map.set(obj.position, obj), new Map())
       setPosMap(posMap)
       setMostRecentChange(mostRecentChange)
-      console.log(`XXX mostRecentChange = ${new Date(mostRecentChange)}`)
     });
+  }
+
+  function updateData() {
+    updateDataNow(selectedDate)
   }
 
   function updateDisplay(showSegmentIds: boolean, refDate: Date) {
     setShowSegmentIds(showSegmentIds)
     setSelectedDate(refDate)
-    updateData()
+    updateDataNow(refDate)
   }
 
   useEffect(() => {
     updateData()
   }, []);
 
-  return (
-    <div className="App">
-      <Topbar updateDisplay={updateDisplay}/>
-      <Mirror showSegmentIds={showSegmentIds} posMap={posMap} mostRecentChange={mostRecentChange} updateDisplay={updateData}/>
-    </div>
-  )
+  if (mostRecentChange == 0)
+    return (
+      <div/>
+    )
+  else
+    return (
+      <div className="App">
+        <Topbar mostRecentChange={new Date(mostRecentChange)} updateDisplay={updateDisplay}/>
+        <Mirror showSegmentIds={showSegmentIds} posMap={posMap} mostRecentChange={mostRecentChange}
+                updateDisplay={updateData}/>
+      </div>
+    )
 }
 export default App

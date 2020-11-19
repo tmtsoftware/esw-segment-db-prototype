@@ -411,6 +411,35 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       ).headOption.getOrElse(currentDate())
     }
 
+  override def nextChange(date: Date): Future[Date] = async {
+    val lastDate = await(mostRecentChange(currentDate()))
+    await(
+      dsl
+        .resultQuery(s"""
+                        |SELECT $dateCol
+                        |FROM $tableName
+                        |WHERE date > '$date'
+                        |ORDER BY date
+                        |LIMIT 1
+                        |""".stripMargin)
+        .fetchAsyncScala[Date]
+    ).headOption.getOrElse(lastDate)
+  }
+
+  override def prevChange(date: Date): Future[Date] = async {
+    await(
+      dsl
+        .resultQuery(s"""
+                        |SELECT $dateCol
+                        |FROM $tableName
+                        |WHERE date < '$date'
+                        |ORDER BY date DESC
+                        |LIMIT 1
+                        |""".stripMargin)
+        .fetchAsyncScala[Date]
+    ).headOption.getOrElse(date)
+  }
+
   override def segmentPositionOnDate(date: Date, segmentId: String): Future[Option[SegmentToM1Pos]] =
     async {
       await(positionsOnDate(date)).find(_.maybeId.contains(segmentId))

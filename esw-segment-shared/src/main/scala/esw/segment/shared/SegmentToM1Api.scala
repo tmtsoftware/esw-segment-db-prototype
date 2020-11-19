@@ -104,6 +104,18 @@ trait SegmentToM1Api {
   def mostRecentChange(date: Date): Future[Date]
 
   /**
+   * Returns the next date after the given one where segments were changed, or the most recent change date,
+   * if there are no newer changes.
+   */
+  def nextChange(date: Date): Future[Date]
+
+  /**
+   * Returns the previous date before the given one where segments were changed, or the first date,
+   * if there are no older changes.
+   */
+  def prevChange(date: Date): Future[Date]
+
+  /**
    * Gets the segment position for the given segment id on the given date.
    *
    * @param date      the date that the segment was in the position
