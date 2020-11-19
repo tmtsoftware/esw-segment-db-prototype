@@ -42,7 +42,18 @@ const App = (): JSX.Element => {
   }
 
   function updateData() {
-    updateDataNow(selectedDate)
+    const requestOptions = {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(new Date().getTime())
+    }
+    fetch(`${SegmentData.baseUri}/mostRecentChange`, requestOptions)
+      .then(response => response.json())
+      .then(result => {
+        const date: Date = new Date(result)
+        setSelectedDate(date)
+        updateDataNow(date)
+      })
   }
 
   function updateDisplay(showSegmentIds: boolean, refDate: Date) {
