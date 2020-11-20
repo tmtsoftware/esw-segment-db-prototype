@@ -6,7 +6,6 @@ import { SegmentData, SegmentToM1Pos } from './components/SegmentData'
 
 const App = (): JSX.Element => {
   const [showSegmentIds, setShowSegmentIds] = useState<boolean>(false)
-  // const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [posMap, setPosMap] = useState<Map<string, SegmentToM1Pos>>(new Map())
   const [mostRecentChange, setMostRecentChange] = useState<number>(0)
 
@@ -55,14 +54,12 @@ const App = (): JSX.Element => {
       .then((response) => response.json())
       .then((result) => {
         const date: Date = new Date(result)
-        // setSelectedDate(date)
         updateDataNow(date)
       })
   }
 
   function updateDisplay(showSegmentIds: boolean, refDate: Date) {
     setShowSegmentIds(showSegmentIds)
-    // setSelectedDate(refDate)
     updateDataNow(refDate)
   }
 

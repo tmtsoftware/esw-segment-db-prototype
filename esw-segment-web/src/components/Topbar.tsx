@@ -27,14 +27,8 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     appBar: {
       background: '#2E3B55'
-      // display: 'flex',
-      // justifyContent: 'center',
-      // flexDirection: 'row'
     },
     toolbar: {
-      // width: '100%',
-      // boxSizing: 'border-box',
-      // maxWidth: 1170,
     },
     formControlLabel: {
       fontSize: 14,

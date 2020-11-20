@@ -292,5 +292,5 @@ export const SegmentDetails = ({
         </DialogActions>
       </Dialog>
     )
-  else return <div></div>
+  else return <div/>
 }
