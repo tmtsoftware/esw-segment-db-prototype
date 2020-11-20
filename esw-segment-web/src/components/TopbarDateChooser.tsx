@@ -25,9 +25,11 @@ const useStyles = makeStyles({
 export const TopbarDateChooser = ({mostRecentChange, updateDisplay}: TopbarDateChooserProps): JSX.Element => {
 
   const [selectedDate, setSelectedDate] = useState<Date>(mostRecentChange)
+  // const [disabled, setDisabled] = useState<boolean>(false)
   const classes = useStyles()
 
   function nextDate() {
+    // setDisabled(true)
     const requestOptions = {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -39,10 +41,12 @@ export const TopbarDateChooser = ({mostRecentChange, updateDisplay}: TopbarDateC
         const date: Date = new Date(result)
         setSelectedDate(date)
         updateDisplay(date)
+        // setDisabled(false)
       })
   }
 
   function prevDate() {
+    // setDisabled(true)
     const requestOptions = {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -54,10 +58,12 @@ export const TopbarDateChooser = ({mostRecentChange, updateDisplay}: TopbarDateC
         const date: Date = new Date(result)
         setSelectedDate(date)
         updateDisplay(date)
+        // setDisabled(false)
       })
   }
 
   function today() {
+    // setDisabled(true)
     const requestOptions = {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -69,6 +75,7 @@ export const TopbarDateChooser = ({mostRecentChange, updateDisplay}: TopbarDateC
         const date: Date = new Date(result)
         setSelectedDate(date)
         updateDisplay(date)
+        // setDisabled(false)
       })
   }
 
@@ -77,6 +84,7 @@ export const TopbarDateChooser = ({mostRecentChange, updateDisplay}: TopbarDateC
       color="inherit"
       className={classes.icons}
       onClick={() => prevDate()}
+      // disabled={disabled}
       title="Go back to the previous segment change">
       <ChevronLeftRounded/>
     </IconButton>
@@ -84,6 +92,7 @@ export const TopbarDateChooser = ({mostRecentChange, updateDisplay}: TopbarDateC
       color="inherit"
       className={classes.icons}
       onClick={() => today()}
+      // disabled={disabled}
       title="Display changes up to the current date (default)">
       <TodayRounded/>
     </IconButton>
@@ -91,6 +100,7 @@ export const TopbarDateChooser = ({mostRecentChange, updateDisplay}: TopbarDateC
       color="inherit"
       className={classes.icons}
       onClick={() => nextDate()}
+      // disabled={disabled}
       title="Go forward to the next segment change">
       <ChevronRightRounded/>
     </IconButton>

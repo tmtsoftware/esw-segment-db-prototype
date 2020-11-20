@@ -70,7 +70,7 @@ trait SegmentToM1Api {
   def newlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]]
 
   /**
-   * Returns the current segment positions, sorted by position
+   * Returns the current segment positions, sorted by date
    * (Missing segments are also included in the returned list).
    */
   def currentPositions(): Future[List[SegmentToM1Pos]]
@@ -92,7 +92,7 @@ trait SegmentToM1Api {
   def currentSegmentAtPosition(position: String): Future[Option[SegmentToM1Pos]]
 
   /**
-   * Returns the segment positions as they were on the given date, sorted by position
+   * Returns the segment positions as they were on the given date, sorted by date
    * (Missing segments are also included in the returned list).
    */
   def positionsOnDate(date: Date): Future[List[SegmentToM1Pos]]

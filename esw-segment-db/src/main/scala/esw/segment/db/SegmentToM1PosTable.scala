@@ -9,7 +9,8 @@ import SegmentToM1PosTable._
 import esw.segment.shared.SegmentToM1Api
 
 import scala.async.Async._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration._
 
 object SegmentToM1PosTable {
 
@@ -390,9 +391,11 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           dbPositions.zipWithIndex
             .map(p => makeSegmentToM1Pos(date, p._1, p._2 + 1))
         }
-        val fList = list
-          .map(s => withInstallDate(s))
-        sortByDate(await(Future.sequence(fList)).distinct)
+        // XXX FIXME: Issues with too many threads (Jooq/JDBC has blocking threads internally...)
+//        val fList = list.map(s => withInstallDate(s))
+        val fList = for(s <- list) yield Await.result(withInstallDate(s), 5.seconds)
+//        sortByDate(await(Future.sequence(fList)).distinct)
+        sortByDate(fList.distinct)
       }
     }
 

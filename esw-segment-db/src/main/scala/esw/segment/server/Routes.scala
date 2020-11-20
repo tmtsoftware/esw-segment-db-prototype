@@ -17,7 +17,7 @@ import scala.concurrent.ExecutionContext
 class Routes(posTable: SegmentToM1PosTable, logger: Logger)(implicit ec: ExecutionContext) extends Directives with JsonSupport {
 
   val logRequest: HttpRequest => Unit = req => {
-    logger.info(s"${req.method.value} ${req.uri.toString()}")
+    logger.debug(s"${req.method.value} ${req.uri.toString()}")
   }
 
   val routeLogger: Directive0 = DebuggingDirectives.logRequest(LoggingMagnet(_ => logRequest))

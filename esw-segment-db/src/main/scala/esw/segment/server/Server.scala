@@ -3,12 +3,10 @@ package esw.segment.server
 import akka.actor.typed.{ActorSystem, SpawnProtocol}
 import akka.http.scaladsl.Http
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
-class Server(port: Int, routes: Routes)(implicit typedSystem: ActorSystem[SpawnProtocol.Command]) {
-  import typedSystem._
-
+class Server(port: Int, routes: Routes)(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec: ExecutionContextExecutor) {
   def start(): Future[Http.ServerBinding] = {
     val f = Http().newServerAt("0.0.0.0", port).bind(routes.route)
     f.onComplete {

@@ -17,7 +17,7 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     checkbox: {
       color: 'inherit',
-      paddingLeft: theme.spacing(10),
+      marginLeft: theme.spacing(10),
     },
     appBar: {
       background : '#2E3B55'
