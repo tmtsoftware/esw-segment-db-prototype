@@ -22,6 +22,7 @@ export const Mirror = ({showSegmentIds, posMap, mostRecentChange, updateDisplay}
   if (posMap.size == 0 || mostRecentChange == 0) {
     return <div/>
   } else {
+    const sectors = ["A", "B", "C", "D", "E", "F"]
     const d = Config.mirrorDiameter
     return (
       <div className="mirror-container">
@@ -32,21 +33,19 @@ export const Mirror = ({showSegmentIds, posMap, mostRecentChange, updateDisplay}
               cy={Config.yOrigin}
               r={Config.segmentRadius * 2 * 10.5}
               fill="none"
-              stroke="black"
+              stroke="white"
               strokeWidth="0.5"
             />
-            <Sector sector="A" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
-                    updateDisplay={updateDisplay}/>
-            <Sector sector="B" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
-                    updateDisplay={updateDisplay}/>
-            <Sector sector="C" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
-                    updateDisplay={updateDisplay}/>
-            <Sector sector="D" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
-                    updateDisplay={updateDisplay}/>
-            <Sector sector="E" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
-                    updateDisplay={updateDisplay}/>
-            <Sector sector="F" posMap={posMap} mostRecentChange={mostRecentChange} showSegmentIds={showSegmentIds}
-                    updateDisplay={updateDisplay}/>
+            {sectors.map((sector) => (
+              <Sector
+                sector={sector}
+                key={sector}
+                posMap={posMap}
+                mostRecentChange={mostRecentChange}
+                showSegmentIds={showSegmentIds}
+                updateDisplay={updateDisplay}
+              />
+            ))}
           </g>
         </svg>
       </div>

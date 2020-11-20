@@ -26,26 +26,6 @@
   fill: #7192f5;
 }
 
-body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  margin: 0;
-  height: 100vh;
-  font-weight: 700;
-  font-family: sans-serif;
-}
-a {
-  color: #ccc;
-  padding: 10px;
-  text-decoration: none;
-  transition: color 0.4s;
-}
-a:hover {
-  color: #333;
-}
-
 .mirror-container {
   position: relative;
   height: 0;

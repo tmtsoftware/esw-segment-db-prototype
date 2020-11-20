@@ -20,7 +20,14 @@ const useStyles = makeStyles((theme: Theme) =>
       marginLeft: theme.spacing(10),
     },
     appBar: {
-      background : '#2E3B55'
+      background : '#2E3B55',
+      // display: 'flex',
+      // justifyContent: 'center',
+      // flexDirection: 'row'
+    },
+    toolbar: {
+      // width: '100%',
+      // maxWidth: 1170
     },
     formControlLabel: {
       fontSize: 14,
@@ -67,7 +74,7 @@ export const Topbar = ({mostRecentChange, updateDisplay}: TopbarProps): JSX.Elem
 
   return (
     <AppBar position="static" className={classes.appBar}>
-      <Toolbar>
+      <Toolbar className={classes.toolbar}>
         <IconButton
           edge="start"
           color="inherit"
