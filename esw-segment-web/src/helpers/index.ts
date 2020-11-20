@@ -1,2 +1,2 @@
-// App reusable functions / utilities goes here. 
+// App reusable functions / utilities goes here.
 export default {}

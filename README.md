@@ -10,6 +10,12 @@ The command line client makes use the the HTTP service to provide some access vi
 The web app uses the HTTP server and displays the mirror sectors and segments. 
 Clicking on a segment displays the details and allows you to change the Segment-ID for the selected position. 
 
+## Initializing the Database
+
+Assuming you have Postgres installed and setup, and the `psql` command in your path:
+Run [scripts/init-db.sh](scripts/init-db.sh) to create the database and tables.
+This creates the tables for production and separate ones used for testing.
+
 ## Building the Server
 
 To build the server, run:
@@ -88,14 +94,26 @@ Usage: esw-segment-db-client [options]
  
  The web app requires npm. It may be necessary to run:
  
-    npm install
+    $ cd ./esw-segment-web
+    $ npm install
 
-once. 
+once. Then to start the web app server for development: 
  
- ```
-$ cd ./esw-segment-web
-$ npm start
-```
+    $ npm start
 
-Then visit [http://localhost:8080/](http://localhost:8080/).
+This automatically opens the browser to [http://localhost:8080/](http://localhost:8080/).
+
+# Deploying the Web App
+
+Note: For remote use, you will need to edit [SegmentData.tsx](esw-segment-web/src/components/SegmentData.tsx) and change
+the value of `baseUri` to where `esw-segment-db` is running. 
+Since there are two servers (esw-segment-db and the react web app), this is currently how the companion server is located.
+
+Then run:
+    
+    npm run build
+    serve -s build -l 8080
+
+Use the `-l` option to change the port the app will run on.
+ 
 

@@ -1,7 +1,8 @@
 // These should match the JSON output of the classes on the server side in EswSegmentData.scala
 export class SegmentData {
   // TODO: Configure
-  static baseUri = "http://localhost:9192"
+  static baseUri = 'http://localhost:9192'
+  // static baseUri = 'http://tp:9192'
 }
 
 /**
@@ -32,4 +33,3 @@ export interface SegmentToM1Positions {
   // Array of pairs of (segment-id, pos) null id means missing segment
   positions: Array<Array<string>>
 }
-

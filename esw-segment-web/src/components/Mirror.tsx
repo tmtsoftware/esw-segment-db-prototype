@@ -1,13 +1,13 @@
 import React from 'react'
 import './Mirror.css'
-import {Sector} from "./Sector";
-import {Config} from "./Config";
-import {SegmentToM1Pos} from "./SegmentData";
+import { Sector } from './Sector'
+import { Config } from './Config'
+import { SegmentToM1Pos } from './SegmentData'
 
 type MirrorProps = {
-  showSegmentIds: boolean,
-  posMap: Map<string, SegmentToM1Pos>,
-  mostRecentChange: number,
+  showSegmentIds: boolean
+  posMap: Map<string, SegmentToM1Pos>
+  mostRecentChange: number
   updateDisplay: () => void
 }
 
@@ -18,23 +18,31 @@ type MirrorProps = {
  * @param refDate the reference date to use for the display (default: current date)
  * @constructor
  */
-export const Mirror = ({showSegmentIds, posMap, mostRecentChange, updateDisplay}: MirrorProps): JSX.Element => {
+export const Mirror = ({
+  showSegmentIds,
+  posMap,
+  mostRecentChange,
+  updateDisplay
+}: MirrorProps): JSX.Element => {
   if (posMap.size == 0 || mostRecentChange == 0) {
-    return <div/>
+    return <div />
   } else {
-    const sectors = ["A", "B", "C", "D", "E", "F"]
+    const sectors = ['A', 'B', 'C', 'D', 'E', 'F']
     const d = Config.mirrorDiameter
     return (
-      <div className="mirror-container">
-        <svg className="mirror-svg" viewBox={`0 0 ${d} ${d}`} preserveAspectRatio="xMidYMin slice">
-          <g className="sectors">
+      <div className='mirror-container'>
+        <svg
+          className='mirror-svg'
+          viewBox={`0 0 ${d} ${d}`}
+          preserveAspectRatio='xMidYMin slice'>
+          <g className='sectors'>
             <circle
               cx={Config.xOrigin}
               cy={Config.yOrigin}
               r={Config.segmentRadius * 2 * 10.5}
-              fill="none"
-              stroke="white"
-              strokeWidth="0.5"
+              fill='none'
+              stroke='white'
+              strokeWidth='0.5'
             />
             {sectors.map((sector) => (
               <Sector
@@ -52,4 +60,3 @@ export const Mirror = ({showSegmentIds, posMap, mostRecentChange, updateDisplay}
     )
   }
 }
-

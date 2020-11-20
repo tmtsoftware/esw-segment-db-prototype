@@ -1,34 +1,42 @@
-import React, {useEffect, useState} from 'react'
-import {SegmentData, SegmentToM1Pos} from "./SegmentData"
+import React, { useEffect, useState } from 'react'
+import { SegmentData, SegmentToM1Pos } from './SegmentData'
 import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
 import FormHelperText from '@material-ui/core/FormHelperText'
 import Select from '@material-ui/core/Select'
-import {MuiPickersUtilsProvider, KeyboardDatePicker} from '@material-ui/pickers'
+import {
+  MuiPickersUtilsProvider,
+  KeyboardDatePicker
+} from '@material-ui/pickers'
 import Grid from '@material-ui/core/Grid'
 import DateFnsUtils from '@date-io/date-fns'
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import MuiDialogTitle from '@material-ui/core/DialogTitle';
-import MuiDialogContent from '@material-ui/core/DialogContent';
-import MuiDialogActions from '@material-ui/core/DialogActions';
-import IconButton from '@material-ui/core/IconButton';
-import CloseIcon from '@material-ui/icons/Close';
-import {createStyles, makeStyles, Theme, withStyles, WithStyles} from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
-import {PositionHistory} from "./PositionHistory";
-import {FormLabel} from "@material-ui/core";
+import Button from '@material-ui/core/Button'
+import Dialog from '@material-ui/core/Dialog'
+import MuiDialogTitle from '@material-ui/core/DialogTitle'
+import MuiDialogContent from '@material-ui/core/DialogContent'
+import MuiDialogActions from '@material-ui/core/DialogActions'
+import IconButton from '@material-ui/core/IconButton'
+import CloseIcon from '@material-ui/icons/Close'
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  withStyles,
+  WithStyles
+} from '@material-ui/core/styles'
+import Typography from '@material-ui/core/Typography'
+import { PositionHistory } from './PositionHistory'
 
 /**
  * Segment-id, pos (A1 to F82), date installed
  */
 type SegmentDetailsProps = {
-  id?: string,
-  pos: string,
-  date?: number,
-  open: boolean,
-  closeDialog: () => void,
+  id?: string
+  pos: string
+  date?: number
+  open: boolean
+  closeDialog: () => void
   updateDisplay: () => void
 }
 
@@ -38,68 +46,70 @@ const useStyles = makeStyles((theme: Theme) =>
       // margin: theme.spacing(1),
       marginLeft: 1,
       paddingBottom: 20,
-      minWidth: 120,
+      minWidth: 120
     },
     selectEmpty: {
-      marginTop: theme.spacing(2),
+      marginTop: theme.spacing(2)
     },
     history: {
-      marginBottom: 3,
+      marginBottom: 3
     },
     datePicker: {
       // maxWidth: 150
-      paddingBottom: 20,
+      paddingBottom: 20
     }
-  }),
+  })
 )
 
 const styles = (theme: Theme) =>
   createStyles({
     root: {
       margin: 0,
-      padding: theme.spacing(2),
+      padding: theme.spacing(2)
     },
     closeButton: {
       position: 'absolute',
       right: theme.spacing(1),
       top: theme.spacing(1),
-      color: theme.palette.grey[500],
-    },
-  });
+      color: theme.palette.grey[500]
+    }
+  })
 
 export interface DialogTitleProps extends WithStyles<typeof styles> {
-  id: string;
-  children: React.ReactNode;
-  onClose: () => void;
+  id: string
+  children: React.ReactNode
+  onClose: () => void
 }
 
 const DialogTitle = withStyles(styles)((props: DialogTitleProps) => {
-  const {children, classes, onClose, ...other} = props;
+  const { children, classes, onClose, ...other } = props
   return (
     <MuiDialogTitle disableTypography className={classes.root} {...other}>
-      <Typography variant="h6">{children}</Typography>
+      <Typography variant='h6'>{children}</Typography>
       {onClose ? (
-        <IconButton aria-label="close" className={classes.closeButton} onClick={onClose}>
-          <CloseIcon/>
+        <IconButton
+          aria-label='close'
+          className={classes.closeButton}
+          onClick={onClose}>
+          <CloseIcon />
         </IconButton>
       ) : null}
     </MuiDialogTitle>
-  );
-});
+  )
+})
 
 const DialogContent = withStyles((theme: Theme) => ({
   root: {
-    padding: theme.spacing(2),
-  },
-}))(MuiDialogContent);
+    padding: theme.spacing(2)
+  }
+}))(MuiDialogContent)
 
 const DialogActions = withStyles((theme: Theme) => ({
   root: {
     margin: 0,
-    padding: theme.spacing(1),
-  },
-}))(MuiDialogActions);
-
+    padding: theme.spacing(1)
+  }
+}))(MuiDialogActions)
 
 /**
  * Displays details about the selected segment
@@ -112,12 +122,23 @@ const DialogActions = withStyles((theme: Theme) => ({
  * @param updateDisplay function to update the display after a DB change
  * @constructor
  */
-export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}: SegmentDetailsProps): JSX.Element => {
-  const emptyId = "empty"
-  const [availableSegmentIds, setAvailableSegmentIds] = useState<Array<string>>([])
+export const SegmentDetails = ({
+  id,
+  pos,
+  date,
+  open,
+  closeDialog,
+  updateDisplay
+}: SegmentDetailsProps): JSX.Element => {
+  const emptyId = 'empty'
+  const [availableSegmentIds, setAvailableSegmentIds] = useState<Array<string>>(
+    []
+  )
   const [selectedSegmentId, setSelectedSegmentId] = useState(id || emptyId)
-  const [errorMessage, setErrorMessage] = useState("")
-  const [selectedDate, setSelectedDate] = useState<Date>(date ? new Date(date) : new Date())
+  const [errorMessage, setErrorMessage] = useState('')
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    date ? new Date(date) : new Date()
+  )
   const [saveEnabled, setSaveEnabled] = useState(false)
 
   const classes = useStyles()
@@ -125,9 +146,11 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
   // Gets the list of available segment ids for this position
   function updateAvailableSegmentIds() {
     fetch(`${SegmentData.baseUri}/availableSegmentIdsForPos/${pos}`)
-      .then(response => response.json())
-      .then(data => {
-        const ids: Array<string> = id ? [...data, id, emptyId] : [...data, emptyId]
+      .then((response) => response.json())
+      .then((data) => {
+        const ids: Array<string> = id
+          ? [...data, id, emptyId]
+          : [...data, emptyId]
         const uniqueIds = [...new Set(ids)]
         setAvailableSegmentIds(uniqueIds)
       })
@@ -140,8 +163,8 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
   // Gets the date of the most recent segment change
   function updateSelectedDate() {
     fetch(`${SegmentData.baseUri}/currentSegmentAtPosition/${pos}`)
-      .then(response => response.json())
-      .then(data => {
+      .then((response) => response.json())
+      .then((data) => {
         const segmentToM1Pos: SegmentToM1Pos = data
         setSelectedDate(new Date(segmentToM1Pos.date))
       })
@@ -160,21 +183,23 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
 
   // A menu of available segment ids for this position
   function segmentIdSelector(): JSX.Element {
-    return <div>
-      <FormControl className={classes.formControl}>
-        <InputLabel>Segment ID</InputLabel>
-        <Select
-          value={selectedSegmentId}
-          onChange={changeSegmentId}
-        >
-          {availableSegmentIds.map(segId => {
-            return <MenuItem key={segId} value={segId}>{segId}</MenuItem>
-          })
-          }
-        </Select>
-      </FormControl>
-      <FormHelperText>{errorMessage}</FormHelperText>
-    </div>
+    return (
+      <div>
+        <FormControl className={classes.formControl}>
+          <InputLabel>Segment ID</InputLabel>
+          <Select value={selectedSegmentId} onChange={changeSegmentId}>
+            {availableSegmentIds.map((segId) => {
+              return (
+                <MenuItem key={segId} value={segId}>
+                  {segId}
+                </MenuItem>
+              )
+            })}
+          </Select>
+        </FormControl>
+        <FormHelperText>{errorMessage}</FormHelperText>
+      </div>
+    )
   }
 
   const handleDateChange = (newDate: Date | null) => {
@@ -184,39 +209,47 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
 
   // Display/edit the installation date
   function datePicker(): JSX.Element {
-    const helpText = id ? `Installed on` : "Date installed"
-    return <MuiPickersUtilsProvider utils={DateFnsUtils}>
-      <Grid container>
-        <KeyboardDatePicker
-          className={classes.datePicker}
-          disableToolbar
-          variant="inline"
-          format="MM/dd/yyyy"
-          id="date-picker-inline"
-          label={helpText}
-          value={selectedDate}
-          onChange={handleDateChange}
-          KeyboardButtonProps={{
-            'aria-label': 'change date',
-          }}
-        />
-      </Grid>
-    </MuiPickersUtilsProvider>
+    const helpText = id ? `Installed on` : 'Date installed'
+    return (
+      <MuiPickersUtilsProvider utils={DateFnsUtils}>
+        <Grid container>
+          <KeyboardDatePicker
+            className={classes.datePicker}
+            disableToolbar
+            variant='inline'
+            format='MM/dd/yyyy'
+            id='date-picker-inline'
+            label={helpText}
+            value={selectedDate}
+            onChange={handleDateChange}
+            KeyboardButtonProps={{
+              'aria-label': 'change date'
+            }}
+          />
+        </Grid>
+      </MuiPickersUtilsProvider>
+    )
   }
 
   function saveChanges() {
     const date = selectedDate.getTime()
     const maybeId = selectedSegmentId == emptyId ? undefined : selectedSegmentId
-    const segmentToM1Pos: SegmentToM1Pos = {date: date, maybeId: maybeId, position: pos}
+    const segmentToM1Pos: SegmentToM1Pos = {
+      date: date,
+      maybeId: maybeId,
+      position: pos
+    }
     const requestOptions = {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(segmentToM1Pos)
     }
     fetch(`${SegmentData.baseUri}/setPosition`, requestOptions)
-      .then(response => response.status)
-      .then(status => {
-        setErrorMessage(status == 200 ? "" : "Error: Failed to update the database")
+      .then((response) => response.status)
+      .then((status) => {
+        setErrorMessage(
+          status == 200 ? '' : 'Error: Failed to update the database'
+        )
         updateDisplay()
         if (status == 200) {
           closeDialog()
@@ -233,8 +266,11 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
 
   if (availableSegmentIds.length != 0)
     return (
-      <Dialog onClose={cancelChanges} aria-labelledby="customized-dialog-title" open={open}>
-        <DialogTitle id="customized-dialog-title" onClose={cancelChanges}>
+      <Dialog
+        onClose={cancelChanges}
+        aria-labelledby='customized-dialog-title'
+        open={open}>
+        <DialogTitle id='customized-dialog-title' onClose={cancelChanges}>
           Segment {pos}
         </DialogTitle>
         <DialogContent dividers>
@@ -242,19 +278,19 @@ export const SegmentDetails = ({id, pos, date, open, closeDialog, updateDisplay}
           {datePicker()}
           <div>
             <InputLabel>History</InputLabel>
-            <PositionHistory pos={pos}/>
+            <PositionHistory pos={pos} />
           </div>
         </DialogContent>
         <DialogActions>
-          <Button autoFocus onClick={saveChanges} color="primary" disabled={!saveEnabled}>
+          <Button
+            autoFocus
+            onClick={saveChanges}
+            color='primary'
+            disabled={!saveEnabled}>
             Save changes
           </Button>
         </DialogActions>
       </Dialog>
     )
-  else return (
-    <div>
-    </div>
-  )
+  else return <div></div>
 }
-
