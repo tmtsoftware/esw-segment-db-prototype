@@ -13,14 +13,12 @@ import akka.http.scaladsl.model.headers.{Authorization, BasicHttpCredentials}
 import spray.json._
 
 //noinspection TypeAnnotation
-object JiraClient {
-  import SprayJsonSupport._
-  import DefaultJsonProtocol._
+object JiraClient  extends SprayJsonSupport with DefaultJsonProtocol with NullOptions {
 
   private val jiraBaseUri   = "https://tmt-project.atlassian.net"
   private val jiraIssueUri  = s"$jiraBaseUri/rest/api/latest/issue"
   private val jiraSearchUri = s"$jiraBaseUri/rest/api/latest/search"
-//  private val jiraBrowseUri = s"$jiraBaseUri/browse"
+  private val jiraBrowseUri = s"$jiraBaseUri/browse"
 
   if (!(sys.env.contains("JIRA_USER") && sys.env.contains("JIRA_API_TOKEN"))) {
     throw new RuntimeException("Please set JIRA_USER and JIRA_API_TOKEN environment variables.")
@@ -34,7 +32,10 @@ object JiraClient {
     "partNumber"                     -> "customfield_11905",
     "originalPartnerBlankAllocation" -> "customfield_11907",
     "itemLocation"                   -> "customfield_11906",
-    "riskOfLoss"                     -> "customfield_11912"
+    "riskOfLoss"                     -> "customfield_11912",
+    "workPackages"                   -> "customfield_11910",
+    "acceptanceCertificates"         -> "customfield_11903",
+    "acceptanceDateBlank"            -> "customfield_11908"
   )
 
   private val customFieldsStr = customFieldMap.values.mkString(",")
@@ -83,6 +84,9 @@ object JiraClient {
       customfield_11905: CustomFieldWithChild,
       customfield_11907: CustomField,
       customfield_11909: CustomField,
+      customfield_11910: Option[String],
+      customfield_11903: Option[String],
+      customfield_11908: Option[String],
       status: JiraStatus
   ) {
     def sector = customfield_12000
@@ -96,9 +100,15 @@ object JiraClient {
     def itemLocation = customfield_11906
 
     def riskOfLoss = customfield_11912
+
+    def workPackages = customfield_11910.getOrElse("").trim()
+
+    def acceptanceCertificates = customfield_11903.getOrElse("").trim()
+
+    def acceptanceDateBlank = customfield_11908.getOrElse("").trim()
   }
 
-  private implicit val JiraFieldsFormat = jsonFormat9(JiraFields)
+  private implicit val JiraFieldsFormat = jsonFormat12(JiraFields)
 
   private case class JiraData(
       expand: String,
@@ -130,7 +140,8 @@ object JiraClient {
       val response                       = await(Http().singleRequest(request))
       val jiraData                       = await(Unmarshal(response).to[JiraData])
       val segmentId                      = jiraData.fields.summary.replace("M1 Segment ", "")
-      val jiraTask                       = jiraData.key
+      val jiraKey                        = jiraData.key
+      val jiraUri                        = s"$jiraBrowseUri/$jiraKey"
       val sector                         = jiraData.fields.sector.value.toIntOption.getOrElse(-1)
       val segmentType                    = jiraData.fields.segmentType.value.toIntOption.getOrElse(-1)
       val partNumber                     = jiraData.fields.partNumber
@@ -139,9 +150,14 @@ object JiraClient {
       val riskOfLoss                     = jiraData.fields.riskOfLoss.value
       val components                     = jiraData.fields.components.headOption.map(_.name).getOrElse("Unknown")
       val status                         = jiraData.fields.status.name
+      val workPackages                   = jiraData.fields.workPackages
+      val acceptanceCertificates         = jiraData.fields.acceptanceCertificates
+      val acceptanceDateBlank            = jiraData.fields.acceptanceDateBlank
+
       JiraSegmentData(
         segmentId,
-        jiraTask,
+        jiraKey,
+        jiraUri,
         sector,
         segmentType,
         partNumber,
@@ -149,7 +165,10 @@ object JiraClient {
         itemLocation,
         riskOfLoss,
         components,
-        status
+        status,
+        workPackages,
+        acceptanceCertificates,
+        acceptanceDateBlank
       )
     }
 

@@ -4,7 +4,8 @@ package esw.segment.shared
  * Data scanned from JIRA issues
  *
  * @param segmentId the segment id ("SN-072")
- * @param jiraTask base name of JIRA task ("M1ST-72")
+ * @param jiraKey base name of JIRA task ("M1ST-72")
+ * @param jiraUri link to JIRA issue
  * @param sector 1 to 6, or 7 for spare
  * @param segmentType 1 to 82, indicates where it can be used
  * @param partNumber string from issue
@@ -16,7 +17,8 @@ package esw.segment.shared
  */
 case class JiraSegmentData(
     segmentId: String,
-    jiraTask: String,
+    jiraKey: String,
+    jiraUri: String,
     sector: Int,
     segmentType: Int,
     partNumber: String,
@@ -25,4 +27,7 @@ case class JiraSegmentData(
     riskOfLoss: String,
     components: String,
     status: String,
+    workPackages: String,
+    acceptanceCertificates: String,
+    acceptanceDateBlank: String
 )
