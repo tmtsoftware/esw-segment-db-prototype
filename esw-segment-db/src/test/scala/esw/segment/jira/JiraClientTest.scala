@@ -24,16 +24,16 @@ class JiraClientTest extends AsyncFunSuite {
     assert(issueData.status == "In Other Storage")
   }
 
-//  test("Test getting all JIRA segment data") {
-//    async {
-//      val data = await(JiraClient.getAllJiraSegmentData())
-//      assert(data.size >= 577)
-//      val issueData = data(71)
-//      await(test72(issueData))
-//    }
-//  }
-
   test("Test getting all JIRA segment data") {
+    async {
+      val data = await(JiraClient.getAllJiraSegmentData())
+      assert(data.size >= 577)
+      val issueData = data.find(_.jiraTask == "M1ST-72").get
+      await(test72(issueData))
+    }
+  }
+
+  test("Test getting segment data from single issue") {
     async {
       val issueData = await(JiraClient.getJiraSegmentData(72))
       await(test72(issueData))

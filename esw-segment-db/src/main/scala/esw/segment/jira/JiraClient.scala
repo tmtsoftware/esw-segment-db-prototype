@@ -2,14 +2,14 @@ package esw.segment.jira
 
 import akka.actor.typed.{ActorSystem, SpawnProtocol}
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ContentTypes, HttpMethods, HttpRequest}
+import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import esw.segment.shared.JiraSegmentData
 
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model.headers.{Authorization, BasicHttpCredentials, `Content-Type`}
+import akka.http.scaladsl.model.headers.{Authorization, BasicHttpCredentials}
 import spray.json._
 
 //noinspection TypeAnnotation
@@ -39,7 +39,7 @@ object JiraClient {
 
   private val customFieldsStr = customFieldMap.values.mkString(",")
 
-  private def issueUri(issueNumber: Int) = s"$jiraIssueUri/M1ST-$issueNumber?fields=${customFieldsStr},components,status,summary"
+  private def issueUri(issueNumber: Int) = s"$jiraIssueUri/M1ST-$issueNumber?fields=$customFieldsStr,components,status,summary"
 
   private case class CustomField(self: String, value: String, id: String)
 
@@ -153,22 +153,46 @@ object JiraClient {
       )
     }
 
+//  /**
+//   * Gets the JIRA segment data for the given segment number
+//   *
+//   * @param issueNumber the number of the JIRA issue (sequential, 1 until number of issues)
+//   */
+//  def recursiveGetJiraSegmentData(
+//      issueNumber: Int,
+//      result: List[JiraSegmentData]
+//  )(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec: ExecutionContextExecutor): Future[List[JiraSegmentData]] =
+//    async {
+//      val r = await(getJiraSegmentData(issueNumber)) :: result
+//      if (issueNumber == 1) {
+//        r
+//      } else {
+//        await(recursiveGetJiraSegmentData(issueNumber - 1, r))
+//      }
+//    }
+
   /**
    * Gets the JIRA segment data for the given segment number
    *
-   * @param issueNumber the number of the JIRA issue (sequential, starting with 1 until number of issues)
+   * @param issueNumber the number of the JIRA issue (sequential, 1 until number of issues)
+   * @param accResult the accumulated result
    */
   def recursiveGetJiraSegmentData(
       issueNumber: Int,
-      result: List[JiraSegmentData]
+      accResult: List[JiraSegmentData]
   )(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec: ExecutionContextExecutor): Future[List[JiraSegmentData]] =
     async {
-      val r = await(getJiraSegmentData(issueNumber)) :: result
-      if (issueNumber == 1) {
-        r
-      } else {
-        println(s"XXX Got issueNumber $issueNumber: ${r.head.jiraTask}")
-        await(recursiveGetJiraSegmentData(issueNumber - 1, r))
+      // Fetch multiple issues at once to improve performance
+      val blockSize    = 10
+      val issueNumbers = (math.max(issueNumber - blockSize + 1, 1) to issueNumber).toList
+      val fList        = issueNumbers.map(getJiraSegmentData)
+      val list         = await(Future.sequence(fList))
+      val result       = list ++ accResult
+      if (issueNumbers.head == 1) {
+        result
+      }
+      else {
+        await(recursiveGetJiraSegmentData(issueNumber - blockSize, result))
       }
     }
 
@@ -178,7 +202,7 @@ object JiraClient {
   def getAllJiraSegmentData(
   )(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec: ExecutionContextExecutor): Future[List[JiraSegmentData]] =
     async {
-      val uri        = s"${jiraSearchUri}?jql=project=SE-M1SEG&maxResults=0"
+      val uri        = s"$jiraSearchUri?jql=project=SE-M1SEG&maxResults=0"
       val request    = HttpRequest(HttpMethods.GET, uri = uri, headers = authHeaders)
       val response   = await(Http().singleRequest(request))
       val issueCount = await(Unmarshal(response).to[IssueCount]).total
