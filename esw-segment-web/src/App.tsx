@@ -1,8 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React, {useEffect, useState} from 'react'
 import './App.css'
-import { Topbar } from './components/Topbar'
-import { Mirror } from './components/Mirror'
-import { SegmentData, SegmentToM1Pos } from './components/SegmentData'
+import {Topbar} from './components/Topbar'
+import {Mirror} from './components/Mirror'
+import {SegmentData, SegmentToM1Pos} from './components/SegmentData'
+import {Layout} from "antd"
+import 'antd/dist/antd.css'
+
+const {Content} = Layout;
 
 const App = (): JSX.Element => {
   const [showSegmentIds, setShowSegmentIds] = useState<boolean>(false)
@@ -12,7 +16,7 @@ const App = (): JSX.Element => {
   async function fetchData(refDate: Date) {
     const requestOptions = {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(refDate.getTime())
     }
 
@@ -34,7 +38,7 @@ const App = (): JSX.Element => {
   }
 
   function updateDataNow(refDate: Date) {
-    fetchData(refDate).then(({ mostRecentChange, positionsOnDate }) => {
+    fetchData(refDate).then(({mostRecentChange, positionsOnDate}) => {
       const posMap: Map<string, SegmentToM1Pos> = positionsOnDate.reduce(
         (map, obj) => map.set(obj.position, obj),
         new Map()
@@ -47,7 +51,7 @@ const App = (): JSX.Element => {
   function updateData() {
     const requestOptions = {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(new Date().getTime())
     }
     fetch(`${SegmentData.baseUri}/mostRecentChange`, requestOptions)
@@ -67,21 +71,23 @@ const App = (): JSX.Element => {
     updateData()
   }, [])
 
-  if (mostRecentChange == 0) return <div />
+  if (mostRecentChange == 0) return <div/>
   else
     return (
-      <div className='App'>
-        <Topbar
-          mostRecentChange={new Date(mostRecentChange)}
-          updateDisplay={updateDisplay}
-        />
-        <Mirror
-          showSegmentIds={showSegmentIds}
-          posMap={posMap}
-          mostRecentChange={mostRecentChange}
-          updateDisplay={updateData}
-        />
-      </div>
+      <Layout className='App'>
+          <Topbar
+            mostRecentChange={new Date(mostRecentChange)}
+            updateDisplay={updateDisplay}
+          />
+        <Content>
+          <Mirror
+            showSegmentIds={showSegmentIds}
+            posMap={posMap}
+            mostRecentChange={mostRecentChange}
+            updateDisplay={updateData}
+          />
+        </Content>
+      </Layout>
     )
 }
 export default App

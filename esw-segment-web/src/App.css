@@ -1,7 +1,7 @@
 /* App wide global css goes in this file  */
 
 .App {
-  background-color: #141631;
+  /*background-color: #141631;*/
   min-height: 100vh;
   min-width: 100vh;
   display: flex;

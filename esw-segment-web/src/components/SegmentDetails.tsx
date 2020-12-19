@@ -1,32 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { SegmentData, SegmentToM1Pos } from './SegmentData'
-import InputLabel from '@material-ui/core/InputLabel'
-import MenuItem from '@material-ui/core/MenuItem'
-import FormControl from '@material-ui/core/FormControl'
-import FormHelperText from '@material-ui/core/FormHelperText'
-import Select from '@material-ui/core/Select'
-import {
-  MuiPickersUtilsProvider,
-  KeyboardDatePicker
-} from '@material-ui/pickers'
-import Grid from '@material-ui/core/Grid'
-import DateFnsUtils from '@date-io/date-fns'
-import Button from '@material-ui/core/Button'
-import Dialog from '@material-ui/core/Dialog'
-import MuiDialogTitle from '@material-ui/core/DialogTitle'
-import MuiDialogContent from '@material-ui/core/DialogContent'
-import MuiDialogActions from '@material-ui/core/DialogActions'
-import IconButton from '@material-ui/core/IconButton'
-import CloseIcon from '@material-ui/icons/Close'
-import {
-  createStyles,
-  makeStyles,
-  Theme,
-  withStyles,
-  WithStyles
-} from '@material-ui/core/styles'
-import Typography from '@material-ui/core/Typography'
 import { PositionHistory } from './PositionHistory'
+import {Button, DatePicker, Form, Select, Typography} from "antd"
+import moment from 'moment'
+
+const { Option } = Select;
 
 /**
  * Segment-id, pos (A1 to F82), date installed
@@ -40,76 +18,76 @@ type SegmentDetailsProps = {
   updateDisplay: () => void
 }
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    formControl: {
-      // margin: theme.spacing(1),
-      marginLeft: 1,
-      paddingBottom: 20,
-      minWidth: 120
-    },
-    selectEmpty: {
-      marginTop: theme.spacing(2)
-    },
-    history: {
-      marginBottom: 3
-    },
-    datePicker: {
-      // maxWidth: 150
-      paddingBottom: 20
-    }
-  })
-)
+// const useStyles = makeStyles((theme: Theme) =>
+//   createStyles({
+//     formControl: {
+//       // margin: theme.spacing(1),
+//       marginLeft: 1,
+//       paddingBottom: 20,
+//       minWidth: 120
+//     },
+//     selectEmpty: {
+//       marginTop: theme.spacing(2)
+//     },
+//     history: {
+//       marginBottom: 3
+//     },
+//     datePicker: {
+//       // maxWidth: 150
+//       paddingBottom: 20
+//     }
+//   })
+// )
 
-const styles = (theme: Theme) =>
-  createStyles({
-    root: {
-      margin: 0,
-      padding: theme.spacing(2)
-    },
-    closeButton: {
-      position: 'absolute',
-      right: theme.spacing(1),
-      top: theme.spacing(1),
-      color: theme.palette.grey[500]
-    }
-  })
+// const styles = (theme: Theme) =>
+//   createStyles({
+//     root: {
+//       margin: 0,
+//       padding: theme.spacing(2)
+//     },
+//     closeButton: {
+//       position: 'absolute',
+//       right: theme.spacing(1),
+//       top: theme.spacing(1),
+//       color: theme.palette.grey[500]
+//     }
+//   })
 
-export interface DialogTitleProps extends WithStyles<typeof styles> {
-  id: string
-  children: React.ReactNode
-  onClose: () => void
-}
+// export interface DialogTitleProps extends WithStyles<typeof styles> {
+//   id: string
+//   children: React.ReactNode
+//   onClose: () => void
+// }
 
-const DialogTitle = withStyles(styles)((props: DialogTitleProps) => {
-  const { children, classes, onClose, ...other } = props
-  return (
-    <MuiDialogTitle disableTypography className={classes.root} {...other}>
-      <Typography variant='h6'>{children}</Typography>
-      {onClose ? (
-        <IconButton
-          aria-label='close'
-          className={classes.closeButton}
-          onClick={onClose}>
-          <CloseIcon />
-        </IconButton>
-      ) : null}
-    </MuiDialogTitle>
-  )
-})
+// const DialogTitle = withStyles(styles)((props: DialogTitleProps) => {
+//   const { children, classes, onClose, ...other } = props
+//   return (
+//     <MuiDialogTitle disableTypography className={classes.root} {...other}>
+//       <Typography variant='h6'>{children}</Typography>
+//       {onClose ? (
+//         <IconButton
+//           aria-label='close'
+//           className={classes.closeButton}
+//           onClick={onClose}>
+//           <CloseIcon />
+//         </IconButton>
+//       ) : null}
+//     </MuiDialogTitle>
+//   )
+// })
 
-const DialogContent = withStyles((theme: Theme) => ({
-  root: {
-    padding: theme.spacing(2)
-  }
-}))(MuiDialogContent)
+// const DialogContent = withStyles((theme: Theme) => ({
+//   root: {
+//     padding: theme.spacing(2)
+//   }
+// }))(MuiDialogContent)
 
-const DialogActions = withStyles((theme: Theme) => ({
-  root: {
-    margin: 0,
-    padding: theme.spacing(1)
-  }
-}))(MuiDialogActions)
+// const DialogActions = withStyles((theme: Theme) => ({
+//   root: {
+//     margin: 0,
+//     padding: theme.spacing(1)
+//   }
+// }))(MuiDialogActions)
 
 /**
  * Displays details about the selected segment
@@ -141,7 +119,8 @@ export const SegmentDetails = ({
   )
   const [saveEnabled, setSaveEnabled] = useState(false)
 
-  const classes = useStyles()
+  // const classes = useStyles()
+  console.log(`XXX open = ${open}`)
 
   // Gets the list of available segment ids for this position
   function updateAvailableSegmentIds() {
@@ -171,8 +150,7 @@ export const SegmentDetails = ({
   }
 
   // Called when a new segment id is selected from the menu: Update the DB with the new id
-  const changeSegmentId = (event: React.ChangeEvent<{ value: unknown }>) => {
-    const selectedId = (event.target.value as string).trim()
+  const changeSegmentId = (selectedId: string) => {
     setSelectedSegmentId(selectedId)
     // Default to current date, since the segment id changed
     if (date == selectedDate.getTime()) {
@@ -183,27 +161,29 @@ export const SegmentDetails = ({
 
   // A menu of available segment ids for this position
   function segmentIdSelector(): JSX.Element {
+    const validateStatus = errorMessage.length == 0 ? "success" : "error"
     return (
-      <div>
-        <FormControl className={classes.formControl}>
-          <InputLabel>Segment ID</InputLabel>
-          <Select value={selectedSegmentId} onChange={changeSegmentId}>
-            {availableSegmentIds.map((segId) => {
-              return (
-                <MenuItem key={segId} value={segId}>
-                  {segId}
-                </MenuItem>
-              )
-            })}
-          </Select>
-        </FormControl>
-        <FormHelperText>{errorMessage}</FormHelperText>
-      </div>
+      <Form.Item
+        label="Segment ID"
+        validateStatus={validateStatus}
+        help={errorMessage}
+      >
+        <Select defaultValue={selectedSegmentId} onChange={changeSegmentId}>
+          {availableSegmentIds.map((segId) => {
+            return (
+              <Option key={segId} value={segId}>
+                {segId}
+              </Option>
+            )
+          })}
+        </Select>
+      </Form.Item>
     )
   }
 
-  const handleDateChange = (newDate: Date | null) => {
-    setSelectedDate(newDate || new Date())
+  const handleDateChange = (value: moment.Moment | null) => {
+    const newDate = value ? value.toDate() : new Date()
+    setSelectedDate(newDate)
     setSaveEnabled(true)
   }
 
@@ -211,23 +191,30 @@ export const SegmentDetails = ({
   function datePicker(): JSX.Element {
     const helpText = id ? `Installed on` : 'Date installed'
     return (
-      <MuiPickersUtilsProvider utils={DateFnsUtils}>
-        <Grid container>
-          <KeyboardDatePicker
-            className={classes.datePicker}
-            disableToolbar
-            variant='inline'
-            format='MM/dd/yyyy'
-            id='date-picker-inline'
-            label={helpText}
-            value={selectedDate}
-            onChange={handleDateChange}
-            KeyboardButtonProps={{
-              'aria-label': 'change date'
-            }}
-          />
-        </Grid>
-      </MuiPickersUtilsProvider>
+      <Form.Item name="date-picker" label={helpText}>
+        <DatePicker
+          onChange={handleDateChange}
+        />
+      </Form.Item>
+
+
+      // <MuiPickersUtilsProvider utils={DateFnsUtils}>
+      //   <Grid container>
+      //     <KeyboardDatePicker
+      //       className={classes.datePicker}
+      //       disableToolbar
+      //       variant='inline'
+      //       format='MM/dd/yyyy'
+      //       id='date-picker-inline'
+      //       label={helpText}
+      //       value={selectedDate}
+      //       onChange={handleDateChange}
+      //       KeyboardButtonProps={{
+      //         'aria-label': 'change date'
+      //       }}
+      //     />
+      //   </Grid>
+      // </MuiPickersUtilsProvider>
     )
   }
 
@@ -258,39 +245,47 @@ export const SegmentDetails = ({
       })
   }
 
-  function cancelChanges() {
-    setSelectedSegmentId(id || emptyId)
-    setSelectedDate(date ? new Date(date) : new Date())
-    closeDialog()
-  }
+  // function cancelChanges() {
+  //   setSelectedSegmentId(id || emptyId)
+  //   setSelectedDate(date ? new Date(date) : new Date())
+  //   closeDialog()
+  // }
+
+  const {Title} = Typography;
+
+  const layout = {
+    labelCol: { span: 8 },
+    wrapperCol: { span: 16 },
+  };
+  const tailLayout = {
+    wrapperCol: { offset: 8, span: 16 },
+  };
 
   if (availableSegmentIds.length != 0)
     return (
-      <Dialog
-        onClose={cancelChanges}
-        aria-labelledby='customized-dialog-title'
-        open={open}>
-        <DialogTitle id='customized-dialog-title' onClose={cancelChanges}>
+      <Form {...layout}>
+        <Title level={5}>
           Segment {pos}
-        </DialogTitle>
-        <DialogContent dividers>
+        </Title>
           {segmentIdSelector()}
           {datePicker()}
           <div>
-            <InputLabel>History</InputLabel>
+            <Title level={5}>
+              History
+            </Title>
             <PositionHistory pos={pos} />
           </div>
-        </DialogContent>
-        <DialogActions>
+        <Form.Item {...tailLayout}>
           <Button
-            autoFocus
+            type="primary"
+            htmlType="submit"
             onClick={saveChanges}
-            color='primary'
             disabled={!saveEnabled}>
             Save changes
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Form.Item>
+
+      </Form>
     )
   else return <div/>
 }

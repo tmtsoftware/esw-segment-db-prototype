@@ -102,14 +102,14 @@ export const Segment = ({
         fill={'black'}>
         {label}
       </text>
-      <SegmentDetails
-        id={id}
-        pos={pos}
-        date={date}
-        open={open}
-        closeDialog={closeDialog}
-        updateDisplay={updateDisplay}
-      />
+      {/*<SegmentDetails*/}
+      {/*  id={id}*/}
+      {/*  pos={pos}*/}
+      {/*  date={date}*/}
+      {/*  open={open}*/}
+      {/*  closeDialog={closeDialog}*/}
+      {/*  updateDisplay={updateDisplay}*/}
+      {/*/>*/}
     </g>
   )
 }

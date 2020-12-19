@@ -1,53 +1,43 @@
-import React, { useState } from 'react'
-import AppBar from '@material-ui/core/AppBar'
-import {
-  Box,
-  createStyles,
-  Theme,
-  Toolbar,
-  Typography
-} from '@material-ui/core'
-import IconButton from '@material-ui/core/IconButton'
-import MenuIcon from '@material-ui/icons/Menu'
-import FormControlLabel from '@material-ui/core/FormControlLabel'
-import Checkbox from '@material-ui/core/Checkbox'
-import { makeStyles } from '@material-ui/core/styles'
-import { TopbarDateChooser } from './TopbarDateChooser'
+import React, {useState} from 'react'
+import {TopbarDateChooser} from './TopbarDateChooser'
+import {Checkbox, Layout, Menu, Tooltip, Typography} from "antd"
+import {CheckboxChangeEvent} from "antd/lib/checkbox"
+const {Title} = Typography;
+const {SubMenu} = Menu;
+const {Header} = Layout;
 
 type TopbarProps = {
   mostRecentChange: Date
   updateDisplay: (showSegmentIds: boolean, refDate: Date) => void
 }
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    checkbox: {
-      color: 'inherit',
-      marginLeft: theme.spacing(10)
-    },
-    appBar: {
-      background: '#2E3B55'
-    },
-    toolbar: {
-    },
-    formControlLabel: {
-      fontSize: 14,
-      paddingTop: 4,
-      paddingRight: theme.spacing(10)
-    }
-  })
-)
+// const useStyles = makeStyles((theme: Theme) =>
+//   createStyles({
+//     checkbox: {
+//       color: 'inherit',
+//       marginLeft: theme.spacing(10)
+//     },
+//     appBar: {
+//       background: '#2E3B55'
+//     },
+//     toolbar: {
+//     },
+//     formControlLabel: {
+//       fontSize: 14,
+//       paddingTop: 4,
+//       paddingRight: theme.spacing(10)
+//     }
+//   })
+// )
 
 export const Topbar = ({
-  mostRecentChange,
-  updateDisplay
-}: TopbarProps): JSX.Element => {
+                         mostRecentChange,
+                         updateDisplay
+                       }: TopbarProps): JSX.Element => {
   const [showSegmentIds, setShowSegmentIds] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(mostRecentChange)
 
-  const showSegmentIdsChanged = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const showSegmentIdsChanged = (event: CheckboxChangeEvent) => {
     setShowSegmentIds(event.target.checked)
     updateDisplay(event.target.checked, selectedDate)
   }
@@ -57,50 +47,45 @@ export const Topbar = ({
     updateDisplay(showSegmentIds, date)
   }
 
-  const classes = useStyles()
-
   function showSegmentIdsCheckbox(): JSX.Element {
     return (
-      <FormControlLabel
-        control={
-          <Checkbox
-            title='Display the last part of the segment id instead of the segment position'
-            size='small'
-            checked={showSegmentIds}
-            onChange={showSegmentIdsChanged}
-            classes={{
-              root: classes.checkbox
-            }}
-            inputProps={{ 'aria-label': 'primary checkbox' }}
-          />
-        }
-        label={
-          <Typography className={classes.formControlLabel}>
-            Show Segment IDs
-          </Typography>
-        }
-      />
+      <Tooltip placement="bottom" title='Display the last part of the segment id instead of the segment position'>
+        <Checkbox
+          style={{color: '@menu-item-color'}}
+          checked={showSegmentIds}
+          onChange={showSegmentIdsChanged}>
+          Show Segment IDs
+        </Checkbox>
+      </Tooltip>
     )
   }
 
   return (
-    <AppBar position='static' className={classes.appBar}>
-      <Toolbar className={classes.toolbar}>
-        <IconButton edge='start' color='inherit' aria-label='open drawer'>
-          <MenuIcon />
-        </IconButton>
-        <Typography variant='h6' noWrap>
-          TMT Segment Database
-        </Typography>
-        <Box display='flex' flexGrow={1}/>
-        <div>{showSegmentIdsCheckbox()}</div>
-        <div>
-          <TopbarDateChooser
-            mostRecentChange={mostRecentChange}
-            updateDisplay={refDateChanged}
-          />
-        </div>
-      </Toolbar>
-    </AppBar>
+    <Header>
+      <div style={{color: "#d9d9d9", float: "left"}}>
+        TMT Segment Database
+        {/*<Title*/}
+        {/*  style={{color: "white"}}*/}
+        {/*  level={5}>*/}
+        {/*  TMT Segment Database*/}
+        {/*</Title>*/}
+      </div>
+      <Menu theme="dark" mode="horizontal">
+        <SubMenu key="view" title="View">
+          <Menu.Item key="showSegmentIds">{showSegmentIdsCheckbox()}</Menu.Item>
+        </SubMenu>
+      </Menu>
+    </Header>
+
+    // <Header>
+    //   <Title level={5}>TMT Segment Database</Title>
+    //   <div>{showSegmentIdsCheckbox()}</div>
+    //   <div>
+    //     {/*<TopbarDateChooser*/}
+    //     {/*  mostRecentChange={mostRecentChange}*/}
+    //     {/*  updateDisplay={refDateChanged}*/}
+    //     {/*/>*/}
+    //   </div>
+    // </Header>
   )
 }
