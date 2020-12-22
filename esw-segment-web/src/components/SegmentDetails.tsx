@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react'
 import {SegmentData, SegmentToM1Pos} from './SegmentData'
 import {PositionHistory} from './PositionHistory'
-import {Button, DatePicker, Form, Select, Typography} from "antd"
+import {Button, DatePicker, Drawer, Form, Select, Typography} from "antd"
 import moment from 'moment'
 
 const {Option} = Select;
@@ -13,6 +13,8 @@ type SegmentDetailsProps = {
   id?: string
   pos: string
   date?: number
+  open: boolean,
+  closeDialog: () => void
   updateDisplay: () => void
 }
 
@@ -22,6 +24,8 @@ type SegmentDetailsProps = {
  * @param id segment id
  * @param pos A1 to F82
  * @param date date the segment was installed
+ * @param open true if drawer is open
+ * @param closeDialog function to call to close the drawer
  * @param updateDisplay function to update the display after a DB change
  * @constructor
  */
@@ -29,6 +33,8 @@ export const SegmentDetails = ({
                                  id,
                                  pos,
                                  date,
+                                 open,
+                                 closeDialog,
                                  updateDisplay
                                }: SegmentDetailsProps): JSX.Element => {
   const emptyId = 'empty'
@@ -89,7 +95,7 @@ export const SegmentDetails = ({
         validateStatus={validateStatus}
         help={errorMessage}
       >
-        <Select defaultValue={selectedSegmentId} onChange={changeSegmentId}>
+        <Select value={selectedSegmentId} onChange={changeSegmentId}>
           {availableSegmentIds.map((segId) => {
             return (
               <Option key={segId} value={segId}>
@@ -111,13 +117,23 @@ export const SegmentDetails = ({
   // Display/edit the installation date
   function datePicker(): JSX.Element {
     const helpText = id ? `Installed on` : 'Date installed'
+    // XXX TODO FIXME: Display current value again after edit/cancel
     return (
       <Form.Item name="date-picker" label={helpText}>
         <DatePicker
+          showToday={true}
           onChange={handleDateChange}
+          value={moment(selectedDate)}
         />
       </Form.Item>
     )
+  }
+
+  function cancel(): void {
+    setSelectedSegmentId(id || emptyId)
+    setSelectedDate(date ? new Date(date) : new Date())
+    setSaveEnabled(false)
+    closeDialog()
   }
 
   function saveChanges() {
@@ -155,34 +171,45 @@ export const SegmentDetails = ({
     labelCol: {span: 8},
     wrapperCol: {span: 16},
   };
-  const tailLayout = {
-    wrapperCol: {offset: 8, span: 16},
-  };
 
   if (availableSegmentIds.length != 0)
     return (
-      <Form
-        size={'small'}
-        {...layout}>
-        {segmentIdSelector()}
-        {datePicker()}
-        <div>
-          <Title level={5}>
-            History
-          </Title>
-          <PositionHistory pos={pos} changed={changed}/>
-        </div>
-        <Form.Item {...tailLayout}>
-          <Button
-            type="primary"
-            htmlType="submit"
-            onClick={saveChanges}
-            disabled={!saveEnabled}>
-            Save changes
-          </Button>
-        </Form.Item>
-
-      </Form>
+      <Drawer
+        title={`Segment ${pos}`}
+        width={420}
+        placement="right"
+        closable={false}
+        onClose={cancel}
+        visible={open}
+        bodyStyle={{ paddingBottom: 80 }}
+        footer={
+          <div
+            style={{
+              textAlign: 'right',
+            }}
+          >
+            <Button onClick={cancel} style={{ marginRight: 8 }}>
+              Cancel
+            </Button>
+            <Button onClick={saveChanges} disabled={!saveEnabled} type="primary">
+              Submit
+            </Button>
+          </div>
+        }
+      >
+        <Form
+          size={'small'}
+          {...layout}>
+          {segmentIdSelector()}
+          {datePicker()}
+          <div>
+            <Title level={5}>
+              History
+            </Title>
+            <PositionHistory pos={pos} changed={changed}/>
+          </div>
+        </Form>
+      </Drawer>
     )
   else return <div/>
 }
