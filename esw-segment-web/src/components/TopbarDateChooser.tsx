@@ -91,7 +91,8 @@ export const TopbarDateChooser = ({
       </Tooltip>
 
       {/*// XXX TODO FIXME: Doesn't display most recent date if segment changed and this item was on previous most recent date */}
-      <Text className={'topbarDateChooserText'}>{selectedDate.toLocaleDateString('en-US')}</Text>
+      {/*<Text className={'topbarDateChooserText'}>{selectedDate.toLocaleDateString('en-US')}</Text>*/}
+      <Text className={'topbarDateChooserText'}>{selectedDate.toDateString()}</Text>
     </span>
   )
 }

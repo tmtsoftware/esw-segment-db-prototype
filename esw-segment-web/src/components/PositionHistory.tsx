@@ -49,7 +49,8 @@ export const PositionHistory = ({pos, changed}: PositionHistoryProps): JSX.Eleme
   const dataSource = data.map((row) => {
     return {
       key: row.date,
-      date: new Date(row.date).toLocaleDateString('en-US'),
+      // date: new Date(row.date).toLocaleDateString('en-US'),
+      date: new Date(row.date).toDateString(),
       segmentId: row.maybeId ? row.maybeId : <em>removed</em>
     };
   });

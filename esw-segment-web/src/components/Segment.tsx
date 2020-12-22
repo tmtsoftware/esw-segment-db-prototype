@@ -38,7 +38,8 @@ export const Segment = ({
   const sector = pos.charAt(0)
   const classNames = `segment ${sector}` + (id ? '' : ' empty')
   const labelXOffset = pos.length == 2 ? -4 : -6
-  const dateStr = date ? new Date(date).toLocaleDateString('en-US') : ''
+  // const dateStr = date ? new Date(date).toLocaleDateString('en-US') : ''
+  const dateStr = date ? new Date(date).toDateString() : ''
   const idStr = id ? id : ''
   const label = showSegmentIds ? idStr.substr(2) : pos
   const fontSize = showSegmentIds ? 6 : 7
@@ -102,14 +103,14 @@ export const Segment = ({
         fill={'black'}>
         {label}
       </text>
-        <SegmentDetails
-          id={id}
-          pos={pos}
-          date={date}
-          open={open}
-          closeDialog={closeDialog}
-          updateDisplay={updateDisplay}
-        />
+      <SegmentDetails
+        id={id}
+        pos={pos}
+        date={date}
+        open={open}
+        closeDialog={closeDialog}
+        updateDisplay={updateDisplay}
+      />
     </g>
   )
 }

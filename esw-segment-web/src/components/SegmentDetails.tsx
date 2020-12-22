@@ -121,6 +121,8 @@ export const SegmentDetails = ({
     return (
       <Form.Item name="date-picker" label={helpText}>
         <DatePicker
+          // format={"YYYY-MM-DD"}
+          format={"ddd ll"}
           showToday={true}
           onChange={handleDateChange}
           value={moment(selectedDate)}
@@ -129,11 +131,14 @@ export const SegmentDetails = ({
     )
   }
 
+  const [form] = Form.useForm();
+
   function cancel(): void {
-    setSelectedSegmentId(id || emptyId)
-    setSelectedDate(date ? new Date(date) : new Date())
     setSaveEnabled(false)
+    setSelectedDate(date ? new Date(date) : new Date())
+    setSelectedSegmentId(id || emptyId)
     closeDialog()
+    form.resetFields()
   }
 
   function saveChanges() {
@@ -198,6 +203,10 @@ export const SegmentDetails = ({
         }
       >
         <Form
+          form={form}
+          initialValues={{
+            "date-picker": moment(selectedDate)
+          }}
           size={'small'}
           {...layout}>
           {segmentIdSelector()}
