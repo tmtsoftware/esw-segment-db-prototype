@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
-import { Config } from './Config'
-import { SegmentDetails } from './SegmentDetails'
-import {Drawer, PageHeader} from "antd";
+import React, {useState} from 'react'
+import {Config} from './Config'
+import {SegmentDetails} from './SegmentDetails'
+import {Drawer} from "antd";
 
 type SegmentProps = {
   id?: string
@@ -27,15 +27,15 @@ type SegmentProps = {
  * @constructor
  */
 export const Segment = ({
-  id,
-  pos,
-  date,
-  mostRecentChange,
-  showSegmentIds,
-  x,
-  y,
-  updateDisplay
-}: SegmentProps): JSX.Element => {
+                          id,
+                          pos,
+                          date,
+                          mostRecentChange,
+                          showSegmentIds,
+                          x,
+                          y,
+                          updateDisplay
+                        }: SegmentProps): JSX.Element => {
   const sector = pos.charAt(0)
   const classNames = `segment ${sector}` + (id ? '' : ' empty')
   const labelXOffset = pos.length == 2 ? -4 : -6
@@ -115,8 +115,6 @@ export const Segment = ({
           id={id}
           pos={pos}
           date={date}
-          open={open}
-          closeDialog={closeDialog}
           updateDisplay={updateDisplay}
         />
       </Drawer>

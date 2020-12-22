@@ -1,10 +1,11 @@
-import React, {useEffect, useRef, useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import {SegmentData, SegmentToM1Pos} from './SegmentData'
 import {Table} from "antd"
 
 
 type PositionHistoryProps = {
   pos: string
+  changed: number
 }
 
 const columns = [
@@ -23,10 +24,10 @@ const columns = [
 /**
  * Displays a table showing when segments were added or removed
  * @param pos the segment position
+ * @param changed incremented when something changes that could change the contents of the history table
  * @constructor
  */
-export const PositionHistory = ({pos}: PositionHistoryProps): JSX.Element => {
-  // const classes = useStyles()
+export const PositionHistory = ({pos, changed}: PositionHistoryProps): JSX.Element => {
   const [data, setData] = useState<Array<SegmentToM1Pos>>([])
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export const PositionHistory = ({pos}: PositionHistoryProps): JSX.Element => {
     }
     console.log(`XXX getHistoryData ${pos}`)
     getHistoryData()
-  })
+  }, [pos, changed])
 
   const dataSource = data.map((row) => {
     return {

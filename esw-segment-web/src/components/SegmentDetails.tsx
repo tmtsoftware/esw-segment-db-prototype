@@ -13,8 +13,6 @@ type SegmentDetailsProps = {
   id?: string
   pos: string
   date?: number
-  open: boolean
-  closeDialog: () => void
   updateDisplay: () => void
 }
 
@@ -24,8 +22,6 @@ type SegmentDetailsProps = {
  * @param id segment id
  * @param pos A1 to F82
  * @param date date the segment was installed
- * @param open true if dialog is open
- * @param closeDialog function to close the dialog
  * @param updateDisplay function to update the display after a DB change
  * @constructor
  */
@@ -33,8 +29,6 @@ export const SegmentDetails = ({
                                  id,
                                  pos,
                                  date,
-                                 open,
-                                 closeDialog,
                                  updateDisplay
                                }: SegmentDetailsProps): JSX.Element => {
   const emptyId = 'empty'
@@ -47,9 +41,7 @@ export const SegmentDetails = ({
     date ? new Date(date) : new Date()
   )
   const [saveEnabled, setSaveEnabled] = useState(false)
-
-  // const classes = useStyles()
-  console.log(`XXX open = ${open}`)
+  const [changed, setChanged] = useState(1)
 
   // Gets the list of available segment ids for this position
   function updateAvailableSegmentIds() {
@@ -152,6 +144,7 @@ export const SegmentDetails = ({
           setSaveEnabled(false)
           // closeDialog()
           updateSelectedDate()
+          setChanged(changed + 1)
         }
       })
   }
@@ -177,7 +170,7 @@ export const SegmentDetails = ({
           <Title level={5}>
             History
           </Title>
-          <PositionHistory pos={pos}/>
+          <PositionHistory pos={pos} changed={changed}/>
         </div>
         <Form.Item {...tailLayout}>
           <Button
