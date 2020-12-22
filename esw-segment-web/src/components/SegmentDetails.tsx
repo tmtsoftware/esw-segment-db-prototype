@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react'
-import { SegmentData, SegmentToM1Pos } from './SegmentData'
-import { PositionHistory } from './PositionHistory'
+import React, {useEffect, useState} from 'react'
+import {SegmentData, SegmentToM1Pos} from './SegmentData'
+import {PositionHistory} from './PositionHistory'
 import {Button, DatePicker, Form, Select, Typography} from "antd"
 import moment from 'moment'
 
-const { Option } = Select;
+const {Option} = Select;
 
 /**
  * Segment-id, pos (A1 to F82), date installed
@@ -18,77 +18,6 @@ type SegmentDetailsProps = {
   updateDisplay: () => void
 }
 
-// const useStyles = makeStyles((theme: Theme) =>
-//   createStyles({
-//     formControl: {
-//       // margin: theme.spacing(1),
-//       marginLeft: 1,
-//       paddingBottom: 20,
-//       minWidth: 120
-//     },
-//     selectEmpty: {
-//       marginTop: theme.spacing(2)
-//     },
-//     history: {
-//       marginBottom: 3
-//     },
-//     datePicker: {
-//       // maxWidth: 150
-//       paddingBottom: 20
-//     }
-//   })
-// )
-
-// const styles = (theme: Theme) =>
-//   createStyles({
-//     root: {
-//       margin: 0,
-//       padding: theme.spacing(2)
-//     },
-//     closeButton: {
-//       position: 'absolute',
-//       right: theme.spacing(1),
-//       top: theme.spacing(1),
-//       color: theme.palette.grey[500]
-//     }
-//   })
-
-// export interface DialogTitleProps extends WithStyles<typeof styles> {
-//   id: string
-//   children: React.ReactNode
-//   onClose: () => void
-// }
-
-// const DialogTitle = withStyles(styles)((props: DialogTitleProps) => {
-//   const { children, classes, onClose, ...other } = props
-//   return (
-//     <MuiDialogTitle disableTypography className={classes.root} {...other}>
-//       <Typography variant='h6'>{children}</Typography>
-//       {onClose ? (
-//         <IconButton
-//           aria-label='close'
-//           className={classes.closeButton}
-//           onClick={onClose}>
-//           <CloseIcon />
-//         </IconButton>
-//       ) : null}
-//     </MuiDialogTitle>
-//   )
-// })
-
-// const DialogContent = withStyles((theme: Theme) => ({
-//   root: {
-//     padding: theme.spacing(2)
-//   }
-// }))(MuiDialogContent)
-
-// const DialogActions = withStyles((theme: Theme) => ({
-//   root: {
-//     margin: 0,
-//     padding: theme.spacing(1)
-//   }
-// }))(MuiDialogActions)
-
 /**
  * Displays details about the selected segment
  *
@@ -101,13 +30,13 @@ type SegmentDetailsProps = {
  * @constructor
  */
 export const SegmentDetails = ({
-  id,
-  pos,
-  date,
-  open,
-  closeDialog,
-  updateDisplay
-}: SegmentDetailsProps): JSX.Element => {
+                                 id,
+                                 pos,
+                                 date,
+                                 open,
+                                 closeDialog,
+                                 updateDisplay
+                               }: SegmentDetailsProps): JSX.Element => {
   const emptyId = 'empty'
   const [availableSegmentIds, setAvailableSegmentIds] = useState<Array<string>>(
     []
@@ -196,25 +125,6 @@ export const SegmentDetails = ({
           onChange={handleDateChange}
         />
       </Form.Item>
-
-
-      // <MuiPickersUtilsProvider utils={DateFnsUtils}>
-      //   <Grid container>
-      //     <KeyboardDatePicker
-      //       className={classes.datePicker}
-      //       disableToolbar
-      //       variant='inline'
-      //       format='MM/dd/yyyy'
-      //       id='date-picker-inline'
-      //       label={helpText}
-      //       value={selectedDate}
-      //       onChange={handleDateChange}
-      //       KeyboardButtonProps={{
-      //         'aria-label': 'change date'
-      //       }}
-      //     />
-      //   </Grid>
-      // </MuiPickersUtilsProvider>
     )
   }
 
@@ -228,7 +138,7 @@ export const SegmentDetails = ({
     }
     const requestOptions = {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(segmentToM1Pos)
     }
     fetch(`${SegmentData.baseUri}/setPosition`, requestOptions)
@@ -239,42 +149,36 @@ export const SegmentDetails = ({
         )
         updateDisplay()
         if (status == 200) {
-          closeDialog()
+          setSaveEnabled(false)
+          // closeDialog()
           updateSelectedDate()
         }
       })
   }
 
-  // function cancelChanges() {
-  //   setSelectedSegmentId(id || emptyId)
-  //   setSelectedDate(date ? new Date(date) : new Date())
-  //   closeDialog()
-  // }
-
   const {Title} = Typography;
 
   const layout = {
-    labelCol: { span: 8 },
-    wrapperCol: { span: 16 },
+    labelCol: {span: 8},
+    wrapperCol: {span: 16},
   };
   const tailLayout = {
-    wrapperCol: { offset: 8, span: 16 },
+    wrapperCol: {offset: 8, span: 16},
   };
 
   if (availableSegmentIds.length != 0)
     return (
-      <Form {...layout}>
-        <Title level={5}>
-          Segment {pos}
-        </Title>
-          {segmentIdSelector()}
-          {datePicker()}
-          <div>
-            <Title level={5}>
-              History
-            </Title>
-            <PositionHistory pos={pos} />
-          </div>
+      <Form
+        size={'small'}
+        {...layout}>
+        {segmentIdSelector()}
+        {datePicker()}
+        <div>
+          <Title level={5}>
+            History
+          </Title>
+          <PositionHistory pos={pos}/>
+        </div>
         <Form.Item {...tailLayout}>
           <Button
             type="primary"

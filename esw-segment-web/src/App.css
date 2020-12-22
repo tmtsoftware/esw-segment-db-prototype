@@ -1,21 +1,38 @@
 /* App wide global css goes in this file  */
 
 .App {
-  /*background-color: #141631;*/
   min-height: 100vh;
   min-width: 100vh;
   display: flex;
   flex-direction: column;
 }
 
+.mirror-container {
+  background-color: #141631;
+}
+
+.topbarPageHeader {
+  padding: 0 50px;
+  /*background-color: #2E3B55;*/
+}
+
+.topbarDateChooser {
+  padding: 0 50px;
+}
+
+.topbarDateChooserText {
+  padding: 0 10px;
+}
+
 body {
   display: flex;
   justify-content: center;
   align-items: center;
+  /*align-items: flex-start;*/
   flex-direction: column;
   margin: 0;
   height: 100vh;
-  font-weight: 700;
+  /*font-weight: 700;*/
   font-family: sans-serif;
 }
 

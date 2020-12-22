@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Config } from './Config'
 import { SegmentDetails } from './SegmentDetails'
+import {Drawer, PageHeader} from "antd";
 
 type SegmentProps = {
   id?: string
@@ -102,14 +103,24 @@ export const Segment = ({
         fill={'black'}>
         {label}
       </text>
-      {/*<SegmentDetails*/}
-      {/*  id={id}*/}
-      {/*  pos={pos}*/}
-      {/*  date={date}*/}
-      {/*  open={open}*/}
-      {/*  closeDialog={closeDialog}*/}
-      {/*  updateDisplay={updateDisplay}*/}
-      {/*/>*/}
+      <Drawer
+        title={`Segment ${pos}`}
+        width={420}
+        placement="right"
+        closable={false}
+        onClose={closeDialog}
+        visible={open}
+      >
+        <SegmentDetails
+          id={id}
+          pos={pos}
+          date={date}
+          open={open}
+          closeDialog={closeDialog}
+          updateDisplay={updateDisplay}
+        />
+      </Drawer>
+
     </g>
   )
 }

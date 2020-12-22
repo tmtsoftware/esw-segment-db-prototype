@@ -1,39 +1,27 @@
-import React, { useState } from 'react'
-import { SegmentData } from './SegmentData'
-import {Button, Layout, Tooltip, Typography} from "antd";
-import { LeftOutlined, RightOutlined, BorderOutlined } from '@ant-design/icons'
-const {Title} = Typography;
+import React, {useState} from 'react'
+import {SegmentData} from './SegmentData'
+import {Button, Tooltip, Typography} from "antd";
+import {LeftOutlined, RightOutlined, BorderOutlined} from '@ant-design/icons'
+
+const {Text} = Typography;
 
 type TopbarDateChooserProps = {
   mostRecentChange: Date
   updateDisplay: (refDate: Date) => void
 }
 
-// const useStyles = makeStyles({
-//   icons: {
-//     paddingLeft: 5,
-//     paddingRight: 5,
-//     paddingBottom: 0
-//   },
-//   formControlLabel: {
-//     fontSize: 14,
-//     paddingLeft: 15,
-//     paddingTop: 2,
-//     paddingBottom: 2
-//   }
-// })
-
 export const TopbarDateChooser = ({
-  mostRecentChange,
-  updateDisplay
-}: TopbarDateChooserProps): JSX.Element => {
+                                    mostRecentChange,
+                                    updateDisplay
+                                  }: TopbarDateChooserProps): JSX.Element => {
   const [selectedDate, setSelectedDate] = useState<Date>(mostRecentChange)
+
   // const classes = useStyles()
 
   function nextDate() {
     const requestOptions = {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(selectedDate.getTime())
     }
     fetch(`${SegmentData.baseUri}/nextChange`, requestOptions)
@@ -48,7 +36,7 @@ export const TopbarDateChooser = ({
   function prevDate() {
     const requestOptions = {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(selectedDate.getTime())
     }
     fetch(`${SegmentData.baseUri}/prevChange`, requestOptions)
@@ -63,7 +51,7 @@ export const TopbarDateChooser = ({
   function today() {
     const requestOptions = {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(new Date().getTime())
     }
     fetch(`${SegmentData.baseUri}/mostRecentChange`, requestOptions)
@@ -76,39 +64,34 @@ export const TopbarDateChooser = ({
   }
 
   return (
-    <div>
+    <span className={'topbarDateChooser'}>
       <Tooltip placement="bottom" title='Go back to the previous segment change'>
       <Button
-        type="primary"
-        icon={<LeftOutlined />}
+        type="ghost"
+        icon={<LeftOutlined/>}
         size={"large"}
         onClick={() => prevDate()}
       />
       </Tooltip>
-
-
-
       <Tooltip placement="bottom" title='Display changes up to the current date (default)'>
         <Button
-          type="primary"
-          icon={<BorderOutlined />}
+          type="ghost"
+          icon={<BorderOutlined/>}
           size={"large"}
           onClick={() => today()}
         />
       </Tooltip>
-
-
       <Tooltip placement="bottom" title='Go forward to the next segment change'>
         <Button
-          type="primary"
-          icon={<RightOutlined />}
+          type="ghost"
+          icon={<RightOutlined/>}
           size={"large"}
           onClick={() => nextDate()}
         />
       </Tooltip>
 
       {/*// XXX TODO FIXME: Doesn't display most recent date if segment changed and this item was on previous most recent date */}
-      <Title level={5}>{selectedDate.toLocaleDateString('en-US')}</Title>
-    </div>
+      <Text className={'topbarDateChooserText'}>{selectedDate.toLocaleDateString('en-US')}</Text>
+    </span>
   )
 }
