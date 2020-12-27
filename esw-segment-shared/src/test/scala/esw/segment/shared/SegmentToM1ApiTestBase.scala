@@ -18,6 +18,7 @@ class SegmentToM1ApiTestBase(posTable: SegmentToM1Api) extends AsyncFunSuite {
 
   private def currentDate(): Date = new Date(System.currentTimeMillis())
 
+  // XXX TODO FIXME: Use actual segment ids?
   private def populateSomeSegments(): Future[Unit] =
     async {
       assert(await(posTable.setPosition(new SegmentToM1Pos(Date.valueOf("2020-10-01"), "SN01-2", "A4"))))

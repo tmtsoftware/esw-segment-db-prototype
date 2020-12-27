@@ -12,7 +12,7 @@
 
 # Segment no: 1 to 574
 # Note: Need to get a list of all JIRA tasks, since some blanks were discarded and new issues created!
-segmentNumber=177
+segmentNumber=340
 
 #curl \
 #   -D- \

@@ -58,13 +58,14 @@ export const SegmentDetails = ({
           ? [...data, id, emptyId]
           : [...data, emptyId]
         const uniqueIds = [...new Set(ids)]
+        console.log(`XXX updateAvailableSegmentIds for ${pos}`)
         setAvailableSegmentIds(uniqueIds)
       })
   }
 
   useEffect(() => {
     updateAvailableSegmentIds()
-  }, [])
+  }, [pos, changed, open])
 
   // Gets the date of the most recent segment change
   function updateSelectedDate() {

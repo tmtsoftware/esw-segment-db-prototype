@@ -13,7 +13,10 @@ import akka.http.scaladsl.model.headers.{Authorization, BasicHttpCredentials}
 import spray.json._
 
 //noinspection TypeAnnotation
-object JiraClient  extends SprayJsonSupport with DefaultJsonProtocol with NullOptions {
+class JiraClient()(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec: ExecutionContextExecutor)
+    extends SprayJsonSupport
+    with DefaultJsonProtocol
+    with NullOptions {
 
   private val jiraBaseUri   = "https://tmt-project.atlassian.net"
   private val jiraIssueUri  = s"$jiraBaseUri/rest/api/latest/issue"
@@ -35,7 +38,8 @@ object JiraClient  extends SprayJsonSupport with DefaultJsonProtocol with NullOp
     "riskOfLoss"                     -> "customfield_11912",
     "workPackages"                   -> "customfield_11910",
     "acceptanceCertificates"         -> "customfield_11903",
-    "acceptanceDateBlank"            -> "customfield_11908"
+    "acceptanceDateBlank"            -> "customfield_11908",
+    "shippingAuthorizations"         -> "customfield_11911"
   )
 
   private val customFieldsStr = customFieldMap.values.mkString(",")
@@ -87,6 +91,7 @@ object JiraClient  extends SprayJsonSupport with DefaultJsonProtocol with NullOp
       customfield_11910: Option[String],
       customfield_11903: Option[String],
       customfield_11908: Option[String],
+      customfield_11911: Option[String],
       status: JiraStatus
   ) {
     def sector = customfield_12000
@@ -106,9 +111,11 @@ object JiraClient  extends SprayJsonSupport with DefaultJsonProtocol with NullOp
     def acceptanceCertificates = customfield_11903.getOrElse("").trim()
 
     def acceptanceDateBlank = customfield_11908.getOrElse("").trim()
+
+    def shippingAuthorizations = customfield_11911.getOrElse("").trim()
   }
 
-  private implicit val JiraFieldsFormat = jsonFormat12(JiraFields)
+  private implicit val JiraFieldsFormat = jsonFormat13(JiraFields)
 
   private case class JiraData(
       expand: String,
@@ -133,7 +140,7 @@ object JiraClient  extends SprayJsonSupport with DefaultJsonProtocol with NullOp
    */
   def getJiraSegmentData(
       issueNumber: Int
-  )(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec: ExecutionContextExecutor): Future[JiraSegmentData] =
+  ): Future[JiraSegmentData] =
     async {
       val uri                            = issueUri(issueNumber)
       val request                        = HttpRequest(HttpMethods.GET, uri = uri, headers = authHeaders)
@@ -153,6 +160,7 @@ object JiraClient  extends SprayJsonSupport with DefaultJsonProtocol with NullOp
       val workPackages                   = jiraData.fields.workPackages
       val acceptanceCertificates         = jiraData.fields.acceptanceCertificates
       val acceptanceDateBlank            = jiraData.fields.acceptanceDateBlank
+      val shippingAuthorizations         = jiraData.fields.shippingAuthorizations
 
       JiraSegmentData(
         segmentId,
@@ -168,27 +176,10 @@ object JiraClient  extends SprayJsonSupport with DefaultJsonProtocol with NullOp
         status,
         workPackages,
         acceptanceCertificates,
-        acceptanceDateBlank
+        acceptanceDateBlank,
+        shippingAuthorizations
       )
     }
-
-//  /**
-//   * Gets the JIRA segment data for the given segment number
-//   *
-//   * @param issueNumber the number of the JIRA issue (sequential, 1 until number of issues)
-//   */
-//  def recursiveGetJiraSegmentData(
-//      issueNumber: Int,
-//      result: List[JiraSegmentData]
-//  )(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec: ExecutionContextExecutor): Future[List[JiraSegmentData]] =
-//    async {
-//      val r = await(getJiraSegmentData(issueNumber)) :: result
-//      if (issueNumber == 1) {
-//        r
-//      } else {
-//        await(recursiveGetJiraSegmentData(issueNumber - 1, r))
-//      }
-//    }
 
   /**
    * Gets the JIRA segment data for the given segment number
@@ -197,35 +188,38 @@ object JiraClient  extends SprayJsonSupport with DefaultJsonProtocol with NullOp
    * @param accResult the accumulated result
    */
   def recursiveGetJiraSegmentData(
+      issueCount: Int,
       issueNumber: Int,
-      accResult: List[JiraSegmentData]
-  )(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec: ExecutionContextExecutor): Future[List[JiraSegmentData]] =
+      accResult: List[JiraSegmentData],
+      progress: Int => Unit
+  ): Future[List[JiraSegmentData]] =
     async {
       // Fetch multiple issues at once to improve performance
       val blockSize    = 10
       val issueNumbers = (math.max(issueNumber - blockSize + 1, 1) to issueNumber).toList
+      val firstIssue   = issueNumbers.head
       val fList        = issueNumbers.map(getJiraSegmentData)
       val list         = await(Future.sequence(fList))
       val result       = list ++ accResult
-      if (issueNumbers.head == 1) {
+      progress(((issueCount - firstIssue + 1.0) / issueCount * 100).toInt)
+      if (firstIssue == 1) {
         result
       }
       else {
-        await(recursiveGetJiraSegmentData(issueNumber - blockSize, result))
+        await(recursiveGetJiraSegmentData(issueCount, issueNumber - blockSize, result, progress))
       }
     }
 
   /**
    * Gets the JIRA data for all issues
    */
-  def getAllJiraSegmentData(
-  )(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec: ExecutionContextExecutor): Future[List[JiraSegmentData]] =
+  def getAllJiraSegmentData(progress: Int => Unit): Future[List[JiraSegmentData]] =
     async {
       val uri        = s"$jiraSearchUri?jql=project=SE-M1SEG&maxResults=0"
       val request    = HttpRequest(HttpMethods.GET, uri = uri, headers = authHeaders)
       val response   = await(Http().singleRequest(request))
       val issueCount = await(Unmarshal(response).to[IssueCount]).total
-      await(recursiveGetJiraSegmentData(issueCount, Nil))
+      await(recursiveGetJiraSegmentData(issueCount, issueCount, Nil, progress))
     }
 
 }

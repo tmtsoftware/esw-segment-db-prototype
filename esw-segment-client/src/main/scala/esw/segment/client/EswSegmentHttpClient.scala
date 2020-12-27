@@ -1,8 +1,7 @@
 package esw.segment.client
 
 import java.sql.Date
-
-import esw.segment.shared.{EswSegmentData, JsonSupport, SegmentToM1Api}
+import esw.segment.shared.{EswSegmentData, JiraSegmentDataApi, JsonSupport, SegmentToM1Api}
 import EswSegmentData._
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -22,6 +21,7 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
     actorSystem: ActorSystem,
     ec: ExecutionContextExecutor
 ) extends SegmentToM1Api
+    with JiraSegmentDataApi
     with JsonSupport {
 
   private val baseUri = s"http://$host:$port"
@@ -129,6 +129,13 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
       val request  = HttpRequest(HttpMethods.GET, uri = uri)
       val response = await(Http().singleRequest(request))
       await(Unmarshal(response).to[List[String]])
+    }
+  }
+
+  override def syncWithJira(progress: Int => Unit): Future[Boolean] = {
+    async {
+      // XXX TODO FIXME
+      false
     }
   }
 

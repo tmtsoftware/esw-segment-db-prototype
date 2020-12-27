@@ -14,6 +14,10 @@ package esw.segment.shared
  * @param riskOfLoss TIO, NINS, DST, ...
  * @param components Planned, In-Work Blank, Accepted Blank, In-Work Roundel, Acceptance View Roundel
  * @param status TO DO, In Progress, Under Review, In TIO Storage, Disposed, ...
+ * @param workPackages String in the form: TMT.OPT.CON.18.004
+ * @param acceptanceCertificates String like: TMT.PMO.CON.20.001.CCR01
+ * @param acceptanceDateBlank date from jira in the form: 2020/01/28
+ * @param shippingAuthorizations String like TMT.PMO.TEC.19.033
  */
 case class JiraSegmentData(
     segmentId: String,
@@ -29,5 +33,6 @@ case class JiraSegmentData(
     status: String,
     workPackages: String,
     acceptanceCertificates: String,
-    acceptanceDateBlank: String
+    acceptanceDateBlank: String,
+    shippingAuthorizations: String
 )

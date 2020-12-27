@@ -9,16 +9,21 @@ CREATE TABLE segment_to_m1_pos
     install_date DATE[492]
 );
 
+
 CREATE TABLE jira_segment_data
 (
-    segment_id    TEXT,
-    jira_key      TEXT,
-    sector        INT,
-    segment_type  INT,
-    part_number   TEXT,
-    partner       TEXT,
-    item_location TEXT,
-    risk_of_loss  TEXT,
-    components    TEXT,
-    status        TEXT
+    segment_id                        TEXT,
+    jira_key                          TEXT,
+    sector                            INT,
+    segment_type                      INT,
+    part_number                       TEXT,
+    original_partner_blank_allocation TEXT,
+    item_location                     TEXT,
+    risk_of_loss                      TEXT,
+    components                        TEXT,
+    status                            TEXT,
+    work_packages                     TEXT,
+    acceptance_certificates           TEXT,
+    acceptance_date_blank             TEXT,
+    shipping_authorizations           TEXT
 );

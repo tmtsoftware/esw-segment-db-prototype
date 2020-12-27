@@ -1,7 +1,6 @@
 package esw.segment.db
 
 import java.net.InetAddress
-
 import akka.actor.typed.{ActorSystem, SpawnProtocol}
 import csw.database.DatabaseServiceFactory
 import csw.location.api.scaladsl.LocationService
@@ -13,6 +12,7 @@ import org.jooq.DSLContext
 import scala.concurrent.{Await, ExecutionContextExecutor}
 import scala.concurrent.duration._
 import DbWiring._
+import esw.segment.jira.JiraClient
 
 object DbWiring {
   val defaultDbName = "esw_segment_db"
@@ -37,4 +37,6 @@ class DbWiring(dbName: String = defaultDbName) {
   lazy val dsl: DSLContext =
     Await.result(dbFactory.makeDsl(locationService, dbName, "DB_WRITE_USERNAME", "DB_WRITE_PASSWORD"), timeout)
   lazy val segmentToM1PosTable = new SegmentToM1PosTable(dsl)
+  val jiraClient = new JiraClient()
+  lazy val jiraSegmentDataTable = new JiraSegmentDataTable(dsl, jiraClient)
 }

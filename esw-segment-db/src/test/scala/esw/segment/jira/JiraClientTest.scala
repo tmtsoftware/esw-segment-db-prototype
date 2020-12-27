@@ -10,6 +10,7 @@ import scala.async.Async.{async, await}
 class JiraClientTest extends AsyncFunSuite {
   implicit lazy val typedSystem: ActorSystem[SpawnProtocol.Command] = ActorSystem(SpawnProtocol(), "EswSegmentDb")
   implicit lazy val ec: ExecutionContextExecutor                    = typedSystem.executionContext
+  val jiraClient = new JiraClient()
 
   private def test72(issueData: JiraSegmentData) = async {
     assert(issueData.segmentId == "SN-072")
@@ -42,9 +43,13 @@ class JiraClientTest extends AsyncFunSuite {
     assert(issueData.acceptanceDateBlank == "2017-03-29")
   }
 
+  private def progress(percent: Int): Unit = {
+    println(s"Progress: $percent%")
+  }
+
   test("Test getting all JIRA segment data") {
     async {
-      val data = await(JiraClient.getAllJiraSegmentData())
+      val data = await(jiraClient.getAllJiraSegmentData(progress))
       assert(data.size >= 577)
 
       val issueData72 = data.find(_.jiraKey == "M1ST-72").get
@@ -57,10 +62,10 @@ class JiraClientTest extends AsyncFunSuite {
 
   test("Test getting segment data from single issue") {
     async {
-      val issueData72 = await(JiraClient.getJiraSegmentData(72))
+      val issueData72 = await(jiraClient.getJiraSegmentData(72))
       await(test72(issueData72))
 
-      val issueData177 = await(JiraClient.getJiraSegmentData(177))
+      val issueData177 = await(jiraClient.getJiraSegmentData(177))
       await(test177(issueData177))
     }
   }

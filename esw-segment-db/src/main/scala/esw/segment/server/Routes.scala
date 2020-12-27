@@ -1,26 +1,35 @@
 package esw.segment.server
 
 import java.sql.Date
-
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.directives.{DebuggingDirectives, LoggingMagnet}
 import akka.http.scaladsl.server.{Directive0, Directives, Route}
-import esw.segment.db.SegmentToM1PosTable
+import esw.segment.db.{JiraSegmentDataTable, SegmentToM1PosTable}
 import esw.segment.shared.EswSegmentData._
 import esw.segment.shared.JsonSupport
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import csw.logging.api.scaladsl.Logger
 
-import scala.concurrent.ExecutionContext
+import scala.async.Async.{async, await}
+import scala.concurrent.{ExecutionContext, Future}
 
-class Routes(posTable: SegmentToM1PosTable, logger: Logger)(implicit ec: ExecutionContext) extends Directives with JsonSupport {
+class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDataTable, logger: Logger)(implicit
+    ec: ExecutionContext
+) extends Directives
+    with JsonSupport {
 
   val logRequest: HttpRequest => Unit = req => {
     logger.debug(s"${req.method.value} ${req.uri.toString()}")
   }
 
   val routeLogger: Directive0 = DebuggingDirectives.logRequest(LoggingMagnet(_ => logRequest))
+
+  private def availableSegmentIds(f: Future[List[String]]): Future[List[String]] = async {
+    val list = await(f)
+    val results = await(Future.sequence(list.map(posTable.currentSegmentPosition)))
+    list.zip(results).filter(_._2.isEmpty).map(_._1)
+  }
 
   val route: Route = cors() {
     routeLogger {
@@ -117,7 +126,7 @@ class Routes(posTable: SegmentToM1PosTable, logger: Logger)(implicit ec: Executi
         } ~
         // Gets a list of segment-ids that can be installed at the given position
         path("availableSegmentIdsForPos" / Segment) { position =>
-          complete(posTable.availableSegmentIdsForPos(position))
+          complete(availableSegmentIds(jiraSegmentDataTable.availableSegmentIdsForPos(position)))
         } ~
         // Gets a list of all segment ids that were in the given location.
         path("allSegmentIds" / Segment) { position =>

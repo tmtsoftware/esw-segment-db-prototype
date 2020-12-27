@@ -531,12 +531,6 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       await(positionsOnDate(date)).find(_.dbPos == dbPos)
     }
 
-  override def availableSegmentIdsForPos(position: String): Future[List[String]] =
-    async {
-      // TODO: Filter out segment-ids already in use
-      compatibleSegmentIdsForPos(position.tail.toInt)
-    }
-
   override def resetTables(): Future[Boolean] =
     async {
       await(dsl.truncate(SegmentToM1PosTable.tableName).executeAsyncScala()) >= 0
