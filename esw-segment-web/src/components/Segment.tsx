@@ -41,7 +41,7 @@ export const Segment = ({
   // const dateStr = date ? new Date(date).toLocaleDateString('en-US') : ''
   const dateStr = date ? new Date(date).toDateString() : ''
   const idStr = id ? id : ''
-  const label = showSegmentIds ? idStr.substr(2) : pos
+  const label = showSegmentIds ? idStr.substr(3) : pos
   const fontSize = showSegmentIds ? 6 : 7
 
   const [open, setOpen] = useState<boolean>(false)

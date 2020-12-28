@@ -3,17 +3,19 @@ import './App.css'
 import {Topbar} from './components/Topbar'
 import {Mirror} from './components/Mirror'
 import {SegmentData, SegmentToM1Pos} from './components/SegmentData'
-import {Layout, Menu} from "antd"
+import {Layout} from "antd"
 import 'antd/dist/antd.css'
-import { UserOutlined, LaptopOutlined, NotificationOutlined } from '@ant-design/icons';
+import {Sidebar} from "./components/Sidebar";
+import {MenuInfo} from "rc-menu/lib/interface";
 
-const {Sider, Content} = Layout;
-const { SubMenu } = Menu;
+const {Content} = Layout;
 
 const App = (): JSX.Element => {
   const [showSegmentIds, setShowSegmentIds] = useState<boolean>(false)
   const [posMap, setPosMap] = useState<Map<string, SegmentToM1Pos>>(new Map())
   const [mostRecentChange, setMostRecentChange] = useState<number>(0)
+  const [viewMode, setViewMode] = useState<React.Key>("installed")
+  const [jiraMode, setJiraMode] = useState<Boolean>(false)
 
   async function fetchData(refDate: Date) {
     const requestOptions = {
@@ -39,15 +41,33 @@ const App = (): JSX.Element => {
     }
   }
 
+  async function fetchPlannedData() {
+    const positionsResponse = await fetch(`${SegmentData.baseUri}/plannedPositions`)
+    const positions: Array<SegmentToM1Pos> = await positionsResponse.json()
+    return {
+      positions
+    }
+  }
+
   function updateDataNow(refDate: Date) {
-    fetchData(refDate).then(({mostRecentChange, positionsOnDate}) => {
-      const posMap: Map<string, SegmentToM1Pos> = positionsOnDate.reduce(
-        (map, obj) => map.set(obj.position, obj),
-        new Map()
-      )
-      setPosMap(posMap)
-      setMostRecentChange(mostRecentChange)
-    })
+    if (viewMode == "installed") {
+      fetchData(refDate).then(({mostRecentChange, positionsOnDate}) => {
+        const posMap: Map<string, SegmentToM1Pos> = positionsOnDate.reduce(
+          (map, obj) => map.set(obj.position, obj),
+          new Map()
+        )
+        setPosMap(posMap)
+        setMostRecentChange(mostRecentChange)
+      })
+    } else {
+      fetchPlannedData().then(({positions}) => {
+        const posMap: Map<string, SegmentToM1Pos> = positions.reduce(
+          (map, obj) => map.set(obj.position, obj),
+          new Map()
+        )
+        setPosMap(posMap)
+      })
+    }
   }
 
   function updateData() {
@@ -71,7 +91,13 @@ const App = (): JSX.Element => {
 
   useEffect(() => {
     updateData()
-  }, [])
+  }, [jiraMode])
+
+  function menuItemSelected(info: MenuInfo) {
+    console.log(`XXX menuItemSelected ${info.key}`)
+    setJiraMode(info.key != 'installed')
+    setViewMode(info.key)
+  }
 
   if (mostRecentChange == 0) return <div/>
   else
@@ -82,32 +108,7 @@ const App = (): JSX.Element => {
           updateDisplay={updateDisplay}
         />
         <Layout>
-          <Sider className={'sidebar'}>
-            <Menu
-              className={'sidebarMenu'}
-              mode="inline"
-              defaultSelectedKeys={['1']}
-              defaultOpenKeys={['sub1']}
-            >
-              <SubMenu key="sub1" icon={<UserOutlined />} title="subnav 1">
-                <Menu.Item key="1">option1</Menu.Item>
-                <Menu.Item key="2">option2</Menu.Item>
-                <Menu.Item key="3">option3</Menu.Item>
-                <Menu.Item key="4">option4</Menu.Item>
-              </SubMenu>
-              <SubMenu key="sub2" icon={<LaptopOutlined />} title="subnav 2">
-                <Menu.Item key="5">option5</Menu.Item>
-                <Menu.Item key="6">option6</Menu.Item>
-                <Menu.Item key="7">option7</Menu.Item>
-                <Menu.Item key="8">option8</Menu.Item>
-              </SubMenu>
-              <SubMenu key="sub3" icon={<NotificationOutlined />} title="subnav 3">
-                <Menu.Item key="9">option9</Menu.Item>
-                <Menu.Item key="10">option10</Menu.Item>
-                <Menu.Item key="11">option11</Menu.Item>
-                <Menu.Item key="12">option12</Menu.Item>
-              </SubMenu>
-            </Menu>          </Sider>
+          <Sidebar menuItemSelected={menuItemSelected}/>
           <Content>
             <Mirror
               showSegmentIds={showSegmentIds}

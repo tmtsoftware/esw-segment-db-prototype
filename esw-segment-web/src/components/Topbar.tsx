@@ -39,6 +39,7 @@ export const Topbar = ({
 
   return (
     <PageHeader
+      style={{backgroundColor: '#b2c4db'}}
       ghost={true}
       className={'topbarPageHeader'}
       title="TMT Segment Database"

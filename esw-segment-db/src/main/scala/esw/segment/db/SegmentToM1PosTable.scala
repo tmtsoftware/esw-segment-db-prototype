@@ -1,7 +1,6 @@
 package esw.segment.db
 
 import java.sql.Date
-
 import org.jooq.DSLContext
 import csw.database.scaladsl.JooqExtentions._
 import esw.segment.shared.EswSegmentData._
@@ -21,19 +20,17 @@ object SegmentToM1PosTable {
   private val installDateCol = "install_date"
 
   // Segment id for missing segments
-  private val missingSegmentId = "------"
+  val missingSegmentId = "------"
 
   // Segment id for segments where the state is unknown (when adding a new empty row)
-  private val unknownSegmentId = "??????"
+  val unknownSegmentId = "??????"
 
   // Return None for missing or unknown segments
-  private def idOption(id: String): Option[String] = {
+  def idOption(id: String): Option[String] = {
     if (id.startsWith(missingSegmentId) || id.startsWith(unknownSegmentId)) None else Some(id)
   }
 
-  private def quoted(s: String) = "\"" + s + "\""
-
-  private def currentDate(): Date = new Date(System.currentTimeMillis())
+  def quoted(s: String): String = "\"" + s + "\""
 
   private def makeSegmentToM1Pos(date: Date, id: String, dbPos: Int): SegmentToM1Pos = {
     val position = toPosition(dbPos)
@@ -74,8 +71,8 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .resultQuery(s"""
                           |SELECT $installDateCol
                           |FROM $tableName
-                          |WHERE date <= '$date'
-                          |ORDER BY date DESC
+                          |WHERE $dateCol <= '$date'
+                          |ORDER BY $dateCol DESC
                           |LIMIT 1
                           |""".stripMargin)
           .fetchAsync()
@@ -99,8 +96,8 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .resultQuery(s"""
                           |SELECT $positionsCol
                           |FROM $tableName
-                          |WHERE date <= '$date'
-                          |ORDER BY date DESC
+                          |WHERE $dateCol <= '$date'
+                          |ORDER BY $dateCol DESC
                           |LIMIT 1
                           |""".stripMargin)
           .fetchAsync()
@@ -161,22 +158,22 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       val queryResult = await(
         dsl
           .resultQuery(s"""
-           |SELECT w1.date
+           |SELECT w1.$dateCol
            |FROM (
            | SELECT
-           |  date,
+           |  $dateCol,
            |  positions[$dbPos] as id,
-           |  LAG(positions[$dbPos]) OVER (ORDER BY date) as next_id
+           |  LAG(positions[$dbPos]) OVER (ORDER BY $dateCol) as next_id
            | FROM
            |  segment_to_m1_pos
-           | WHERE date <= '${segmentToM1Pos.date}'
-           | ORDER BY date DESC
+           | WHERE $dateCol <= '${segmentToM1Pos.date}'
+           | ORDER BY $dateCol DESC
            |) as w1
            |WHERE
            |  (w1.id = '${segmentToM1Pos.maybeId.getOrElse(missingSegmentId)}'
            |  OR w1.id = '${segmentToM1Pos.maybeId.getOrElse(unknownSegmentId)}')
            |  AND w1.id IS DISTINCT FROM w1.next_id
-           |ORDER BY date DESC
+           |ORDER BY $dateCol DESC
            |LIMIT 1
            |""".stripMargin)
           .fetchAsyncScala[Date]
@@ -235,13 +232,6 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       }
       true
     }
-
-  private def sortByDate(list: List[SegmentToM1Pos], desc: Boolean = false) = {
-    if (desc)
-      list.sortWith((p, q) => q.date.before(p.date))
-    else
-      list.sortWith((p, q) => p.date.before(q.date))
-  }
 
   private def updatePosition(segmentToM1Pos: SegmentToM1Pos): Future[Boolean] =
     async {
@@ -365,8 +355,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .fetchAsyncScala[(Array[String], Array[Date])]
       )
       val list = queryResult.flatMap { result =>
-        val dbPositions  = result._1
-        val installDates = result._2
+        val (dbPositions, installDates) = result
         dbPositions.zipWithIndex
           .find(segmentId == _._1)
           .map(p => makeSegmentToM1Pos(installDates(p._2), segmentId, p._2 + 1))
@@ -453,7 +442,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .resultQuery(s"""
          |SELECT $positionsCol, $installDateCol
          |FROM $tableName
-         |WHERE date <= '$date'
+         |WHERE $dateCol <= '$date'
          |ORDER BY date DESC
          |LIMIT 1
          |""".stripMargin)
@@ -465,8 +454,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       }
       else {
         val list = queryResult.flatMap { result =>
-          val dbPositions  = result._1
-          val installDates = result._2
+          val (dbPositions, installDates)  = result
           dbPositions.zipWithIndex
             .map(p => makeSegmentToM1Pos(installDates(p._2), p._1, p._2 + 1))
         }
@@ -481,7 +469,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .resultQuery(s"""
          |SELECT $dateCol
          |FROM $tableName
-         |WHERE date <= '$date'
+         |WHERE $dateCol <= '$date'
          |ORDER BY date DESC
          |LIMIT 1
          |""".stripMargin)
@@ -497,7 +485,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .resultQuery(s"""
                         |SELECT $dateCol
                         |FROM $tableName
-                        |WHERE date > '$date'
+                        |WHERE $dateCol > '$date'
                         |ORDER BY date
                         |LIMIT 1
                         |""".stripMargin)
@@ -512,7 +500,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .resultQuery(s"""
                         |SELECT $dateCol
                         |FROM $tableName
-                        |WHERE date < '$date'
+                        |WHERE $dateCol < '$date'
                         |ORDER BY date DESC
                         |LIMIT 1
                         |""".stripMargin)

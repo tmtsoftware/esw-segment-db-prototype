@@ -168,6 +168,10 @@ object EswSegmentDbClient extends App {
         showResults(await(client.currentPositions()))
       }
 
+      if (options.plannedPositions.isDefined) {
+        showResults(await(client.plannedPositions()))
+      }
+
       if (options.currentSegmentPosition.isDefined) {
         if (segmentId.isEmpty) error("--segmentId option is required")
         showResults(await(client.currentSegmentPosition(segmentId.get)).toList)

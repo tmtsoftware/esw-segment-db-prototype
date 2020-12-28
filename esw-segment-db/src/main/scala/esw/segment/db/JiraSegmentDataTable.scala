@@ -8,6 +8,10 @@ import esw.segment.shared.{EswSegmentData, JiraSegmentData, JiraSegmentDataApi}
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
 import JiraSegmentDataTable._
+import esw.segment.shared.EswSegmentData.SegmentToM1Pos
+import esw.segment.shared.EswSegmentData._
+
+import java.sql.Date
 
 //noinspection ScalaUnusedSymbol
 object JiraSegmentDataTable {
@@ -28,6 +32,12 @@ object JiraSegmentDataTable {
   private val workPackagesCol                   = "work_packages"
   private val acceptanceCertificatesCol         = "acceptance_certificates"
   private val acceptanceDateBlankCol            = "acceptance_date_blank"
+
+  // Convert sector and sectorType from JIRA to position like F32
+  private def toPos(sector: Int, sectorType: Int): String  = {
+    val sectorName = ('A' + sector - 1).toChar
+    s"${sectorName}$sectorType"
+  }
 }
 
 class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec: ExecutionContext) extends JiraSegmentDataApi {
@@ -42,8 +52,8 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
         import item._
         val result = await(
           dsl
-            .query(s"""INSERT INTO $tableName VALUES 
-          ('$segmentId',
+            .query(s"""INSERT INTO $tableName VALUES (
+                      |'$segmentId',
                       |'$jiraKey',
                       |'$sector',
                       |'$segmentType',
@@ -76,21 +86,45 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
       val sector      = position.head - 'A' + 1
       val segmentType = position.tail.toInt
       assert(
-        sector >= 1 && sector <= EswSegmentData.numSectors
-          && segmentType >= 1 && segmentType <= EswSegmentData.segmentsPerSector
+        sector >= 1 && sector <= numSectors
+          && segmentType >= 1 && segmentType <= segmentsPerSector
       )
-
       await(
         dsl
           .resultQuery(
             s"""
                |SELECT $segmentIdCol
                |FROM $tableName
-               |WHERE $segmentTypeCol = '${segmentType}'
+               |WHERE $segmentTypeCol = '${segmentType}' AND $statusCol != 'Disposed'
                |""".stripMargin
           )
           .fetchAsyncScala[String]
       )
     }
 
+  override def plannedPositions(): Future[List[SegmentToM1Pos]] = async {
+    val date = currentDate()
+    val queryResult = await(
+      dsl
+        .resultQuery(s"""
+                        |SELECT $segmentIdCol, $sectorCol, $segmentTypeCol
+                        |FROM $tableName
+                        |WHERE $sectorCol >= 1 AND $sectorCol <= 6
+                        |AND $segmentTypeCol >= 1 AND $segmentTypeCol <= 82
+                        |AND $statusCol != 'Disposed'
+                        |""".stripMargin)
+        .fetchAsyncScala[(String, Int, Int)]
+    )
+    if (queryResult.isEmpty) {
+      // If the results are empty, return a row with empty ids
+      (1 to numSegments).toList.map(pos => SegmentToM1Pos(date, None, toPosition(pos)))
+    }
+    else {
+      queryResult.map { result =>
+        val (segmentId, sector, segmentType)  = result
+        val pos = toPos(sector, segmentType)
+        SegmentToM1Pos(date, Option(segmentId), pos)
+      }
+    }
+  }
 }

@@ -46,6 +46,8 @@ object EswSegmentData {
     new java.sql.Date(date.getTime)
   }
 
+  def currentDate(): Date = new Date(System.currentTimeMillis())
+
   /**
    * Position of a segment on a given date
    *
@@ -95,4 +97,12 @@ object EswSegmentData {
    * @param to   end of the date range
    */
   case class DateRange(from: Date, to: Date)
+
+
+  def sortByDate(list: List[SegmentToM1Pos], desc: Boolean = false): List[SegmentToM1Pos] = {
+    if (desc)
+      list.sortWith((p, q) => q.date.before(p.date))
+    else
+      list.sortWith((p, q) => p.date.before(q.date))
+  }
 }

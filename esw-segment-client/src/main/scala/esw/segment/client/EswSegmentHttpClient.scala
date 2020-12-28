@@ -17,6 +17,7 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 /**
  * HTTP Client for ESW Segment DB HTTP Server
  */
+//noinspection DuplicatedCode
 class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(implicit
     actorSystem: ActorSystem,
     ec: ExecutionContextExecutor
@@ -142,6 +143,14 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
   override def currentPositions(): Future[List[SegmentToM1Pos]] =
     async {
       val uri      = Uri(s"$baseUri/currentPositions")
+      val request  = HttpRequest(HttpMethods.GET, uri = uri)
+      val response = await(Http().singleRequest(request))
+      await(Unmarshal(response).to[List[SegmentToM1Pos]])
+    }
+
+  override def plannedPositions(): Future[List[SegmentToM1Pos]] =
+    async {
+      val uri      = Uri(s"$baseUri/plannedPositions")
       val request  = HttpRequest(HttpMethods.GET, uri = uri)
       val response = await(Http().singleRequest(request))
       await(Unmarshal(response).to[List[SegmentToM1Pos]])

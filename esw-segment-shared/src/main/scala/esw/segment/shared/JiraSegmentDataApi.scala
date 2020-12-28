@@ -1,5 +1,7 @@
 package esw.segment.shared
 
+import esw.segment.shared.EswSegmentData.SegmentToM1Pos
+
 import scala.concurrent.Future
 
 trait JiraSegmentDataApi {
@@ -11,11 +13,11 @@ trait JiraSegmentDataApi {
    */
   def syncWithJira(progress: Int => Unit): Future[Boolean]
 
-//  /**
-//   * Returns the segment positions as defined in the JIRA issues
-//   * (Missing segments are also included in the returned list).
-//   */
-//  def currentPositions(): Future[List[SegmentToM1Pos]]
+  /**
+   * Returns the segment positions as defined in the JIRA issues
+   * (Missing segments are also included in the returned list).
+   */
+  def plannedPositions(): Future[List[SegmentToM1Pos]]
 
   /**
    * Gets a list of segment-ids that can be installed at the given position

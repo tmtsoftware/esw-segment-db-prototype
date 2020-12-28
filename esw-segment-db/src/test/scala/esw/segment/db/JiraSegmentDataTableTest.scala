@@ -28,8 +28,22 @@ class JiraSegmentDataTableTest extends AsyncFunSuite {
           await(jiraSegmentDataTable.availableSegmentIdsForPos(testPos))
         }
       }
-      list.foreach(s => println(s"XXX Avail for $testPos: $s"))
-      assert(list.nonEmpty)
+//      list.foreach(s => println(s"XXX Avail for $testPos: $s"))
+      assert(List("SN-032", "SN-034", "SN-035", "SN-036", "SN-037", "SN-038", "SN-050") == list.sorted)
+    }
+  }
+
+  test("Get planned positions") {
+    async {
+      val list = await(jiraSegmentDataTable.plannedPositions())
+        .sortWith { (p, q) =>
+          val s = p.position.head.compareTo(q.position.head)
+          if (s == 0)
+            p.position.tail.toInt.compareTo(q.position.tail.toInt) < 0
+          else s < 0
+        }
+//      list.foreach(p => println(s"${p.position}: ${p.maybeId.getOrElse("----")}"))
+      assert(list.size == 492)
     }
   }
 }

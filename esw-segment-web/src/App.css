@@ -2,30 +2,26 @@
 
 .App {
   min-height: 100vh;
-  min-width: 100vh;
   display: flex;
   flex-direction: column;
-}
-
-.mirror-container {
-  background-color: #141631;
 }
 
 .topbarPageHeader {
-  background-color: #b2c4db;
-  padding: 0 50px;
+  /*background-color: #b2c4db;*/
   min-width: 120vh;
+  height: 6vh;
   display: flex;
   flex-direction: column;
+  padding: 1vh 1vw 1vh 1vw;
 }
 
-.topbarDateChooser {
-  padding: 0 50px;
-}
+/*.topbarDateChooser {*/
+/*  padding: 0 0 0 0;*/
+/*}*/
 
-.topbarDateChooserText {
-  padding: 0 10px;
-}
+/*.topbarDateChooserText {*/
+/*  padding: 0 0 0 1vw;*/
+/*}*/
 
 .sidebar {
 }

@@ -65,7 +65,7 @@ export const SegmentDetails = ({
 
   useEffect(() => {
     updateAvailableSegmentIds()
-  }, [pos, changed, open])
+  }, [changed, open])
 
   // Gets the date of the most recent segment change
   function updateSelectedDate() {

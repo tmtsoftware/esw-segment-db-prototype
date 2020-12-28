@@ -67,7 +67,7 @@ export const TopbarDateChooser = ({
     <span className={'topbarDateChooser'}>
       <Tooltip placement="bottom" title='Go back to the previous segment change'>
       <Button
-        type="ghost"
+        type="text"
         icon={<LeftOutlined/>}
         size={"large"}
         onClick={() => prevDate()}
@@ -75,7 +75,7 @@ export const TopbarDateChooser = ({
       </Tooltip>
       <Tooltip placement="bottom" title='Display changes up to the current date (default)'>
         <Button
-          type="ghost"
+          type="text"
           icon={<BorderOutlined/>}
           size={"large"}
           onClick={() => today()}
@@ -83,7 +83,7 @@ export const TopbarDateChooser = ({
       </Tooltip>
       <Tooltip placement="bottom" title='Go forward to the next segment change'>
         <Button
-          type="ghost"
+          type="text"
           icon={<RightOutlined/>}
           size={"large"}
           onClick={() => nextDate()}

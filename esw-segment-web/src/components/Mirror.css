@@ -32,6 +32,8 @@
   width: 100%;
   padding: 0;
   padding-bottom: 95%;
+  /*background-color: #141631;*/
+  background-color: #383b3e;
 }
 
 .mirror-svg {

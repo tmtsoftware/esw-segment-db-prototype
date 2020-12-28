@@ -19,6 +19,7 @@ case class EswSegmentClientOptions(
     segmentIds: Option[Unit] = None,
     newlyInstalledSegments: Option[Unit] = None,
     currentPositions: Option[Unit] = None,
+    plannedPositions: Option[Unit] = None,
     currentSegmentPosition: Option[Unit] = None,
     currentSegmentAtPosition: Option[Unit] = None,
     positionsOnDate: Option[Unit] = None,
