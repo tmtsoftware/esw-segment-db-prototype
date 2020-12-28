@@ -22,6 +22,14 @@
 .C.empty, .F.empty {
   fill: #e2ecec;
 }
+
+.G {
+  fill: #e3e0e0;
+}
+.G.empty {
+  fill: #f3e8e8;
+}
+
 .segment:hover {
   fill: #7192f5;
 }

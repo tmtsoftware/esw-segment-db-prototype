@@ -1,6 +1,7 @@
 package esw.segment.db
 
 import JiraSegmentDataTableTest._
+import esw.segment.shared.EswSegmentData.totalSegments
 import org.scalatest.funsuite.AsyncFunSuite
 
 import scala.async.Async.{async, await}
@@ -43,7 +44,7 @@ class JiraSegmentDataTableTest extends AsyncFunSuite {
           else s < 0
         }
 //      list.foreach(p => println(s"${p.position}: ${p.maybeId.getOrElse("----")}"))
-      assert(list.size == 492)
+      assert(list.size == totalSegments)
     }
   }
 }

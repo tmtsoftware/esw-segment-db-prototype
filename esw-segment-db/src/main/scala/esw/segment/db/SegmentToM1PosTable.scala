@@ -79,7 +79,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .toScala
           .map(_.asScala.map(_.into(classOf[Object]).asInstanceOf[Array[Date]]).toArray)
       ).headOption
-        .getOrElse((1 to numSegments).map(_ => date).toArray)
+        .getOrElse((1 to totalSegments).map(_ => date).toArray)
     }
 
   /**
@@ -104,7 +104,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .toScala
           .map(_.asScala.map(_.into(classOf[Object]).asInstanceOf[Array[String]]).toArray)
       ).headOption
-        .getOrElse((1 to numSegments).map(_ => unknownSegmentId).toArray)
+        .getOrElse((1 to totalSegments).map(_ => unknownSegmentId).toArray)
     }
 
 
@@ -319,7 +319,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
   override def setAllPositions(date: Date, allSegmentIds: List[Option[String]]): Future[Boolean] =
     async {
       // Make sure the row exists
-      val rowStatus = allSegmentIds.size == numSegments && (await(rowExists(date)) || await(addEmptyRow(date)))
+      val rowStatus = allSegmentIds.size == totalSegments && (await(rowExists(date)) || await(addEmptyRow(date)))
       if (rowStatus) {
         val allSegmentIdsStr = allSegmentIds.map(p => s"${quoted(p.getOrElse(missingSegmentId))}").mkString(",")
         val status = await(
@@ -417,7 +417,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
   override def newlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]] =
     async {
       val dateRange = DateRange(since, currentDate())
-      val fList     = (1 to numSegments).toList.map(pos => segmentIds(dateRange, toPosition(pos)))
+      val fList     = (1 to totalSegments).toList.map(pos => segmentIds(dateRange, toPosition(pos)))
       // await(Future.sequence(fList)).flatten.filter(_.date.after(since))
       await(Future.sequence(fList)).flatten.filter(_.date.getTime >= since.getTime)
     }
@@ -443,14 +443,14 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
          |SELECT $positionsCol, $installDateCol
          |FROM $tableName
          |WHERE $dateCol <= '$date'
-         |ORDER BY date DESC
+         |ORDER BY $dateCol DESC
          |LIMIT 1
          |""".stripMargin)
           .fetchAsyncScala[(Array[String], Array[Date])]
       )
       if (queryResult.isEmpty) {
         // If the results are empty, return a row with empty ids
-        (1 to numSegments).toList.map(pos => SegmentToM1Pos(date, None, toPosition(pos)))
+        (1 to totalSegments).toList.map(pos => SegmentToM1Pos(date, None, toPosition(pos)))
       }
       else {
         val list = queryResult.flatMap { result =>
@@ -470,7 +470,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
          |SELECT $dateCol
          |FROM $tableName
          |WHERE $dateCol <= '$date'
-         |ORDER BY date DESC
+         |ORDER BY $dateCol DESC
          |LIMIT 1
          |""".stripMargin)
           .fetchAsyncScala[Date]
@@ -486,7 +486,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
                         |SELECT $dateCol
                         |FROM $tableName
                         |WHERE $dateCol > '$date'
-                        |ORDER BY date
+                        |ORDER BY $dateCol
                         |LIMIT 1
                         |""".stripMargin)
           .fetchAsyncScala[Date]
@@ -501,7 +501,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
                         |SELECT $dateCol
                         |FROM $tableName
                         |WHERE $dateCol < '$date'
-                        |ORDER BY date DESC
+                        |ORDER BY $dateCol DESC
                         |LIMIT 1
                         |""".stripMargin)
           .fetchAsyncScala[Date]
@@ -519,8 +519,8 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       await(positionsOnDate(date)).find(_.dbPos == dbPos)
     }
 
-  override def resetTables(): Future[Boolean] =
+  def resetSegmentToM1PosTable(): Future[Boolean] =
     async {
-      await(dsl.truncate(SegmentToM1PosTable.tableName).executeAsyncScala()) >= 0
+      await(dsl.truncate(tableName).executeAsyncScala()) >= 0
     }
 }

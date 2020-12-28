@@ -164,10 +164,24 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
     getOption(Uri(s"$baseUri/currentSegmentAtPosition/$position"))
   }
 
+  override def resetJiraSegmentDataTable(): Future[Boolean] = async {
+    val uri      = Uri(s"$baseUri/resetJiraSegmentDataTable")
+    val request  = HttpRequest(HttpMethods.POST, uri = uri)
+    val response = await(Http().singleRequest(request))
+    response.status == OK
+  }
+
+  override def resetSegmentToM1PosTable(): Future[Boolean] = async {
+    val uri      = Uri(s"$baseUri/resetSegmentToM1PosTable")
+    val request  = HttpRequest(HttpMethods.POST, uri = uri)
+    val response = await(Http().singleRequest(request))
+    response.status == OK
+  }
+
   /**
    * Drops and recreates the database tables (for testing)
    */
-  override def resetTables(): Future[Boolean] =
+  def resetTables(): Future[Boolean] =
     async {
       val uri      = Uri(s"$baseUri/resetTables")
       val request  = HttpRequest(HttpMethods.POST, uri = uri)

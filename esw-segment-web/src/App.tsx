@@ -93,7 +93,6 @@ const App = (): JSX.Element => {
   }, [jiraMode])
 
   function sidebarOptionsChanged(viewMode: string|number, showSegmentIds: boolean, showSpares: boolean) {
-    console.log(`XXX sidebarOptionsChanged viewMode=${viewMode}, showSegIds=${showSegmentIds}`)
     setJiraMode(viewMode != 'installed')
     setViewMode(viewMode)
     setShowSegmentIds(showSegmentIds)
@@ -114,6 +113,7 @@ const App = (): JSX.Element => {
           <Content>
             <Mirror
               showSegmentIds={showSegmentIds}
+              showSpares={showSpares}
               posMap={posMap}
               mostRecentChange={mostRecentChange}
               updateDisplay={updateData}

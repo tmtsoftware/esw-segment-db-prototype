@@ -47,7 +47,7 @@ class SegmentToM1ApiTestBase(posTable: SegmentToM1Api) extends AsyncFunSuite {
 
   private def populateAllSegments(date: Date): Future[Unit] =
     async {
-      val positions = (1 to numSegments).toList.map { n =>
+      val positions = (1 to totalSegments).toList.map { n =>
         val sectorOffset = (n - 1) / 82 + 1
         val pos          = (n - 1) % segmentsPerSector + 1
         Some(f"SN$pos%02d-$sectorOffset")
@@ -57,7 +57,7 @@ class SegmentToM1ApiTestBase(posTable: SegmentToM1Api) extends AsyncFunSuite {
 
   test("Test with single segment positions") {
     async {
-      assert(await(posTable.resetTables()))
+      assert(await(posTable.resetSegmentToM1PosTable()))
       await(populateSomeSegments())
 
       assert(await(posTable.mostRecentChange(currentDate())) == Date.valueOf("2020-10-23"))
@@ -129,7 +129,7 @@ class SegmentToM1ApiTestBase(posTable: SegmentToM1Api) extends AsyncFunSuite {
       )
 
       val currentPositions = await(posTable.currentPositions()).toSet
-      assert(currentPositions.size == EswSegmentData.numSegments)
+      assert(currentPositions.size == EswSegmentData.totalSegments)
       assert(
         currentPositions.filter(_.maybeId.isDefined) == Set(
           new SegmentToM1Pos(Date.valueOf("2020-10-08"), "SN04-1", "A4"),
@@ -207,7 +207,7 @@ class SegmentToM1ApiTestBase(posTable: SegmentToM1Api) extends AsyncFunSuite {
 
   test("Test with all segment positions") {
     async {
-      assert(await(posTable.resetTables()))
+      assert(await(posTable.resetSegmentToM1PosTable()))
       await(populateAllSegments(dateRange1.from))
 
       assert(await(posTable.mostRecentChange(currentDate())) == dateRange1.from)

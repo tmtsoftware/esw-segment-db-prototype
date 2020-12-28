@@ -86,7 +86,7 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
       val sector      = position.head - 'A' + 1
       val segmentType = position.tail.toInt
       assert(
-        sector >= 1 && sector <= numSectors
+        sector >= 1 && sector <= numSectors + 1
           && segmentType >= 1 && segmentType <= segmentsPerSector
       )
       await(
@@ -109,7 +109,7 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
         .resultQuery(s"""
                         |SELECT $segmentIdCol, $sectorCol, $segmentTypeCol
                         |FROM $tableName
-                        |WHERE $sectorCol >= 1 AND $sectorCol <= 6
+                        |WHERE $sectorCol >= 1 AND $sectorCol <= 7
                         |AND $segmentTypeCol >= 1 AND $segmentTypeCol <= 82
                         |AND $statusCol != 'Disposed'
                         |""".stripMargin)
@@ -117,7 +117,7 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
     )
     if (queryResult.isEmpty) {
       // If the results are empty, return a row with empty ids
-      (1 to numSegments).toList.map(pos => SegmentToM1Pos(date, None, toPosition(pos)))
+      (1 to totalSegments).toList.map(pos => SegmentToM1Pos(date, None, toPosition(pos)))
     }
     else {
       queryResult.map { result =>
@@ -127,4 +127,10 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
       }
     }
   }
+
+  override def resetJiraSegmentDataTable(): Future[Boolean] =
+    async {
+      await(dsl.truncate(tableName).executeAsyncScala()) >= 0
+    }
+
 }

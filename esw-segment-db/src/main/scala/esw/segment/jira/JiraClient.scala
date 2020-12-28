@@ -149,7 +149,7 @@ class JiraClient()(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec:
       val segmentId                      = jiraData.fields.summary.replace("M1 Segment ", "")
       val jiraKey                        = jiraData.key
       val jiraUri                        = s"$jiraBrowseUri/$jiraKey"
-      val sector                         = jiraData.fields.sector.value.toIntOption.getOrElse(-1)
+      val sector                         = jiraData.fields.sector.value.split(' ').head.toIntOption.getOrElse(-1)
       val segmentType                    = jiraData.fields.segmentType.value.toIntOption.getOrElse(-1)
       val partNumber                     = jiraData.fields.partNumber
       val originalPartnerBlankAllocation = jiraData.fields.originalPartnerBlankAllocation.value

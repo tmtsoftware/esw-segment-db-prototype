@@ -138,5 +138,5 @@ trait SegmentToM1Api {
    *
    * @return true if OK
    */
-  def resetTables(): Future[Boolean]
+  def resetSegmentToM1PosTable(): Future[Boolean]
 }

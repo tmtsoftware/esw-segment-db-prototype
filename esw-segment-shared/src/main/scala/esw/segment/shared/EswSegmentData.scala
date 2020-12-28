@@ -27,7 +27,7 @@ object EswSegmentData {
   def toDbPosition(loc: String): Int = {
     val sectorOffset = loc.head - 'A'
     val n          = loc.tail.toInt
-    assert(sectorOffset >= 0 && sectorOffset < numSectors && n >= 1 && n <= segmentsPerSector)
+    assert(sectorOffset >= 0 && sectorOffset <= numSectors && n >= 1 && n <= segmentsPerSector)
     sectorOffset * segmentsPerSector + n
   }
 
@@ -35,7 +35,7 @@ object EswSegmentData {
    * Convert a one based index in an array of all segments to a segment position like F32 or A2
    */
   def toPosition(dbPos: Int): String = {
-    assert(dbPos >= 1 && dbPos <= numSegments)
+    assert(dbPos >= 1 && dbPos <= totalSegments)
     val sectorOffset = (dbPos - 1) / 82
     val sector       = ('A' + sectorOffset).toChar
     val num          = (dbPos - 1) % segmentsPerSector + 1

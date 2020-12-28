@@ -26,4 +26,8 @@ trait JiraSegmentDataApi {
    */
   def availableSegmentIdsForPos(position: String): Future[List[String]]
 
+  /**
+   * Truncates the database table
+   */
+  def resetJiraSegmentDataTable(): Future[Boolean]
 }

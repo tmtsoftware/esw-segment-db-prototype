@@ -6,6 +6,7 @@ import { SegmentToM1Pos } from './SegmentData'
 
 type MirrorProps = {
   showSegmentIds: boolean
+  showSpares: boolean
   posMap: Map<string, SegmentToM1Pos>
   mostRecentChange: number
   updateDisplay: () => void
@@ -15,11 +16,15 @@ type MirrorProps = {
  * Represents the TMT mirror
  *
  * @param showSegmentIds if true, display segment ids instead of positions in the segments
- * @param refDate the reference date to use for the display (default: current date)
+ * @param showSpares if true, only display the spare segments
+ * @param posMap
+ * @param mostRecentChange
+ * @param updateDisplay
  * @constructor
  */
 export const Mirror = ({
   showSegmentIds,
+  showSpares,
   posMap,
   mostRecentChange,
   updateDisplay
@@ -27,7 +32,7 @@ export const Mirror = ({
   if (posMap.size == 0 || mostRecentChange == 0) {
     return <div />
   } else {
-    const sectors = ['A', 'B', 'C', 'D', 'E', 'F']
+    const sectors = showSpares ? ['G'] : ['A', 'B', 'C', 'D', 'E', 'F']
     const d = Config.mirrorDiameter
     return (
       <div className='mirror-container'>

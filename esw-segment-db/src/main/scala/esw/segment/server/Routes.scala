@@ -90,7 +90,16 @@ class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDat
         } ~
         // Drops and recreates the database tables (for testing)
         path("resetTables") {
-          complete(posTable.resetTables().map(if (_) OK else BadRequest))
+          val f1 = jiraSegmentDataTable.resetJiraSegmentDataTable()
+          val f2 = posTable.resetSegmentToM1PosTable()
+          val result = Future.sequence(List(f1, f2)).map(_.forall(b => b))
+          complete(result.map(if (_) OK else BadRequest))
+        } ~
+        path("resetJiraSegmentDataTable") {
+          complete(jiraSegmentDataTable.resetJiraSegmentDataTable().map(if (_) OK else BadRequest))
+        } ~
+        path("resetSegmentToM1PosTable") {
+          complete(posTable.resetSegmentToM1PosTable().map(if (_) OK else BadRequest))
         } ~
         // Returns the most recent date that segments were changed up to the given date, or the current date
         path("mostRecentChange") {

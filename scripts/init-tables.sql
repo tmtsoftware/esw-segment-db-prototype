@@ -5,8 +5,8 @@
 CREATE TABLE segment_to_m1_pos
 (
     date         DATE NOT NULL PRIMARY KEY,
-    positions    TEXT[492],
-    install_date DATE[492]
+    positions    TEXT[574],
+    install_date DATE[574]
 );
 
 
