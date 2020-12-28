@@ -8,11 +8,13 @@ const {Text} = Typography;
 type TopbarDateChooserProps = {
   mostRecentChange: Date
   updateDisplay: (refDate: Date) => void
+  jiraMode: Boolean
 }
 
 export const TopbarDateChooser = ({
                                     mostRecentChange,
-                                    updateDisplay
+                                    updateDisplay,
+                                    jiraMode
                                   }: TopbarDateChooserProps): JSX.Element => {
   const [selectedDate, setSelectedDate] = useState<Date>(mostRecentChange)
 
@@ -64,12 +66,14 @@ export const TopbarDateChooser = ({
   }
 
   return (
-    <span className={'topbarDateChooser'}>
+    jiraMode ? <span/> :
+      <span className={'topbarDateChooser'}>
       <Tooltip placement="bottom" title='Go back to the previous segment change'>
       <Button
         type="text"
         icon={<LeftOutlined/>}
         size={"large"}
+        style={{width: '25px'}}
         onClick={() => prevDate()}
       />
       </Tooltip>
@@ -78,6 +82,7 @@ export const TopbarDateChooser = ({
           type="text"
           icon={<BorderOutlined/>}
           size={"large"}
+          style={{width: '25px'}}
           onClick={() => today()}
         />
       </Tooltip>
@@ -86,13 +91,14 @@ export const TopbarDateChooser = ({
           type="text"
           icon={<RightOutlined/>}
           size={"large"}
+          style={{width: '25px'}}
           onClick={() => nextDate()}
         />
       </Tooltip>
 
-      {/*// XXX TODO FIXME: Doesn't display most recent date if segment changed and this item was on previous most recent date */}
-      {/*<Text className={'topbarDateChooserText'}>{selectedDate.toLocaleDateString('en-US')}</Text>*/}
-      <Text className={'topbarDateChooserText'}>{selectedDate.toDateString()}</Text>
+        {/*// XXX TODO FIXME: Doesn't display most recent date if segment changed and this item was on previous most recent date */}
+        {/*<Text className={'topbarDateChooserText'}>{selectedDate.toLocaleDateString('en-US')}</Text>*/}
+        <Text className={'topbarDateChooserText'}>{selectedDate.toDateString()}</Text>
     </span>
   )
 }

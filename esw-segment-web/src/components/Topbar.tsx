@@ -6,11 +6,13 @@ import {CheckboxChangeEvent} from "antd/lib/checkbox"
 type TopbarProps = {
   mostRecentChange: Date
   updateDisplay: (showSegmentIds: boolean, refDate: Date) => void
+  jiraMode: Boolean
 }
 
 export const Topbar = ({
                          mostRecentChange,
-                         updateDisplay
+                         updateDisplay,
+                         jiraMode
                        }: TopbarProps): JSX.Element => {
   const [showSegmentIds, setShowSegmentIds] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(mostRecentChange)
@@ -29,6 +31,7 @@ export const Topbar = ({
     return (
       <Tooltip placement="bottom" title='Display the last part of the segment id instead of the segment position'>
         <Checkbox
+          style={{paddingTop: '10px'}}
           checked={showSegmentIds}
           onChange={showSegmentIdsChanged}>
           Show Segment IDs
@@ -39,7 +42,7 @@ export const Topbar = ({
 
   return (
     <PageHeader
-      style={{backgroundColor: '#b2c4db'}}
+      style={{backgroundColor: '#b2c4db', height: '45px', paddingTop: '0'}}
       ghost={true}
       className={'topbarPageHeader'}
       title="TMT Segment Database"
@@ -49,6 +52,7 @@ export const Topbar = ({
           <TopbarDateChooser
             mostRecentChange={mostRecentChange}
             updateDisplay={refDateChanged}
+            jiraMode={jiraMode}
           />
         </span>
       }

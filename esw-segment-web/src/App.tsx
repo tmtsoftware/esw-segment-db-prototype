@@ -50,7 +50,7 @@ const App = (): JSX.Element => {
   }
 
   function updateDataNow(refDate: Date) {
-    if (viewMode == "installed") {
+    if (!jiraMode) {
       fetchData(refDate).then(({mostRecentChange, positionsOnDate}) => {
         const posMap: Map<string, SegmentToM1Pos> = positionsOnDate.reduce(
           (map, obj) => map.set(obj.position, obj),
@@ -106,6 +106,7 @@ const App = (): JSX.Element => {
         <Topbar
           mostRecentChange={new Date(mostRecentChange)}
           updateDisplay={updateDisplay}
+          jiraMode={jiraMode}
         />
         <Layout>
           <Sidebar menuItemSelected={menuItemSelected}/>
