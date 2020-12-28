@@ -8,7 +8,7 @@ const {Text} = Typography;
 type TopbarDateChooserProps = {
   mostRecentChange: Date
   updateDisplay: (refDate: Date) => void
-  jiraMode: Boolean
+  jiraMode: boolean
 }
 
 export const TopbarDateChooser = ({
@@ -73,7 +73,6 @@ export const TopbarDateChooser = ({
         type="text"
         icon={<LeftOutlined/>}
         size={"large"}
-        style={{width: '25px'}}
         onClick={() => prevDate()}
       />
       </Tooltip>
@@ -82,7 +81,6 @@ export const TopbarDateChooser = ({
           type="text"
           icon={<BorderOutlined/>}
           size={"large"}
-          style={{width: '25px'}}
           onClick={() => today()}
         />
       </Tooltip>
@@ -91,7 +89,6 @@ export const TopbarDateChooser = ({
           type="text"
           icon={<RightOutlined/>}
           size={"large"}
-          style={{width: '25px'}}
           onClick={() => nextDate()}
         />
       </Tooltip>

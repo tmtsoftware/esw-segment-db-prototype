@@ -6,16 +6,16 @@ import {SegmentData, SegmentToM1Pos} from './components/SegmentData'
 import {Layout} from "antd"
 import 'antd/dist/antd.css'
 import {Sidebar} from "./components/Sidebar";
-import {MenuInfo} from "rc-menu/lib/interface";
 
 const {Content} = Layout;
 
 const App = (): JSX.Element => {
   const [showSegmentIds, setShowSegmentIds] = useState<boolean>(false)
+  const [showSpares, setShowSpares] = useState<boolean>(false)
   const [posMap, setPosMap] = useState<Map<string, SegmentToM1Pos>>(new Map())
   const [mostRecentChange, setMostRecentChange] = useState<number>(0)
   const [viewMode, setViewMode] = useState<React.Key>("installed")
-  const [jiraMode, setJiraMode] = useState<Boolean>(false)
+  const [jiraMode, setJiraMode] = useState<boolean>(false)
 
   async function fetchData(refDate: Date) {
     const requestOptions = {
@@ -84,8 +84,7 @@ const App = (): JSX.Element => {
       })
   }
 
-  function updateDisplay(showSegmentIds: boolean, refDate: Date) {
-    setShowSegmentIds(showSegmentIds)
+  function updateDisplay(refDate: Date) {
     updateDataNow(refDate)
   }
 
@@ -93,10 +92,12 @@ const App = (): JSX.Element => {
     updateData()
   }, [jiraMode])
 
-  function menuItemSelected(info: MenuInfo) {
-    console.log(`XXX menuItemSelected ${info.key}`)
-    setJiraMode(info.key != 'installed')
-    setViewMode(info.key)
+  function sidebarOptionsChanged(viewMode: string|number, showSegmentIds: boolean, showSpares: boolean) {
+    console.log(`XXX sidebarOptionsChanged viewMode=${viewMode}, showSegIds=${showSegmentIds}`)
+    setJiraMode(viewMode != 'installed')
+    setViewMode(viewMode)
+    setShowSegmentIds(showSegmentIds)
+    setShowSpares(showSpares)
   }
 
   if (mostRecentChange == 0) return <div/>
@@ -109,7 +110,7 @@ const App = (): JSX.Element => {
           jiraMode={jiraMode}
         />
         <Layout>
-          <Sidebar menuItemSelected={menuItemSelected}/>
+          <Sidebar sidebarOptionsChanged={sidebarOptionsChanged}/>
           <Content>
             <Mirror
               showSegmentIds={showSegmentIds}

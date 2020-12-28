@@ -1,14 +1,49 @@
-import React from 'react'
-import {Layout, Menu} from "antd";
-import {MenuClickEventHandler} from 'rc-menu/lib/interface';
+import React, {useEffect, useState} from 'react'
+import {Divider, Layout, Menu} from "antd";
+import {MenuInfo, SelectInfo} from 'rc-menu/lib/interface';
 
 const {Sider} = Layout;
 
 type SidebarProps = {
-  menuItemSelected: MenuClickEventHandler
+  sidebarOptionsChanged: (viewMode: string|number, showSegmentIds: boolean, showSpares: boolean) => void
 }
 
-export const Sidebar = ({menuItemSelected}: SidebarProps): JSX.Element => {
+export const Sidebar = ({sidebarOptionsChanged}: SidebarProps): JSX.Element => {
+
+  const [viewMode, setViewMode] = useState<string|number>("installed")
+  const [showSegmentIds, setShowSegmentIds] = useState<boolean>(false)
+  const [showSpares, setShowSpares] = useState<boolean>(false)
+
+  useEffect(() => {
+    sidebarOptionsChanged(viewMode, showSegmentIds, showSpares)
+  }, [viewMode, showSegmentIds, showSpares])
+
+  function menuItemSelected(info: MenuInfo) {
+    setViewMode(info.key)
+  }
+
+  function menuOptionSelected(info: SelectInfo) {
+    switch (info.key) {
+      case 'showSegmentIds':
+        setShowSegmentIds(true)
+        break
+      case 'showSpares':
+        setShowSpares(true)
+        break
+    }
+  }
+
+  function menuOptionDeselected(info: SelectInfo) {
+    switch (info.key) {
+      case 'showSegmentIds':
+        setShowSegmentIds(false)
+        break
+      case 'showSpares':
+        setShowSpares(false)
+        break
+    }
+  }
+
   return (
     <Sider>
       <Menu
@@ -39,6 +74,20 @@ export const Sidebar = ({menuItemSelected}: SidebarProps): JSX.Element => {
         </Menu.Item>
         <Menu.Item key="syncWithJira">
           Sync with JIRA
+        </Menu.Item>
+      </Menu>
+      <Divider dashed style={{backgroundColor: '#b2c4db'}}/>
+      <Menu
+        multiple={true}
+        theme="dark"
+        onSelect={menuOptionSelected}
+        onDeselect={menuOptionDeselected}
+        mode="inline">
+        <Menu.Item key="showSegmentIds">
+          Show Segment IDs
+        </Menu.Item>
+        <Menu.Item key="showSpares">
+          Show Spares
         </Menu.Item>
       </Menu>
     </Sider>
