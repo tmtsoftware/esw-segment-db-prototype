@@ -13,15 +13,11 @@ import akka.http.scaladsl.model.headers.{Authorization, BasicHttpCredentials}
 import spray.json._
 
 //noinspection TypeAnnotation
-class JiraClient()(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec: ExecutionContextExecutor)
-    extends SprayJsonSupport
-    with DefaultJsonProtocol
-    with NullOptions {
-
+object JiraClient extends SprayJsonSupport with DefaultJsonProtocol with NullOptions {
   private val jiraBaseUri   = "https://tmt-project.atlassian.net"
   private val jiraIssueUri  = s"$jiraBaseUri/rest/api/latest/issue"
   private val jiraSearchUri = s"$jiraBaseUri/rest/api/latest/search"
-  private val jiraBrowseUri = s"$jiraBaseUri/browse"
+  val jiraBrowseUri         = s"$jiraBaseUri/browse"
 
   if (!(sys.env.contains("JIRA_USER") && sys.env.contains("JIRA_API_TOKEN"))) {
     throw new RuntimeException("Please set JIRA_USER and JIRA_API_TOKEN environment variables.")
@@ -133,6 +129,16 @@ class JiraClient()(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec:
 
   private val authHeaders = List(Authorization(BasicHttpCredentials(jiraUser, jiraApiToken)))
 
+  // Convert sector and segmentType from JIRA to position like F32
+  def toPos(sector: Int, segmentType: Int): String = {
+    val sectorName = ('A' + sector - 1).toChar
+    s"${sectorName}$segmentType"
+  }
+}
+
+class JiraClient()(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec: ExecutionContextExecutor) {
+  import JiraClient._
+
   /**
    * Gets the JIRA segment data for the given segment number
    *
@@ -151,6 +157,7 @@ class JiraClient()(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec:
       val jiraUri                        = s"$jiraBrowseUri/$jiraKey"
       val sector                         = jiraData.fields.sector.value.split(' ').head.toIntOption.getOrElse(-1)
       val segmentType                    = jiraData.fields.segmentType.value.toIntOption.getOrElse(-1)
+      val pos                            = JiraClient.toPos(sector, segmentType)
       val partNumber                     = jiraData.fields.partNumber
       val originalPartnerBlankAllocation = jiraData.fields.originalPartnerBlankAllocation.value
       val itemLocation                   = jiraData.fields.itemLocation.value
@@ -163,6 +170,7 @@ class JiraClient()(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec:
       val shippingAuthorizations         = jiraData.fields.shippingAuthorizations
 
       JiraSegmentData(
+        pos,
         segmentId,
         jiraKey,
         jiraUri,

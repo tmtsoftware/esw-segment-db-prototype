@@ -128,6 +128,9 @@ class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDat
         path("plannedPositions") {
           complete(jiraSegmentDataTable.plannedPositions())
         } ~
+        path("segmentData") {
+          complete(jiraSegmentDataTable.segmentData())
+        } ~
         // Gets the current segment position for the given segment id.
         path("currentSegmentPosition" / Segment) { segmentId =>
           complete(posTable.currentSegmentPosition(segmentId))

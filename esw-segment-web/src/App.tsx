@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react'
 import './App.css'
 import {Topbar} from './components/Topbar'
 import {Mirror} from './components/Mirror'
-import {SegmentData, SegmentToM1Pos} from './components/SegmentData'
+import {JiraSegmentData, SegmentData, SegmentToM1Pos} from './components/SegmentData'
 import {Layout} from "antd"
 import 'antd/dist/antd.css'
 import {Sidebar} from "./components/Sidebar";
@@ -13,6 +13,7 @@ const App = (): JSX.Element => {
   const [showSegmentIds, setShowSegmentIds] = useState<boolean>(false)
   const [showSpares, setShowSpares] = useState<boolean>(false)
   const [posMap, setPosMap] = useState<Map<string, SegmentToM1Pos>>(new Map())
+  const [segmentMap, setSegmentMap] = useState<Map<string, JiraSegmentData>>(new Map())
   const [mostRecentChange, setMostRecentChange] = useState<number>(0)
   const [viewMode, setViewMode] = useState<React.Key>("installed")
   const [jiraMode, setJiraMode] = useState<boolean>(false)
@@ -26,46 +27,78 @@ const App = (): JSX.Element => {
 
     const [
       mostRecentChangeResponse,
-      positionsOnDateResponse
+      positionsOnDateResponse,
+      segmentDataResponse
     ] = await Promise.all([
       fetch(`${SegmentData.baseUri}/mostRecentChange`, requestOptions),
-      fetch(`${SegmentData.baseUri}/positionsOnDate`, requestOptions)
+      fetch(`${SegmentData.baseUri}/positionsOnDate`, requestOptions),
+      fetch(`${SegmentData.baseUri}/segmentData`),
     ])
 
     const mostRecentChange: number = await mostRecentChangeResponse.json()
     const positionsOnDate: Array<SegmentToM1Pos> = await positionsOnDateResponse.json()
+    const segmentData: Array<JiraSegmentData> = await segmentDataResponse.json()
 
     return {
       mostRecentChange,
-      positionsOnDate
+      positionsOnDate,
+      segmentData
     }
   }
 
   async function fetchPlannedData() {
-    const positionsResponse = await fetch(`${SegmentData.baseUri}/plannedPositions`)
-    const positions: Array<SegmentToM1Pos> = await positionsResponse.json()
+    const [
+      plannedPositionsResponse,
+      segmentDataResponse
+    ] = await Promise.all([
+      fetch(`${SegmentData.baseUri}/plannedPositions`),
+      fetch(`${SegmentData.baseUri}/segmentData`),
+    ])
+
+    const plannedPositions: Array<SegmentToM1Pos> = await plannedPositionsResponse.json()
+    const segmentData: Array<JiraSegmentData> = await segmentDataResponse.json()
+
     return {
-      positions
+      plannedPositions,
+      segmentData
     }
   }
 
+  // async function fetchPlannedData() {
+  //   const positionsResponse = await fetch(`${SegmentData.baseUri}/plannedPositions`)
+  //   const positions: Array<SegmentToM1Pos> = await positionsResponse.json()
+  //   return {
+  //     positions
+  //   }
+  // }
+
   function updateDataNow(refDate: Date) {
     if (!jiraMode) {
-      fetchData(refDate).then(({mostRecentChange, positionsOnDate}) => {
+      fetchData(refDate).then(({mostRecentChange, positionsOnDate, segmentData}) => {
         const posMap: Map<string, SegmentToM1Pos> = positionsOnDate.reduce(
           (map, obj) => map.set(obj.position, obj),
           new Map()
         )
         setPosMap(posMap)
+        const segMap: Map<string, JiraSegmentData> = segmentData.reduce(
+          (map, obj) => map.set(obj.position, obj),
+          new Map()
+        )
+        setSegmentMap(segMap)
         setMostRecentChange(mostRecentChange)
       })
     } else {
-      fetchPlannedData().then(({positions}) => {
-        const posMap: Map<string, SegmentToM1Pos> = positions.reduce(
+      fetchPlannedData().then(({plannedPositions, segmentData}) => {
+        const posMap: Map<string, SegmentToM1Pos> = plannedPositions.reduce(
           (map, obj) => map.set(obj.position, obj),
           new Map()
         )
         setPosMap(posMap)
+        const segMap: Map<string, JiraSegmentData> = segmentData.reduce(
+          (map, obj) => map.set(obj.position, obj),
+          new Map()
+        )
+        setSegmentMap(segMap)
       })
     }
   }
@@ -92,7 +125,7 @@ const App = (): JSX.Element => {
     updateData()
   }, [jiraMode])
 
-  function sidebarOptionsChanged(viewMode: string|number, showSegmentIds: boolean, showSpares: boolean) {
+  function sidebarOptionsChanged(viewMode: string | number, showSegmentIds: boolean, showSpares: boolean) {
     setJiraMode(viewMode != 'installed')
     setViewMode(viewMode)
     setShowSegmentIds(showSegmentIds)
@@ -115,8 +148,10 @@ const App = (): JSX.Element => {
               showSegmentIds={showSegmentIds}
               showSpares={showSpares}
               posMap={posMap}
+              segmentMap={segmentMap}
               mostRecentChange={mostRecentChange}
               updateDisplay={updateData}
+              viewMode={viewMode}
             />
           </Content>
         </Layout>

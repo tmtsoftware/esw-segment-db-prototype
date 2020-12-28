@@ -3,15 +3,14 @@ package esw.segment.db
 import org.jooq.DSLContext
 import csw.database.scaladsl.JooqExtentions._
 import esw.segment.jira.JiraClient
-import esw.segment.shared.{EswSegmentData, JiraSegmentData, JiraSegmentDataApi}
+import esw.segment.shared.{JiraSegmentData, JiraSegmentDataApi}
 
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
 import JiraSegmentDataTable._
+import esw.segment.jira.JiraClient.{jiraBrowseUri, toPos}
 import esw.segment.shared.EswSegmentData.SegmentToM1Pos
 import esw.segment.shared.EswSegmentData._
-
-import java.sql.Date
 
 //noinspection ScalaUnusedSymbol
 object JiraSegmentDataTable {
@@ -32,12 +31,6 @@ object JiraSegmentDataTable {
   private val workPackagesCol                   = "work_packages"
   private val acceptanceCertificatesCol         = "acceptance_certificates"
   private val acceptanceDateBlankCol            = "acceptance_date_blank"
-
-  // Convert sector and sectorType from JIRA to position like F32
-  private def toPos(sector: Int, sectorType: Int): String  = {
-    val sectorName = ('A' + sector - 1).toChar
-    s"${sectorName}$sectorType"
-  }
 }
 
 class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec: ExecutionContext) extends JiraSegmentDataApi {
@@ -95,38 +88,94 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
             s"""
                |SELECT $segmentIdCol
                |FROM $tableName
-               |WHERE $segmentTypeCol = '${segmentType}' AND $statusCol != 'Disposed'
+               |WHERE $segmentTypeCol = '$segmentType' AND $statusCol != 'Disposed'
                |""".stripMargin
           )
           .fetchAsyncScala[String]
       )
     }
 
-  override def plannedPositions(): Future[List[SegmentToM1Pos]] = async {
-    val date = currentDate()
-    val queryResult = await(
-      dsl
-        .resultQuery(s"""
+  override def plannedPositions(): Future[List[SegmentToM1Pos]] =
+    async {
+      val date = currentDate()
+      val queryResult = await(
+        dsl
+          .resultQuery(s"""
                         |SELECT $segmentIdCol, $sectorCol, $segmentTypeCol
                         |FROM $tableName
                         |WHERE $sectorCol >= 1 AND $sectorCol <= 7
                         |AND $segmentTypeCol >= 1 AND $segmentTypeCol <= 82
                         |AND $statusCol != 'Disposed'
                         |""".stripMargin)
-        .fetchAsyncScala[(String, Int, Int)]
-    )
-    if (queryResult.isEmpty) {
-      // If the results are empty, return a row with empty ids
-      (1 to totalSegments).toList.map(pos => SegmentToM1Pos(date, None, toPosition(pos)))
-    }
-    else {
-      queryResult.map { result =>
-        val (segmentId, sector, segmentType)  = result
-        val pos = toPos(sector, segmentType)
-        SegmentToM1Pos(date, Option(segmentId), pos)
+          .fetchAsyncScala[(String, Int, Int)]
+      )
+      if (queryResult.isEmpty) {
+        // If the results are empty, return a row with empty ids
+        (1 to totalSegments).toList.map(pos => SegmentToM1Pos(date, None, toPosition(pos)))
+      }
+      else {
+        queryResult.map { result =>
+          val (segmentId, sector, segmentType) = result
+          val pos                              = toPos(sector, segmentType)
+          SegmentToM1Pos(date, Option(segmentId), pos)
+        }
       }
     }
-  }
+
+  override def segmentData(): Future[List[JiraSegmentData]] =
+    async {
+      val queryResult = await(
+        dsl
+          .resultQuery(s"""
+                        |SELECT *
+                        |FROM $tableName
+                        |WHERE $sectorCol >= 1 AND $sectorCol <= 7
+                        |AND $segmentTypeCol >= 1 AND $segmentTypeCol <= 82
+                        |AND $statusCol != 'Disposed'
+                        |""".stripMargin)
+          .fetchAsyncScala[
+            (String, String, Int, Int, String, String, String, String, String, String, String, String, String, String)
+          ]
+      )
+      queryResult.map { result =>
+        val (
+          segmentId,
+          jiraKey,
+          sector,
+          segmentType,
+          partNumber,
+          originalPartnerBlankAllocation,
+          itemLocation,
+          riskOfLoss,
+          components,
+          status,
+          workPackages,
+          acceptanceCertificates,
+          acceptanceDateBlank,
+          shippingAuthorizations
+        )           = result
+        val pos     = JiraClient.toPos(sector, segmentType)
+        val jiraUri = s"$jiraBrowseUri/$jiraKey"
+        JiraSegmentData(
+          pos,
+          segmentId,
+          jiraKey,
+          jiraUri,
+          sector,
+          segmentType,
+          partNumber,
+          originalPartnerBlankAllocation,
+          itemLocation,
+          riskOfLoss,
+          components,
+          status,
+          workPackages,
+          acceptanceCertificates,
+          acceptanceDateBlank,
+          shippingAuthorizations
+        )
+      }
+    }
 
   override def resetJiraSegmentDataTable(): Future[Boolean] =
     async {

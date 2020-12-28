@@ -1,15 +1,17 @@
 import React from 'react'
 import './Mirror.css'
-import { Sector } from './Sector'
-import { Config } from './Config'
-import { SegmentToM1Pos } from './SegmentData'
+import {Sector} from './Sector'
+import {Config} from './Config'
+import {JiraSegmentData, SegmentToM1Pos} from './SegmentData'
 
 type MirrorProps = {
   showSegmentIds: boolean
   showSpares: boolean
   posMap: Map<string, SegmentToM1Pos>
+  segmentMap: Map<string, JiraSegmentData>
   mostRecentChange: number
   updateDisplay: () => void
+  viewMode: React.Key
 }
 
 /**
@@ -17,20 +19,24 @@ type MirrorProps = {
  *
  * @param showSegmentIds if true, display segment ids instead of positions in the segments
  * @param showSpares if true, only display the spare segments
- * @param posMap
- * @param mostRecentChange
- * @param updateDisplay
+ * @param posMap map pos ("A23") to object containing segment id and date
+ * @param segmentMap maps pos ("A23") to data from JIRA task
+ * @param mostRecentChange date of most recent change to installed segments
+ * @param updateDisplay function to update the display
+ * @param viewMode string indicating the selected view (from the Sidebar menu)
  * @constructor
  */
 export const Mirror = ({
-  showSegmentIds,
-  showSpares,
-  posMap,
-  mostRecentChange,
-  updateDisplay
-}: MirrorProps): JSX.Element => {
+                         showSegmentIds,
+                         showSpares,
+                         posMap,
+                         segmentMap,
+                         mostRecentChange,
+                         updateDisplay,
+                         viewMode
+                       }: MirrorProps): JSX.Element => {
   if (posMap.size == 0 || mostRecentChange == 0) {
-    return <div />
+    return <div/>
   } else {
     const sectors = showSpares ? ['G'] : ['A', 'B', 'C', 'D', 'E', 'F']
     const d = Config.mirrorDiameter
@@ -54,9 +60,11 @@ export const Mirror = ({
                 sector={sector}
                 key={sector}
                 posMap={posMap}
+                segmentMap={segmentMap}
                 mostRecentChange={mostRecentChange}
                 showSegmentIds={showSegmentIds}
                 updateDisplay={updateDisplay}
+                viewMode={viewMode}
               />
             ))}
           </g>

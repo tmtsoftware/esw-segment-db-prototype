@@ -13,22 +13,25 @@ export interface SegmentToM1Pos {
   position: string
 }
 
-// // case class AllSegmentPositions(date: Date, allPositions: List[Option[String]])
-// export interface AllSegmentPositions {
-//   date: number
-//   // null entry means missing segment
-//   allPositions: Array<string>
-// }
-//
-// export interface DateRange {
-//   from: number
-//   to: number
-// }
-//
-// // XXX SegmentToM1Positions: {"date":1603231200000,"positions":[["SN000X","F32"],[null,"F33"]]}
-// // case class SegmentToM1Positions(date: Date, positions: List[(Option[String], String)])
-// export interface SegmentToM1Positions {
-//   date: number
-//   // Array of pairs of (segment-id, pos) null id means missing segment
-//   positions: Array<Array<string>>
-// }
+/**
+ * Segment data extracted from JIRA
+ */
+export interface JiraSegmentData {
+  position: string,
+  segmentId: string,
+  jiraKey: string,
+  jiraUri: string,
+  sector: number,
+  segmentType: number,
+  partNumber: string,
+  originalPartnerBlankAllocation: string,
+  itemLocation: string,
+  riskOfLoss: string,
+  components: string,
+  status: string,
+  workPackages: string,
+  acceptanceCertificates: string,
+  acceptanceDateBlank: string,
+  shippingAuthorizations: string
+}
+

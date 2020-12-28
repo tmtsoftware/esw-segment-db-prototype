@@ -1,33 +1,5 @@
 .segment {
-  /*transition: 0.4s;*/
   cursor: pointer;
-}
-.A, .D {
-  fill: #eeda00;
-}
-.A.empty, .D.empty {
-  fill: #f8ee92;
-}
-
-.B, .E {
-  fill: #ffcc99;
-}
-.B.empty, .E.empty {
-  fill: #ffefe0;
-}
-
-.C, .F {
-  fill: #bbe0e3;
-}
-.C.empty, .F.empty {
-  fill: #e2ecec;
-}
-
-.G {
-  fill: #e3e0e0;
-}
-.G.empty {
-  fill: #f3e8e8;
 }
 
 .segment:hover {
@@ -40,7 +12,6 @@
   width: 100%;
   padding: 0;
   padding-bottom: 95%;
-  /*background-color: #141631;*/
   background-color: #383b3e;
 }
 

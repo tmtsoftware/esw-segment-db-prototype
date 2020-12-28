@@ -15,9 +15,13 @@ trait JiraSegmentDataApi {
 
   /**
    * Returns the segment positions as defined in the JIRA issues
-   * (Missing segments are also included in the returned list).
    */
   def plannedPositions(): Future[List[SegmentToM1Pos]]
+
+  /**
+   * Gets the JIRA segment data for all segments
+   */
+  def segmentData(): Future[List[JiraSegmentData]]
 
   /**
    * Gets a list of segment-ids that can be installed at the given position

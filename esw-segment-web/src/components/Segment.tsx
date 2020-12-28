@@ -1,42 +1,49 @@
 import React, {useState} from 'react'
 import {Config} from './Config'
 import {SegmentDetails} from './SegmentDetails'
+import {JiraSegmentData} from "./SegmentData";
 
 type SegmentProps = {
   id?: string
   pos: string
+  segmentData?: JiraSegmentData
   date?: number
   mostRecentChange: number
   showSegmentIds: boolean
   x: number
   y: number
   updateDisplay: () => void
+  viewMode: React.Key
 }
 
 /**
  * Represents one of the 492 segments of the mirror
  * @param id the segment id
  * @param pos A1 to F82
+ * @param segmentData data from JIRA task for segment
  * @param date date the segment was installed
  * @param mostRecentChange date of most recent segment change
  * @param showSegmentIds if true, display the segment id, otherwise the position
  * @param x x offset of segment in the display
  * @param y y offset of segment in the display
  * @param updateDisplay function to update the display after a DB change
+ * @param viewMode string indicating the selected view (from the Sidebar menu)
  * @constructor
  */
 export const Segment = ({
                           id,
                           pos,
+                          segmentData,
                           date,
                           mostRecentChange,
                           showSegmentIds,
                           x,
                           y,
-                          updateDisplay
+                          updateDisplay,
+                          viewMode
                         }: SegmentProps): JSX.Element => {
   const sector = pos.charAt(0)
-  const classNames = `segment ${sector}` + (id ? '' : ' empty')
+  const fill = getFillColor()
   const labelXOffset = pos.length == 2 ? -4 : -6
   const dateStr = date ? new Date(date).toDateString() : ''
   const idStr = id ? id : ''
@@ -44,6 +51,25 @@ export const Segment = ({
   const fontSize = showSegmentIds ? 6 : 7
 
   const [open, setOpen] = useState<boolean>(false)
+
+  function getFillColor(): string | undefined {
+    let c
+    switch(viewMode) {
+      case "segmentAllocation":
+        c = Config.segmentAllocationColors.get(segmentData?.originalPartnerBlankAllocation || "TBD")
+        break
+      case "itemLocation":
+        c = Config.itemLocationColors.get(segmentData?.itemLocation || "TBD")
+        break
+      case "riskOfLoss":
+      case "components":
+      case "status":
+      default:
+        c = id ? Config.sectorColors.get(sector) : Config.sectorEmptyColors.get(sector)
+        break
+    }
+    return c ? c : Config.undefinedColor
+  }
 
   function openDialog() {
     setOpen(true)
@@ -83,7 +109,8 @@ export const Segment = ({
     <g
       id={pos}
       key={pos}
-      className={classNames}
+      className={'segment'}
+      fill={fill}
       transform={`translate(${x}, ${y})`}>
       <title>{toolTip()}</title>
       <polygon

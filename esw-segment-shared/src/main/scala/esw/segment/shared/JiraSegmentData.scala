@@ -3,6 +3,7 @@ package esw.segment.shared
 /**
  * Data scanned from JIRA issues
  *
+ * @param position the planned position ("A32", "F81")
  * @param segmentId the segment id ("SN-072")
  * @param jiraKey base name of JIRA task ("M1ST-72")
  * @param jiraUri link to JIRA issue
@@ -20,6 +21,7 @@ package esw.segment.shared
  * @param shippingAuthorizations String like TMT.PMO.TEC.19.033
  */
 case class JiraSegmentData(
+    position: String,
     segmentId: String,
     jiraKey: String,
     jiraUri: String,

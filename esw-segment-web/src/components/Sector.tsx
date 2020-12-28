@@ -1,32 +1,38 @@
 import React from 'react'
-import { Segment } from './Segment'
-import { Config } from './Config'
-import { SegmentToM1Pos } from './SegmentData'
+import {Segment} from './Segment'
+import {Config} from './Config'
+import {JiraSegmentData, SegmentToM1Pos} from './SegmentData'
 
 type SectorProps = {
   sector: string
   posMap: Map<string, SegmentToM1Pos>
+  segmentMap: Map<string, JiraSegmentData>
   mostRecentChange: number
   showSegmentIds: boolean
   updateDisplay: () => void
+  viewMode: React.Key
 }
 
 /**
  * Represents a sector of the mirror
  * @param sector A to F
  * @param posMap a map of pos (A1 to F82) to SegmentToM1Pos object
+ * @param segmentMap maps pos ("A23") to data from JIRA task
  * @param mostRecentChange date of most recent segment change
  * @param showSegmentIds if true display segment ids in teh segments instead of the position
  * @param updateDisplay function to update the display after a DB change
+ * @param viewMode string indicating the selected view (from the Sidebar menu)
  * @constructor
  */
 export const Sector = ({
-  sector,
-  posMap,
-  mostRecentChange,
-  showSegmentIds,
-  updateDisplay
-}: SectorProps): JSX.Element => {
+                         sector,
+                         posMap,
+                         segmentMap,
+                         mostRecentChange,
+                         showSegmentIds,
+                         updateDisplay,
+                         viewMode
+                       }: SectorProps): JSX.Element => {
   const xInc = (3 * Config.segmentRadius) / 2.0
   const yInc = Config.segmentRadius * Math.sin((60 * Math.PI) / 180.0)
 
@@ -45,6 +51,7 @@ export const Sector = ({
       return [...Array(count).keys()].map((i) => {
         const pos = `${sector}${firstPos + i}`
         const segmentToM1Pos = posMap.get(pos)
+        const segmentData = segmentMap.get(pos)
         const id = segmentToM1Pos ? segmentToM1Pos.maybeId || '' : ''
         const key = pos
         const date = segmentToM1Pos ? segmentToM1Pos.date : undefined
@@ -52,6 +59,7 @@ export const Sector = ({
           <Segment
             id={id}
             pos={pos}
+            segmentData={segmentData}
             date={date}
             mostRecentChange={mostRecentChange}
             showSegmentIds={showSegmentIds}
@@ -59,6 +67,7 @@ export const Sector = ({
             x={xStart + xInc * row}
             y={yStart + yInc * (2 - count + (i + offset / 2.0) * 2)}
             updateDisplay={updateDisplay}
+            viewMode={viewMode}
           />
         )
       })
