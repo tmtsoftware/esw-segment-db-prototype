@@ -142,6 +142,7 @@ export const Segment = ({
         open={open}
         closeDialog={closeDialog}
         updateDisplay={updateDisplay}
+        viewMode={viewMode}
       />
     </g>
   )

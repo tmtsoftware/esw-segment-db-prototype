@@ -1,5 +1,12 @@
 /* App wide global css goes in this file  */
 
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background: #eaeaea;
+}
+
 .App {
   min-height: 100vh;
   display: flex;
@@ -7,7 +14,7 @@
 }
 
 .topbarPageHeader {
-  min-width: 123vh;
+  min-width: 120vh;
   height: 6vh;
   display: flex;
   flex-direction: column;

@@ -53,6 +53,7 @@ export const Mirror = ({
               r={Config.segmentRadius * 2 * 10.5}
               fill='none'
               stroke='white'
+              // stroke='black'
               strokeWidth='0.5'
             />
             {sectors.map((sector) => (

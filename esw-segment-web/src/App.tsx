@@ -155,7 +155,7 @@ const App = (): JSX.Element => {
               viewMode={viewMode}
             />
           </Content>
-          <Legend viewMode={viewMode}/>
+          <Legend viewMode={viewMode} segmentMap={segmentMap}/>
         </Layout>
       </Layout>
     )

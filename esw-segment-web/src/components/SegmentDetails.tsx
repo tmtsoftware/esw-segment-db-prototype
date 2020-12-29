@@ -16,6 +16,7 @@ type SegmentDetailsProps = {
   open: boolean,
   closeDialog: () => void
   updateDisplay: () => void
+  viewMode: React.Key
 }
 
 /**
@@ -35,7 +36,8 @@ export const SegmentDetails = ({
                                  date,
                                  open,
                                  closeDialog,
-                                 updateDisplay
+                                 updateDisplay,
+                                 viewMode
                                }: SegmentDetailsProps): JSX.Element => {
   const emptyId = 'empty'
   const [availableSegmentIds, setAvailableSegmentIds] = useState<Array<string>>(
@@ -178,7 +180,7 @@ export const SegmentDetails = ({
     wrapperCol: {span: 16},
   };
 
-  if (availableSegmentIds.length != 0)
+  function installedLayout(): JSX.Element {
     return (
       <Drawer
         title={`Segment ${pos}`}
@@ -187,14 +189,14 @@ export const SegmentDetails = ({
         closable={false}
         onClose={cancel}
         visible={open}
-        bodyStyle={{ paddingBottom: 80 }}
+        bodyStyle={{paddingBottom: 80}}
         footer={
           <div
             style={{
               textAlign: 'right',
             }}
           >
-            <Button onClick={cancel} style={{ marginRight: 8 }}>
+            <Button onClick={cancel} style={{marginRight: 8}}>
               Cancel
             </Button>
             <Button onClick={saveChanges} disabled={!saveEnabled} type="primary">
@@ -221,5 +223,33 @@ export const SegmentDetails = ({
         </Form>
       </Drawer>
     )
+  }
+
+  function plannedLayout(): JSX.Element {
+    return (
+      <Drawer
+        title={`Segment ${pos}`}
+        width={420}
+        placement="right"
+        closable={false}
+        onClose={cancel}
+        visible={open}
+        bodyStyle={{paddingBottom: 80}}
+      >
+        <Form
+          form={form}
+          size={'small'}
+          {...layout}>
+          <Form.Item label="Item 1">
+            value here
+          </Form.Item>
+        </Form>
+      </Drawer>
+    )
+  }
+
+  if (availableSegmentIds.length != 0)
+    return viewMode == "installed" ? installedLayout() : plannedLayout()
+
   else return <div/>
 }

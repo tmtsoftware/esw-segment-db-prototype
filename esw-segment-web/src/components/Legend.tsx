@@ -2,15 +2,24 @@ import React from 'react'
 import {Layout, Table, Tag} from "antd";
 import {Config} from "./Config";
 import {ColumnsType} from "antd/es/table";
+import {JiraSegmentData} from "./SegmentData";
 
 const {Sider} = Layout;
 
 type LegendProps = {
   viewMode: React.Key
+  segmentMap: Map<string, JiraSegmentData>
 }
 
-export const Legend = ({viewMode}: LegendProps): JSX.Element => {
-  function makeSegmentAllocationLegend(): JSX.Element {
+interface SegmentStats {
+  segmentTypes: string,
+  totalPrimeSegments: string,
+  totalSpareSegments: string,
+  totalSegments: string,
+}
+
+export const Legend = ({viewMode, segmentMap}: LegendProps): JSX.Element => {
+  function makeTable(map: Map<string, string>): JSX.Element {
     interface SegmentAllocation {
       key: string;
       partner: string,
@@ -22,11 +31,16 @@ export const Legend = ({viewMode}: LegendProps): JSX.Element => {
 
     const columns: ColumnsType<SegmentAllocation> = [
       {
-        title: 'Partner',
+        title: ' ',
         dataIndex: 'partner',
         key: 'partner',
         render: partner => (
-          <Tag color={Config.segmentAllocationColors.get(partner)}>{partner}</Tag>
+          <Tag
+            color={map.get(partner)}
+            style={{color: 'black', width: '100%'}}
+          >
+            {partner}
+          </Tag>
         ),
       },
       {
@@ -51,7 +65,8 @@ export const Legend = ({viewMode}: LegendProps): JSX.Element => {
       }
     ];
 
-    const dataSource = [...Config.segmentAllocationColors.keys()].map((key: string) => {
+    // XXX TODO calculate the stats
+    const dataSource = [...map.keys()].map((key: string) => {
       return {
         key: key,
         partner: key,
@@ -63,13 +78,12 @@ export const Legend = ({viewMode}: LegendProps): JSX.Element => {
     })
 
     return (
-      <Table
+      <Table<SegmentAllocation>
         className={'legend'}
         size={'small'}
         dataSource={dataSource}
         columns={columns}
         pagination={false}
-        // scroll={{y: 200}}
       />
     )
   }
@@ -77,14 +91,18 @@ export const Legend = ({viewMode}: LegendProps): JSX.Element => {
   function makeLegend(): JSX.Element {
     switch (viewMode) {
       case "segmentAllocation":
+        return makeTable(Config.segmentAllocationColors)
       case "itemLocation":
+        return makeTable(Config.itemLocationColors)
       case "riskOfLoss":
+        return makeTable(Config.riskOfLossColors)
       case "components":
+        return makeTable(Config.componentColors)
       case "status":
+        return makeTable(Config.statusColors)
       default:
-        break
+        return makeTable(Config.sectorColors)
     }
-    return makeSegmentAllocationLegend()
   }
 
   return (
