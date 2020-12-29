@@ -75,10 +75,31 @@ export class Config {
     ["JIT", "#26d8ef"],
   ])
 
+  static riskOfLossColors = new Map([
+    ["DST", "#f8ee92"],
+    ["TIO", "#26d8ef"],
+    ["TBD", Config.undefinedColor],
+    ["NINS", "#5a80c6"],
+  ])
 
-  // case "riskOfLoss":
-  // case "components":
-  // case "status":
+  // TODO: Get complete list
+  static componentColors = new Map([
+    ["Planned", "#f8ee92"],
+    ["In-Work Blank", "#82a2e0"],
+    ["In-Work Roundel", "#26d8ef"],
+    ["Accepted Blank", "#c8f892"],
+    ["Accepted Roundel", "#23aa37"],
+    ["Unknown", Config.undefinedColor],
+  ])
 
+  // TODO: Get complete list
+  static statusColors = new Map([
+    ["To Do", "#f8ee92"],
+    ["In TIO Storage", "#82a2e0"],
+    ["In Progress", "#26d8ef"],
+    ["In Other Storage", "#c8f892"],
+    ["Under review", "#23aa37"],
+    ["Disposed", Config.undefinedColor],
+  ])
 
 }

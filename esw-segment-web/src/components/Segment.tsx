@@ -62,8 +62,14 @@ export const Segment = ({
         c = Config.itemLocationColors.get(segmentData?.itemLocation || "TBD")
         break
       case "riskOfLoss":
+        c = Config.riskOfLossColors.get(segmentData?.riskOfLoss || "TBD")
+        break
       case "components":
+        c = Config.componentColors.get(segmentData?.components || "Unknown")
+        break
       case "status":
+        c = Config.statusColors.get(segmentData?.status || "Disposed")
+        break
       default:
         c = id ? Config.sectorColors.get(sector) : Config.sectorEmptyColors.get(sector)
         break
