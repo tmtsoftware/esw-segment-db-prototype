@@ -5,7 +5,7 @@ import {MenuInfo, SelectInfo} from 'rc-menu/lib/interface';
 const {Sider} = Layout;
 
 type SidebarProps = {
-  sidebarOptionsChanged: (viewMode: string|number, showSegmentIds: boolean, showSpares: boolean) => void
+  sidebarOptionsChanged: (viewMode: React.Key, showSegmentIds: boolean, showSpares: boolean) => void
 }
 
 export const Sidebar = ({sidebarOptionsChanged}: SidebarProps): JSX.Element => {

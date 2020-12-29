@@ -7,32 +7,25 @@
 }
 
 .topbarPageHeader {
-  /*background-color: #b2c4db;*/
-  min-width: 120vh;
+  min-width: 123vh;
   height: 6vh;
   display: flex;
   flex-direction: column;
 }
 
-/*.topbarDateChooser {*/
-/*  padding: 0 0 0 0;*/
-/*}*/
-
-/*.topbarDateChooserText {*/
-/*  padding: 0 0 0 1vw;*/
-/*}*/
-
-.sidebar {
-}
-
-.segmentDetails {
-  background-color: #d6dadc;
-}
-
 .sidebarMenu {
-  background-color: #d6dadc;
   height: 100%;
   border-right: 0;
+}
+
+.legend {
+  position: absolute;
+  bottom: 0;
+  right: auto;
+  width: min-content;
+  /*padding: 10px;*/
+  margin: 10px;
+  border-style: double;
 }
 
 body {

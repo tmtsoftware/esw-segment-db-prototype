@@ -6,6 +6,7 @@ import {JiraSegmentData, SegmentData, SegmentToM1Pos} from './components/Segment
 import {Layout} from "antd"
 import 'antd/dist/antd.css'
 import {Sidebar} from "./components/Sidebar";
+import {Legend} from "./components/Legend";
 
 const {Content} = Layout;
 
@@ -154,6 +155,7 @@ const App = (): JSX.Element => {
               viewMode={viewMode}
             />
           </Content>
+          <Legend viewMode={viewMode}/>
         </Layout>
       </Layout>
     )
