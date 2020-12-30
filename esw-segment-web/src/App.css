@@ -51,12 +51,12 @@ body {
 }
 
 .ant-drawer-header {
-  background-color: #b2c4db;
+  background-color: #b2c4db !important;
   border-radius: 0;
 }
 
 .ant-drawer-title {
-  font-weight: 700;
+  font-weight: 700 !important;
   color: black;
 }
 
