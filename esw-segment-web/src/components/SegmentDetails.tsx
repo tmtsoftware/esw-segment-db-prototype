@@ -64,7 +64,6 @@ export const SegmentDetails = ({
           ? [...data, id, emptyId]
           : [...data, emptyId]
         const uniqueIds = [...new Set(ids)]
-        console.log(`XXX updateAvailableSegmentIds for ${pos}`)
         setAvailableSegmentIds(uniqueIds)
       })
   }

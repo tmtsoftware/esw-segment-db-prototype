@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react'
-import {Divider, Layout, Menu} from "antd";
+import {Divider, Layout, Menu, Progress} from "antd";
 import {MenuInfo, SelectInfo} from 'rc-menu/lib/interface';
+import {SegmentData} from "./SegmentData";
 
 const {Sider} = Layout;
 
@@ -10,16 +11,21 @@ type SidebarProps = {
 
 export const Sidebar = ({sidebarOptionsChanged}: SidebarProps): JSX.Element => {
 
-  const [viewMode, setViewMode] = useState<string|number>("installed")
+  const [viewMode, setViewMode] = useState<string | number>("installed")
   const [showSegmentIds, setShowSegmentIds] = useState<boolean>(false)
   const [showSpares, setShowSpares] = useState<boolean>(false)
+  const [syncing, setSyncing] = useState<boolean>(false)
+  const [syncProgress, setSyncProgress] = useState<number>(0)
 
   useEffect(() => {
     sidebarOptionsChanged(viewMode, showSegmentIds, showSpares)
   }, [viewMode, showSegmentIds, showSpares])
 
   function menuItemSelected(info: MenuInfo) {
-    setViewMode(info.key)
+    if (info.key == "syncWithJira")
+      syncWithJira()
+    else
+      setViewMode(info.key)
   }
 
   function menuOptionSelected(info: SelectInfo) {
@@ -41,6 +47,16 @@ export const Sidebar = ({sidebarOptionsChanged}: SidebarProps): JSX.Element => {
       case 'showSpares':
         setShowSpares(false)
         break
+    }
+  }
+
+  async function syncWithJira() {
+    const eventSource = new EventSource(`${SegmentData.baseUri}/syncWithJira`)
+    eventSource.onmessage = e => {
+      const progress: number = +e.data
+      console.log(`XXX SSE: ${progress}`)
+      setSyncing(progress < 100)
+      setSyncProgress(progress)
     }
   }
 
@@ -72,10 +88,17 @@ export const Sidebar = ({sidebarOptionsChanged}: SidebarProps): JSX.Element => {
         <Menu.Item key="status">
           Status
         </Menu.Item>
-        <Menu.Item key="syncWithJira">
+        <Menu.Item key="syncWithJira" disabled={syncing}>
           Sync with JIRA
         </Menu.Item>
       </Menu>
+      <div style={{width: 140}}>
+        <Progress
+          percent={syncProgress}
+          size="small"
+          className="syncWithJiraProgress"
+          style={{margin: '0 0 0 20px', display: syncing ? 'block' : 'none'}}/>
+      </div>
       <Divider dashed style={{backgroundColor: '#b2c4db'}}/>
       <Menu
         multiple={true}

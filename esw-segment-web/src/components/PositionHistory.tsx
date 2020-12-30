@@ -42,7 +42,6 @@ export const PositionHistory = ({pos, changed}: PositionHistoryProps): JSX.Eleme
           }
         })
     }
-    console.log(`XXX getHistoryData ${pos}`)
     getHistoryData()
   }, [pos, changed])
 

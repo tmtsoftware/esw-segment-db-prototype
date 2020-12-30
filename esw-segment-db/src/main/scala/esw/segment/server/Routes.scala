@@ -1,10 +1,16 @@
 package esw.segment.server
 
+import akka.NotUsed
+import akka.actor.typed.ActorSystem
+
 import java.sql.Date
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model.sse.ServerSentEvent
 import akka.http.scaladsl.server.directives.{DebuggingDirectives, LoggingMagnet}
 import akka.http.scaladsl.server.{Directive0, Directives, Route}
+import akka.stream.OverflowStrategy
+import akka.stream.scaladsl.Source
 import esw.segment.db.{JiraSegmentDataTable, SegmentToM1PosTable}
 import esw.segment.shared.EswSegmentData._
 import esw.segment.shared.JsonSupport
@@ -15,7 +21,8 @@ import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
 
 class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDataTable, logger: Logger)(implicit
-    ec: ExecutionContext
+    ec: ExecutionContext,
+    sys: ActorSystem[_]
 ) extends Directives
     with JsonSupport {
 
@@ -25,10 +32,22 @@ class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDat
 
   val routeLogger: Directive0 = DebuggingDirectives.logRequest(LoggingMagnet(_ => logRequest))
 
-  private def availableSegmentIds(f: Future[List[String]]): Future[List[String]] = async {
-    val list = await(f)
-    val results = await(Future.sequence(list.map(posTable.currentSegmentPosition)))
-    list.zip(results).filter(_._2.isEmpty).map(_._1)
+  private def availableSegmentIds(f: Future[List[String]]): Future[List[String]] =
+    async {
+      val list    = await(f)
+      val results = await(Future.sequence(list.map(posTable.currentSegmentPosition)))
+      list.zip(results).filter(_._2.isEmpty).map(_._1)
+    }
+
+  // Convert callback to stream for progress on sync
+  private def syncWithJiraStream(): Source[Int, NotUsed] = {
+    val sourceDecl      = Source.queue[Int](bufferSize = 2, OverflowStrategy.backpressure)
+    val (queue, source) = sourceDecl.preMaterialize()
+    def callback(percent: Int): Unit = {
+      queue.offer(percent)
+    }
+    jiraSegmentDataTable.syncWithJira(callback)
+    source
   }
 
   val route: Route = cors() {
@@ -90,8 +109,8 @@ class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDat
         } ~
         // Drops and recreates the database tables (for testing)
         path("resetTables") {
-          val f1 = jiraSegmentDataTable.resetJiraSegmentDataTable()
-          val f2 = posTable.resetSegmentToM1PosTable()
+          val f1     = jiraSegmentDataTable.resetJiraSegmentDataTable()
+          val f2     = posTable.resetSegmentToM1PosTable()
           val result = Future.sequence(List(f1, f2)).map(_.forall(b => b))
           complete(result.map(if (_) OK else BadRequest))
         } ~
@@ -146,6 +165,13 @@ class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDat
         // Gets a list of all segment ids that were in the given location.
         path("allSegmentIds" / Segment) { position =>
           complete(posTable.allSegmentIds(position))
+        } ~
+        path("syncWithJira") {
+          import akka.http.scaladsl.marshalling.sse.EventStreamMarshalling._
+          complete {
+            syncWithJiraStream()
+              .map(p => ServerSentEvent(p.toString))
+          }
         }
       }
     }

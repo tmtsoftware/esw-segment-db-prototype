@@ -65,4 +65,10 @@ body {
   height: calc(100vh - 55px);
 }
 
+.syncWithJiraProgress.ant-progress .ant-progress-text {
+  color: #eaeaea;
+}
+
+
+
 
