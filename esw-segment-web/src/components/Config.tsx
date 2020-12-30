@@ -61,25 +61,25 @@ export class Config {
   static segmentAllocationColors = new Map([
     ["US", "#26d8ef"],
     ["Japan", "#5a80c6"],
-    ["TBD", Config.undefinedColor],
     ["China", "#f60966"],
     ["India", "#f8ee92"],
+    ["TBD", Config.undefinedColor],
   ])
 
   static itemLocationColors = new Map([
     ["Ohara", "#f60966"],
     ["Coherent", "#26d8ef"],
     ["Canon", "#5a80c6"],
-    ["TBD", Config.undefinedColor],
     ["India", "#f8ee92"],
-    ["JIT", "#26d8ef"],
+    ["JIT", "#23aa37"],
+    ["TBD", Config.undefinedColor],
   ])
 
   static riskOfLossColors = new Map([
     ["DST", "#f8ee92"],
     ["TIO", "#26d8ef"],
-    ["TBD", Config.undefinedColor],
     ["NINS", "#5a80c6"],
+    ["TBD", Config.undefinedColor],
   ])
 
   // TODO: Get complete list
@@ -99,7 +99,7 @@ export class Config {
     ["In Progress", "#26d8ef"],
     ["In Other Storage", "#c8f892"],
     ["Under review", "#23aa37"],
-    ["Disposed", Config.undefinedColor],
+    // ["Disposed", Config.undefinedColor],
   ])
 
 }

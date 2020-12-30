@@ -1,12 +1,5 @@
 /* App wide global css goes in this file  */
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family: sans-serif;
-  background: #eaeaea;
-}
-
 .App {
   min-height: 100vh;
   display: flex;
@@ -42,8 +35,34 @@ body {
   /*align-items: flex-start;*/
   flex-direction: column;
   margin: 0;
+  padding: 0;
   height: 100vh;
   /*font-weight: 700;*/
   font-family: sans-serif;
+  background: #eaeaea;
 }
+
+.ant-form-item {
+  margin-bottom: 8px !important;
+}
+
+.ant-form-item-label {
+  white-space: normal;
+}
+
+.ant-drawer-header {
+  background-color: #b2c4db;
+  border-radius: 0;
+}
+
+.ant-drawer-title {
+  font-weight: 700;
+  color: black;
+}
+
+.ant-drawer-body {
+  background-color: #eaeaea;
+  height: calc(100vh - 55px);
+}
+
 

@@ -51,7 +51,24 @@ export const Sector = ({
       return [...Array(count).keys()].map((i) => {
         const pos = `${sector}${firstPos + i}`
         const segmentToM1Pos = posMap.get(pos)
-        const segmentData = segmentMap.get(pos)
+        const segmentData = segmentMap.get(pos) || {
+          position: '',
+          segmentId: '',
+          jiraKey: '',
+          jiraUri: '',
+          sector: 0,
+          segmentType: 0,
+          partNumber: '',
+          originalPartnerBlankAllocation: '',
+          itemLocation: '',
+          riskOfLoss: '',
+          components: '',
+          status: '',
+          workPackages: '',
+          acceptanceCertificates: '',
+          acceptanceDateBlank: '',
+          shippingAuthorizations: ''
+        }
         const id = segmentToM1Pos ? segmentToM1Pos.maybeId || '' : ''
         const key = pos
         const date = segmentToM1Pos ? segmentToM1Pos.date : undefined

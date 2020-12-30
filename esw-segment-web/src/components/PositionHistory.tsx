@@ -55,8 +55,12 @@ export const PositionHistory = ({pos, changed}: PositionHistoryProps): JSX.Eleme
     };
   });
 
+  // margin: 10px;
+  // border-style: double;
+
   return (
     <Table
+      style={{borderStyle: 'double', borderColor: 'gray'}}
       dataSource={dataSource}
       columns={columns}
       pagination={false}

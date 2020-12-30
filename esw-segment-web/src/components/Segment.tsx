@@ -6,7 +6,7 @@ import {JiraSegmentData} from "./SegmentData";
 type SegmentProps = {
   id?: string
   pos: string
-  segmentData?: JiraSegmentData
+  segmentData: JiraSegmentData
   date?: number
   mostRecentChange: number
   showSegmentIds: boolean
@@ -56,19 +56,19 @@ export const Segment = ({
     let c
     switch(viewMode) {
       case "segmentAllocation":
-        c = Config.segmentAllocationColors.get(segmentData?.originalPartnerBlankAllocation || "TBD")
+        c = Config.segmentAllocationColors.get(segmentData?.originalPartnerBlankAllocation)
         break
       case "itemLocation":
-        c = Config.itemLocationColors.get(segmentData?.itemLocation || "TBD")
+        c = Config.itemLocationColors.get(segmentData?.itemLocation)
         break
       case "riskOfLoss":
-        c = Config.riskOfLossColors.get(segmentData?.riskOfLoss || "TBD")
+        c = Config.riskOfLossColors.get(segmentData?.riskOfLoss)
         break
       case "components":
-        c = Config.componentColors.get(segmentData?.components || "Unknown")
+        c = Config.componentColors.get(segmentData?.components)
         break
       case "status":
-        c = Config.statusColors.get(segmentData?.status || "Disposed")
+        c = Config.statusColors.get(segmentData?.status)
         break
       default:
         c = id ? Config.sectorColors.get(sector) : Config.sectorEmptyColors.get(sector)
@@ -143,6 +143,7 @@ export const Segment = ({
         closeDialog={closeDialog}
         updateDisplay={updateDisplay}
         viewMode={viewMode}
+        segmentData={segmentData}
       />
     </g>
   )

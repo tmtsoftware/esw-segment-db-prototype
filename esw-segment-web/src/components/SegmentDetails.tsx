@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react'
-import {SegmentData, SegmentToM1Pos} from './SegmentData'
+import {JiraSegmentData, SegmentData, SegmentToM1Pos} from './SegmentData'
 import {PositionHistory} from './PositionHistory'
-import {Button, DatePicker, Drawer, Form, Select, Typography} from "antd"
+import {Button, DatePicker, Divider, Drawer, Form, Select, Typography} from "antd"
 import moment from 'moment'
 
 const {Option} = Select;
@@ -17,6 +17,7 @@ type SegmentDetailsProps = {
   closeDialog: () => void
   updateDisplay: () => void
   viewMode: React.Key
+  segmentData: JiraSegmentData
 }
 
 /**
@@ -28,6 +29,8 @@ type SegmentDetailsProps = {
  * @param open true if drawer is open
  * @param closeDialog function to call to close the drawer
  * @param updateDisplay function to update the display after a DB change
+ * @param viewMode selected view mode from sidebar
+ * @param segmentData segment data from JIRA
  * @constructor
  */
 export const SegmentDetails = ({
@@ -37,7 +40,8 @@ export const SegmentDetails = ({
                                  open,
                                  closeDialog,
                                  updateDisplay,
-                                 viewMode
+                                 viewMode,
+                                 segmentData
                                }: SegmentDetailsProps): JSX.Element => {
   const emptyId = 'empty'
   const [availableSegmentIds, setAvailableSegmentIds] = useState<Array<string>>(
@@ -180,11 +184,90 @@ export const SegmentDetails = ({
     wrapperCol: {span: 16},
   };
 
+  function installedForm(): JSX.Element {
+    return (
+      <Form
+        form={form}
+        initialValues={{
+          "date-picker": moment(selectedDate)
+        }}
+        size={'small'}
+        {...layout}>
+        {segmentIdSelector()}
+        {datePicker()}
+        <Divider/>
+        {plannedForm(false)}
+        <Divider/>
+        <div>
+          <Title level={5}>
+            History
+          </Title>
+          <PositionHistory pos={pos} changed={changed}/>
+        </div>
+      </Form>
+    )
+  }
+
+  function plannedForm(includeSegmentId: boolean): JSX.Element {
+    const sector = segmentData.position[0]
+    const sectorMsg = sector == 'G' ? ' (Spare)' : ''
+    return (
+      <Form
+        form={form}
+        size={'small'}
+        {...layout}>
+        {includeSegmentId && (
+          <Form.Item label="Segment ID">
+            {segmentData.segmentId}
+          </Form.Item>
+        )}
+        <Form.Item label="JIRA Task">
+          <a href={segmentData.jiraUri} target="_blank" rel="noopener noreferrer">
+            {segmentData.jiraKey}
+          </a>
+        </Form.Item>
+        <Form.Item label="Sector">
+          {sector} {sectorMsg}
+        </Form.Item>
+        <Form.Item label="Part Number">
+          {segmentData.partNumber}
+        </Form.Item>
+        <Form.Item label="Partner Blank Allocation">
+          {segmentData.originalPartnerBlankAllocation}
+        </Form.Item>
+        <Form.Item label="Item Location">
+          {segmentData.itemLocation}
+        </Form.Item>
+        <Form.Item label="Risk of Loss">
+          {segmentData.riskOfLoss}
+        </Form.Item>
+        <Form.Item label="Components">
+          {segmentData.components}
+        </Form.Item>
+        <Form.Item label="Status">
+          {segmentData.status}
+        </Form.Item>
+        <Form.Item label="Work Packages">
+          {segmentData.workPackages}
+        </Form.Item>
+        <Form.Item label="Acceptance Certificates">
+          {segmentData.acceptanceCertificates}
+        </Form.Item>
+        <Form.Item label="Acceptance Date Blank">
+          {segmentData.acceptanceDateBlank}
+        </Form.Item>
+        <Form.Item label="Shipping Authorizations">
+          {segmentData.shippingAuthorizations}
+        </Form.Item>
+      </Form>
+    )
+  }
+
   function installedLayout(): JSX.Element {
     return (
       <Drawer
         title={`Segment ${pos}`}
-        width={420}
+        width={550}
         placement="right"
         closable={false}
         onClose={cancel}
@@ -205,22 +288,7 @@ export const SegmentDetails = ({
           </div>
         }
       >
-        <Form
-          form={form}
-          initialValues={{
-            "date-picker": moment(selectedDate)
-          }}
-          size={'small'}
-          {...layout}>
-          {segmentIdSelector()}
-          {datePicker()}
-          <div>
-            <Title level={5}>
-              History
-            </Title>
-            <PositionHistory pos={pos} changed={changed}/>
-          </div>
-        </Form>
+        {installedForm()}
       </Drawer>
     )
   }
@@ -229,21 +297,14 @@ export const SegmentDetails = ({
     return (
       <Drawer
         title={`Segment ${pos}`}
-        width={420}
+        width={550}
         placement="right"
         closable={false}
         onClose={cancel}
         visible={open}
         bodyStyle={{paddingBottom: 80}}
       >
-        <Form
-          form={form}
-          size={'small'}
-          {...layout}>
-          <Form.Item label="Item 1">
-            value here
-          </Form.Item>
-        </Form>
+        {plannedForm(true)}
       </Drawer>
     )
   }
