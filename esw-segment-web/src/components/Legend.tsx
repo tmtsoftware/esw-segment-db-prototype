@@ -19,7 +19,7 @@ interface SegmentStats {
 interface SegmentAllocation {
   key: string;
   partner: string,
-  segmentTypes: number,
+  segmentTypes: number | undefined,
   totalPrimeSegments: number,
   totalSpareSegments: number,
   totalSegments: number,
@@ -63,7 +63,7 @@ export const Legend = ({viewMode, segmentMap}: LegendProps): JSX.Element => {
       }
     ];
 
-    const dataSource = [...map.keys()].map((key: string) => {
+    const dataSource: Array<SegmentAllocation> = [...map.keys()].map((key: string) => {
       const stats = getStats(key)
       return {
         key: key,
@@ -75,11 +75,23 @@ export const Legend = ({viewMode, segmentMap}: LegendProps): JSX.Element => {
       };
     })
 
+    function dataSourceWithTotals(): Array<SegmentAllocation> {
+      const totals: SegmentAllocation = {
+        key: "total",
+        partner: "Total",
+        segmentTypes: undefined,
+        totalPrimeSegments: dataSource.reduce((sum, current) => sum + current.totalPrimeSegments, 0),
+        totalSpareSegments: dataSource.reduce((sum, current) => sum + current.totalSpareSegments, 0),
+        totalSegments: dataSource.reduce((sum, current) => sum + current.totalSegments, 0)
+      }
+      return dataSource.concat([totals])
+    }
+
     return (
       <Table<SegmentAllocation>
         className={'legend'}
         size={'small'}
-        dataSource={dataSource}
+        dataSource={dataSourceWithTotals()}
         columns={columns}
         pagination={false}
       />
