@@ -39,7 +39,7 @@ body {
   height: 100vh;
   /*font-weight: 700;*/
   font-family: sans-serif;
-  background: #eaeaea;
+  background: #eaeaea !important;
 }
 
 .ant-form-item {
@@ -61,7 +61,7 @@ body {
 }
 
 .ant-drawer-body {
-  background-color: #eaeaea;
+  background-color: #eaeaea !important;
   height: calc(100vh - 55px);
 }
 
