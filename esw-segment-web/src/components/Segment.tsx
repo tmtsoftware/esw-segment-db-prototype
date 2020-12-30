@@ -56,19 +56,19 @@ export const Segment = ({
     let c
     switch(viewMode) {
       case "segmentAllocation":
-        c = Config.segmentAllocationColors.get(segmentData?.originalPartnerBlankAllocation)
+        c = Config.segmentAllocationColors.get(segmentData.originalPartnerBlankAllocation)
         break
       case "itemLocation":
-        c = Config.itemLocationColors.get(segmentData?.itemLocation)
+        c = Config.itemLocationColors.get(segmentData.itemLocation)
         break
       case "riskOfLoss":
-        c = Config.riskOfLossColors.get(segmentData?.riskOfLoss)
+        c = Config.riskOfLossColors.get(segmentData.riskOfLoss)
         break
       case "components":
-        c = Config.componentColors.get(segmentData?.components)
+        c = Config.componentColors.get(segmentData.components)
         break
       case "status":
-        c = Config.statusColors.get(segmentData?.status)
+        c = Config.statusColors.get(segmentData.status)
         break
       default:
         c = id ? Config.sectorColors.get(sector) : Config.sectorEmptyColors.get(sector)
