@@ -55,7 +55,6 @@ export const Sidebar = ({sidebarOptionsChanged}: SidebarProps): JSX.Element => {
     const eventSource = new EventSource(`${SegmentData.baseUri}/syncWithJira`)
     eventSource.onmessage = e => {
       const progress: number = +e.data
-      console.log(`XXX SSE: ${progress}`)
       setSyncing(progress < 100)
       setSyncProgress(progress)
       setSyncPopupVisible(false)

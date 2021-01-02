@@ -60,7 +60,6 @@ export const SegmentDetails = ({
     fetch(`${SegmentData.baseUri}/availableSegmentIdsForPos/${pos}`)
       .then((response) => response.json())
       .then((data) => {
-        console.log(`XXX updateAvailableSegmentIds for ${pos}`)
         const ids: Array<string> = id
           ? [...data, id, emptyId]
           : [...data, emptyId]
@@ -70,7 +69,8 @@ export const SegmentDetails = ({
   }
 
   useEffect(() => {
-    updateAvailableSegmentIds()
+    if (open)
+      updateAvailableSegmentIds()
   }, [changed, open])
 
   // Gets the date of the most recent segment change
