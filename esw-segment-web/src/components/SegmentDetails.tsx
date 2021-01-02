@@ -183,19 +183,13 @@ export const SegmentDetails = ({
     wrapperCol: {span: 16},
   };
 
-  function installedForm(): JSX.Element {
+  function installedFormItems(): JSX.Element {
     return (
-      <Form
-        form={form}
-        initialValues={{
-          "date-picker": moment(selectedDate)
-        }}
-        size={'small'}
-        {...layout}>
+      <>
         {segmentIdSelector()}
         {datePicker()}
         <Divider/>
-        {plannedForm(false)}
+        {plannedFormItems(false)}
         <Divider/>
         <div>
           <Title level={5}>
@@ -203,18 +197,15 @@ export const SegmentDetails = ({
           </Title>
           <PositionHistory pos={pos} changed={changed}/>
         </div>
-      </Form>
+      </>
     )
   }
 
-  function plannedForm(includeSegmentId: boolean): JSX.Element {
+  function plannedFormItems(includeSegmentId: boolean): JSX.Element {
     const sector = segmentData.position[0]
     const sectorMsg = sector == 'G' ? ' (Spare)' : ''
     return (
-      <Form
-        form={form}
-        size={'small'}
-        {...layout}>
+      <>
         {includeSegmentId && (
           <Form.Item label="Segment ID">
             {segmentData.segmentId}
@@ -258,7 +249,7 @@ export const SegmentDetails = ({
         <Form.Item label="Shipping Authorizations">
           {segmentData.shippingAuthorizations}
         </Form.Item>
-      </Form>
+      </>
     )
   }
 
@@ -287,7 +278,12 @@ export const SegmentDetails = ({
           </div>
         }
       >
-        {installedForm()}
+        <Form
+          form={form}
+          size={'small'}
+          {...layout}>
+          {installedFormItems()}
+        </Form>
       </Drawer>
     )
   }
@@ -303,7 +299,12 @@ export const SegmentDetails = ({
         visible={open}
         bodyStyle={{paddingBottom: 80}}
       >
-        {plannedForm(true)}
+        <Form
+          form={form}
+          size={'small'}
+          {...layout}>
+          {plannedFormItems(true)}
+        </Form>
       </Drawer>
     )
   }

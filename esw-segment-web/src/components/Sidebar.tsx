@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react'
-import {Divider, Layout, Menu, Progress} from "antd";
+import {Divider, Layout, Menu, Popconfirm, Progress} from "antd";
 import {MenuInfo, SelectInfo} from 'rc-menu/lib/interface';
 import {SegmentData} from "./SegmentData";
 
@@ -16,6 +16,7 @@ export const Sidebar = ({sidebarOptionsChanged}: SidebarProps): JSX.Element => {
   const [showSpares, setShowSpares] = useState<boolean>(false)
   const [syncing, setSyncing] = useState<boolean>(false)
   const [syncProgress, setSyncProgress] = useState<number>(0)
+  const [syncPopupVisible, setSyncPopupVisible] = useState<boolean>(false)
 
   useEffect(() => {
     sidebarOptionsChanged(viewMode, showSegmentIds, showSpares)
@@ -23,7 +24,7 @@ export const Sidebar = ({sidebarOptionsChanged}: SidebarProps): JSX.Element => {
 
   function menuItemSelected(info: MenuInfo) {
     if (info.key == "syncWithJira")
-      syncWithJira()
+      setSyncPopupVisible(true)
     else
       setViewMode(info.key)
   }
@@ -57,6 +58,7 @@ export const Sidebar = ({sidebarOptionsChanged}: SidebarProps): JSX.Element => {
       console.log(`XXX SSE: ${progress}`)
       setSyncing(progress < 100)
       setSyncProgress(progress)
+      setSyncPopupVisible(false)
     }
   }
 
@@ -92,6 +94,13 @@ export const Sidebar = ({sidebarOptionsChanged}: SidebarProps): JSX.Element => {
           Sync with JIRA
         </Menu.Item>
       </Menu>
+      <Popconfirm
+        placement="right"
+        title="Really Sync with JIRA?"
+        visible={syncPopupVisible}
+        onConfirm={syncWithJira}
+        onCancel={() => setSyncPopupVisible(false)}
+      />
       <div style={{width: 140}}>
         <Progress
           percent={syncProgress}
