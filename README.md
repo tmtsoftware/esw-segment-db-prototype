@@ -24,16 +24,28 @@ To build the server, run:
 
 ## Running the Server
 
-To run the HTTP server, you need to first have Postgres and csw-services running, 
+To run the HTTP server, you need to first have csw-services running, 
 as described in the [CSW docs](https://tmtsoftware.github.io/csw/).
 
-The following environment variables need to be defined:
+The following environment variables need to be defined (Required by csw-services for the Database Service):
 
 * DB_READ_USERNAME
 * DB_READ_PASSWORD
 * DB_WRITE_USERNAME
 * DB_WRITE_PASSWORD
 * PGDATA
+
+PGDATA is the directory containing the data for the Postgres database.
+
+In addition, in order for the server to get information about the segments from JIRA, the 
+following environment variables need to be defined and the user must have read access to the `M1ST` JIRA project:
+
+* JIRA_USER
+* JIRA_API_TOKEN
+
+See [here](https://developer.atlassian.com/cloud/jira/platform/basic-auth-for-rest-apis/) for more information.
+
+To start the server, run:
 
 ```
 $ csw-services start

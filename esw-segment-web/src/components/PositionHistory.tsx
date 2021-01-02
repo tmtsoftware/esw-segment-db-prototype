@@ -36,6 +36,7 @@ export const PositionHistory = ({pos, changed}: PositionHistoryProps): JSX.Eleme
       fetch(`${SegmentData.baseUri}/allSegmentIds/${pos}`)
         .then((response) => response.json())
         .then((result) => {
+          console.log(`XXX getHistoryData for ${pos}`)
           const d: Array<SegmentToM1Pos> = result
           if (JSON.stringify(d) != JSON.stringify(data)) {
             setData(d)

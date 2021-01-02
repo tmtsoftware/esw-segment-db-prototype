@@ -104,6 +104,8 @@ object EswSegmentDbClient extends App {
       c.copy(resetTables = Some(()))
     } text "Drops and recreates the database tables (for testing)"
 
+    help("help")
+    version("version")
   }
 
   // Parse the command line options
