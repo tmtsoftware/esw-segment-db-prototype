@@ -8,7 +8,6 @@ import esw.segment.shared.EswSegmentData._
 import scopt.Read.reads
 import scopt.Read
 
-import scala.async.Async.{async, await}
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
@@ -111,7 +110,7 @@ object EswSegmentDbClient extends App {
   parser.parse(args, EswSegmentClientOptions()) match {
     case Some(options) =>
       try {
-        Await.ready(run(options), 60.seconds)
+        run(options)
         System.exit(0)
       }
       catch {
@@ -131,82 +130,82 @@ object EswSegmentDbClient extends App {
     result.foreach(r => println(s"${dateFormat.format(r.date)} ${r.maybeId.getOrElse("------")} ${r.position}"))
   }
 
+  private def await[T](future: Future[T]): T = Await.result(future, Duration.Inf)
+
   // Run the application
-  private def run(options: EswSegmentClientOptions): Future[Unit] = {
-    async {
-      import options._
-      val client = new EswSegmentHttpClient(host, port)
+  private def run(options: EswSegmentClientOptions): Unit = {
+    import options._
+    val client = new EswSegmentHttpClient(host, port)
 
-      if (options.setPosition.isDefined) {
-        if (position.isEmpty) error("--position option is required")
-        val segmentToM1Pos = SegmentToM1Pos(date, segmentId, position.get)
-        val result         = await(client.setPosition(segmentToM1Pos))
-        if (!result)
-          error(s"setPosition failed for date: $date, segmentId: ${segmentId.getOrElse("None")}, position: ${position.get}")
-      }
+    if (options.setPosition.isDefined) {
+      if (position.isEmpty) error("--position option is required")
+      val segmentToM1Pos = SegmentToM1Pos(date, segmentId, position.get)
+      val result         = await(client.setPosition(segmentToM1Pos))
+      if (!result)
+        error(s"setPosition failed for date: $date, segmentId: ${segmentId.getOrElse("None")}, position: ${position.get}")
+    }
 
-      if (options.resetTables.isDefined) {
-        val result = await(client.resetTables())
-        if (!result)
-          error(s"resetTables failed")
-      }
+    if (options.resetTables.isDefined) {
+      val result = await(client.resetTables())
+      if (!result)
+        error(s"resetTables failed")
+    }
 
-      if (options.segmentPositions.isDefined) {
-        if (segmentId.isEmpty) error("--segmentId option is required")
-        showResults(await(client.segmentPositions(DateRange(from, to), segmentId.get)))
-      }
+    if (options.segmentPositions.isDefined) {
+      if (segmentId.isEmpty) error("--segmentId option is required")
+      showResults(await(client.segmentPositions(DateRange(from, to), segmentId.get)))
+    }
 
-      if (options.segmentIds.isDefined) {
-        if (position.isEmpty) error("--position option is required")
-        showResults(await(client.segmentIds(DateRange(from, to), position.get)))
-      }
+    if (options.segmentIds.isDefined) {
+      if (position.isEmpty) error("--position option is required")
+      showResults(await(client.segmentIds(DateRange(from, to), position.get)))
+    }
 
-      if (options.newlyInstalledSegments.isDefined) {
-        showResults(await(client.newlyInstalledSegments(date)))
-      }
+    if (options.newlyInstalledSegments.isDefined) {
+      showResults(await(client.newlyInstalledSegments(date)))
+    }
 
-      if (options.currentPositions.isDefined) {
-        showResults(await(client.currentPositions()))
-      }
+    if (options.currentPositions.isDefined) {
+      showResults(await(client.currentPositions()))
+    }
 
-      if (options.plannedPositions.isDefined) {
-        showResults(await(client.plannedPositions()))
-      }
+    if (options.plannedPositions.isDefined) {
+      showResults(await(client.plannedPositions()))
+    }
 
-      if (options.currentSegmentPosition.isDefined) {
-        if (segmentId.isEmpty) error("--segmentId option is required")
-        showResults(await(client.currentSegmentPosition(segmentId.get)).toList)
-      }
+    if (options.currentSegmentPosition.isDefined) {
+      if (segmentId.isEmpty) error("--segmentId option is required")
+      showResults(await(client.currentSegmentPosition(segmentId.get)).toList)
+    }
 
-      if (options.currentSegmentAtPosition.isDefined) {
-        if (position.isEmpty) error("--position option is required")
-        showResults(await(client.currentSegmentAtPosition(position.get)).toList)
-      }
+    if (options.currentSegmentAtPosition.isDefined) {
+      if (position.isEmpty) error("--position option is required")
+      showResults(await(client.currentSegmentAtPosition(position.get)).toList)
+    }
 
-      if (options.positionsOnDate.isDefined) {
-        showResults(await(client.positionsOnDate(date)))
-      }
+    if (options.positionsOnDate.isDefined) {
+      showResults(await(client.positionsOnDate(date)))
+    }
 
-      if (options.mostRecentChange.isDefined) {
-        val result = await(client.mostRecentChange(options.date))
-        println(result.toString)
-      }
+    if (options.mostRecentChange.isDefined) {
+      val result = await(client.mostRecentChange(options.date))
+      println(result.toString)
+    }
 
-      if (options.segmentPositionOnDate.isDefined) {
-        if (segmentId.isEmpty) error("--segmentId option is required")
-        showResults(await(client.segmentPositionOnDate(date, segmentId.get)).toList)
-      }
+    if (options.segmentPositionOnDate.isDefined) {
+      if (segmentId.isEmpty) error("--segmentId option is required")
+      showResults(await(client.segmentPositionOnDate(date, segmentId.get)).toList)
+    }
 
-      if (options.segmentAtPositionOnDate.isDefined) {
-        if (position.isEmpty) error("--position option is required")
-        showResults(await(client.segmentAtPositionOnDate(date, position.get)).toList)
-      }
+    if (options.segmentAtPositionOnDate.isDefined) {
+      if (position.isEmpty) error("--position option is required")
+      showResults(await(client.segmentAtPositionOnDate(date, position.get)).toList)
+    }
 
-      if (options.availableSegmentIdsForPos.isDefined) {
-        if (position.isEmpty) error("--position option is required")
-        val result = await(client.availableSegmentIdsForPos(position.get))
-        result.foreach(println)
-      }
+    if (options.availableSegmentIdsForPos.isDefined) {
+      if (position.isEmpty) error("--position option is required")
+      val result = await(client.availableSegmentIdsForPos(position.get))
+      result.foreach(println)
     }
   }
 }

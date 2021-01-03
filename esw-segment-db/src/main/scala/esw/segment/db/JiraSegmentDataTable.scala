@@ -60,7 +60,7 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
   def syncWithJira(progress: Int => Unit): Future[Boolean] =
     async {
       val data = await(jiraClient.getAllJiraSegmentData(progress))
-      await(insertDb(data))
+      await(resetJiraSegmentDataTable()) && await(insertDb(data))
     }
 
   override def availableSegmentIdsForPos(position: String): Future[List[String]] =
@@ -75,7 +75,7 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
         dsl
           .resultQuery(
             s"""
-               |SELECT $segmentIdCol
+               |SELECT DISTINCT $segmentIdCol
                |FROM $tableName
                |WHERE $segmentTypeCol = '$segmentType' AND $statusCol != 'Disposed'
                |""".stripMargin
@@ -90,7 +90,7 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
       val queryResult = await(
         dsl
           .resultQuery(s"""
-                        |SELECT $segmentIdCol, $sectorCol, $segmentTypeCol
+                        |SELECT DISTINCT $segmentIdCol, $sectorCol, $segmentTypeCol
                         |FROM $tableName
                         |WHERE $sectorCol >= 1 AND $sectorCol <= 7
                         |AND $segmentTypeCol >= 1 AND $segmentTypeCol <= 82

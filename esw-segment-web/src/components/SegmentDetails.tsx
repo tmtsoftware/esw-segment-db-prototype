@@ -173,6 +173,7 @@ export const SegmentDetails = ({
           // closeDialog()
           updateSelectedDate()
           setChanged(changed + 1)
+          closeDialog()
         }
       })
   }

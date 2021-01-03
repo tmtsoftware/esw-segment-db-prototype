@@ -47,18 +47,18 @@ class JiraClientTest extends AsyncFunSuite {
     println(s"Progress: $percent%")
   }
 
-  test("Test getting all JIRA segment data") {
-    async {
-      val data = await(jiraClient.getAllJiraSegmentData(progress))
-      assert(data.size >= 577)
-
-      val issueData72 = data.find(_.jiraKey == "M1ST-72").get
-      await(test72(issueData72))
-
-      val issueData177 = data.find(_.jiraKey == "M1ST-177").get
-      await(test177(issueData177))
-    }
-  }
+//  test("Test getting all JIRA segment data") {
+//    async {
+//      val data = await(jiraClient.getAllJiraSegmentData(progress))
+//      assert(data.size >= 577)
+//
+//      val issueData72 = data.find(_.jiraKey == "M1ST-72").get
+//      await(test72(issueData72))
+//
+//      val issueData177 = data.find(_.jiraKey == "M1ST-177").get
+//      await(test177(issueData177))
+//    }
+//  }
 
   test("Test getting segment data from single issue") {
     async {
