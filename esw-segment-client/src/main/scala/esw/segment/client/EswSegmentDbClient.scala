@@ -1,7 +1,6 @@
 package esw.segment.client
 
 import java.util.Date
-
 import akka.actor.ActorSystem
 import buildinfo.BuildInfo
 import esw.segment.client.EswSegmentClientOptions.defaultPort
@@ -133,7 +132,7 @@ object EswSegmentDbClient extends App {
   }
 
   // Run the application
-  private def run(options: EswSegmentClientOptions): Future[Unit] =
+  private def run(options: EswSegmentClientOptions): Future[Unit] = {
     async {
       import options._
       val client = new EswSegmentHttpClient(host, port)
@@ -188,7 +187,6 @@ object EswSegmentDbClient extends App {
         showResults(await(client.positionsOnDate(date)))
       }
 
-      // TODO: FIXME
       if (options.mostRecentChange.isDefined) {
         val result = await(client.mostRecentChange(options.date))
         println(result.toString)
@@ -210,4 +208,5 @@ object EswSegmentDbClient extends App {
         result.foreach(println)
       }
     }
+  }
 }

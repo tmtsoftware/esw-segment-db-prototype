@@ -143,7 +143,9 @@ const App = (): JSX.Element => {
           jiraMode={jiraMode}
         />
         <Layout>
-          <Sidebar sidebarOptionsChanged={sidebarOptionsChanged}/>
+          <Sidebar
+            segmentMapSize={segmentMap.size}
+            sidebarOptionsChanged={sidebarOptionsChanged}/>
           <Content>
             <Mirror
               showSegmentIds={showSegmentIds}

@@ -6,10 +6,11 @@ import {SegmentData} from "./SegmentData";
 const {Sider} = Layout;
 
 type SidebarProps = {
+  segmentMapSize:number
   sidebarOptionsChanged: (viewMode: React.Key, showSegmentIds: boolean, showSpares: boolean) => void
 }
 
-export const Sidebar = ({sidebarOptionsChanged}: SidebarProps): JSX.Element => {
+export const Sidebar = ({segmentMapSize, sidebarOptionsChanged}: SidebarProps): JSX.Element => {
 
   const [viewMode, setViewMode] = useState<string | number>("installed")
   const [showSegmentIds, setShowSegmentIds] = useState<boolean>(false)
@@ -17,6 +18,13 @@ export const Sidebar = ({sidebarOptionsChanged}: SidebarProps): JSX.Element => {
   const [syncing, setSyncing] = useState<boolean>(false)
   const [syncProgress, setSyncProgress] = useState<number>(0)
   const [syncPopupVisible, setSyncPopupVisible] = useState<boolean>(false)
+
+  useEffect(() => {
+    if (segmentMapSize == 0) {
+      console.log("XXX useEffect syncWithJira")
+      syncWithJira()
+    }
+  }, [])
 
   useEffect(() => {
     sidebarOptionsChanged(viewMode, showSegmentIds, showSpares)
