@@ -141,9 +141,11 @@ export const SegmentDetails = ({
   const [form] = Form.useForm();
 
   function cancel(): void {
-    setSaveEnabled(false)
-    setSelectedDate(date ? new Date(date) : new Date())
-    setSelectedSegmentId(id || emptyId)
+    if (viewMode == "installed") {
+      setSaveEnabled(false)
+      setSelectedDate(date ? new Date(date) : new Date())
+      setSelectedSegmentId(id || emptyId)
+    }
     closeDialog()
     form.resetFields()
   }
@@ -258,6 +260,7 @@ export const SegmentDetails = ({
   function installedLayout(): JSX.Element {
     return (
       <Drawer
+        // mask={false}
         title={`Segment ${pos}`}
         width={550}
         placement="right"
@@ -293,6 +296,7 @@ export const SegmentDetails = ({
   function plannedLayout(): JSX.Element {
     return (
       <Drawer
+        // mask={false}
         title={`Segment ${pos}`}
         width={550}
         placement="right"
