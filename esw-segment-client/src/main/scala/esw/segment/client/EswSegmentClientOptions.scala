@@ -27,5 +27,7 @@ case class EswSegmentClientOptions(
     segmentPositionOnDate: Option[Unit] = None,
     segmentAtPositionOnDate: Option[Unit] = None,
     availableSegmentIdsForPos: Option[Unit] = None,
-    resetTables: Option[Unit] = None
+    resetTables: Option[Unit] = None,
+    resetSegmentToM1PosTable: Option[Unit] = None,
+    resetJiraSegmentDataTable: Option[Unit] = None,
 )

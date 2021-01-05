@@ -19,7 +19,7 @@ type SectorProps = {
  * @param posMap a map of pos (A1 to F82) to SegmentToM1Pos object
  * @param segmentMap maps pos ("A23") to data from JIRA task
  * @param mostRecentChange date of most recent segment change
- * @param showSegmentIds if true display segment ids in teh segments instead of the position
+ * @param showSegmentIds if true display segment ids in the segments instead of the position
  * @param updateDisplay function to update the display after a DB change
  * @param viewMode string indicating the selected view (from the Sidebar menu)
  * @constructor

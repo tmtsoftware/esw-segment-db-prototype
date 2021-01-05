@@ -58,8 +58,8 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
     }
 
   /**
-   * Returns an array of all 492 segment ids as of the given date as stored in the database,
-   * or a list of unknown segment id entries, if there are no database rows yet.
+   * Returns an array of install dates for all segment ids as of the given date as stored in the database,
+   * or a list of with the given date, if there are no database rows yet.
    */
   private def getInstallDates(date: Date): Future[Array[Date]] =
     async {
@@ -83,8 +83,8 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
     }
 
   /**
-   * Returns an array of all 492 segment install dates as of the given date as stored in the database,
-   * or a list of the given dates, if there are no database rows yet.
+   * Returns an array of all segment ids as of the given date as stored in the database,
+   * or a list of unknownSegmentId, if there are no database rows yet.
    */
   private def getPositions(date: Date): Future[Array[String]] =
     async {
@@ -121,13 +121,16 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       val installDates       = await(getInstallDates(date))
       val allSegmentIdsStr   = positions.map(quoted).mkString(",")
       val allInstallDatesStr = installDates.map(d => quoted(d.toString)).mkString(",")
-      await(
+      val result = await(
         dsl
           .query(s"""
                |INSERT INTO $tableName($dateCol, $positionsCol, $installDateCol)
                |VALUES ('${date.toString}', '{$allSegmentIdsStr}', '{$allInstallDatesStr}')""".stripMargin)
           .executeAsyncScala()
       ) == 1
+
+      val posList = (1 to totalSegments).toList.map(pos => SegmentToM1Pos(installDates(pos-1), idOption(positions(pos-1)), toPosition(pos)))
+      result && await(updateAllPositionsAfter(posList))
     }
 
   /**
@@ -162,8 +165,8 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
            |FROM (
            | SELECT
            |  $dateCol,
-           |  positions[$dbPos] as id,
-           |  LAG(positions[$dbPos]) OVER (ORDER BY $dateCol) as next_id
+           |  $positionsCol[$dbPos] as id,
+           |  LAG($positionsCol[$dbPos]) OVER (ORDER BY $dateCol) as next_id
            | FROM
            |  segment_to_m1_pos
            | WHERE $dateCol <= '${segmentToM1Pos.date}'
@@ -201,6 +204,18 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
     }
 
   /**
+   * Calls updatePositionsAfter() recursively on each position in the list
+   * @param posList the positions being inserted
+   * @return true if ok
+   */
+  private def updateAllPositionsAfter(posList: List[SegmentToM1Pos]): Future[Boolean] = async {
+    if (posList.isEmpty) true else {
+      val result = await(updatePositionsAfter(posList.head, posList.head.date))
+      result && await(updateAllPositionsAfter(posList.tail))
+    }
+  }
+
+  /**
    * Update any "unknown" segment ids in rows after the given pos (up to the first known value)
    * @param segmentToM1Pos the position being inserted
    * @param installDate the initial install date for the segment
@@ -223,7 +238,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
                    |UPDATE $tableName
                    |SET $positionsCol[${segmentToM1Pos.dbPos}] = '${segmentToM1Pos.maybeId.getOrElse(missingSegmentId)}',
                    |$installDateCol[${segmentToM1Pos.dbPos}] = '$installDate'
-                   |WHERE $positionsCol[${segmentToM1Pos.dbPos}] = '$unknownSegmentId'
+                   |WHERE $positionsCol[${segmentToM1Pos.dbPos}] IN ('$unknownSegmentId', '$missingSegmentId')
                    |AND $dateCol >= '${dateRange2.from}' AND $dateCol <= '${dateRange2.to}'
                    |""".stripMargin)
               .executeAsyncScala()
@@ -266,7 +281,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
     }
 
   /**
-   * Update teh installDate in the current and following rows after a position was inserted
+   * Update the installDate in the current and following rows after a position was inserted
    */
   private def updateAfterInsert(segmentToM1Pos: SegmentToM1Pos): Future[Boolean] =
     async {

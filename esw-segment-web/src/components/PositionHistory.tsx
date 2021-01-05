@@ -31,7 +31,7 @@ export const PositionHistory = ({pos, changed}: PositionHistoryProps): JSX.Eleme
   const [data, setData] = useState<Array<SegmentToM1Pos>>([])
 
   useEffect(() => {
-    // Gets the list of available segment ids for this position
+    // Gets the list of segment ids that were in the given position until now
     function getHistoryData() {
       fetch(`${SegmentData.baseUri}/allSegmentIds/${pos}`)
         .then((response) => response.json())
@@ -50,7 +50,7 @@ export const PositionHistory = ({pos, changed}: PositionHistoryProps): JSX.Eleme
       key: row.date,
       // date: new Date(row.date).toLocaleDateString('en-US'),
       date: new Date(row.date).toDateString(),
-      segmentId: row.maybeId ? row.maybeId : <em>removed</em>
+      segmentId: row.maybeId ? row.maybeId : <em>empty</em>
     };
   });
 

@@ -102,6 +102,14 @@ object EswSegmentDbClient extends App {
       c.copy(resetTables = Some(()))
     } text "Drops and recreates the database tables (for testing)"
 
+    opt[Unit]("resetSegmentToM1PosTable") action { (_, c) =>
+      c.copy(resetSegmentToM1PosTable = Some(()))
+    } text "Drops and recreates the segment_to_m1_pos database table (for testing)"
+
+    opt[Unit]("resetJiraSegmentDataTable") action { (_, c) =>
+      c.copy(resetJiraSegmentDataTable = Some(()))
+    } text "Drops and recreates the jira_segment_data database table (for testing)"
+
     help("help")
     version("version")
   }
@@ -149,6 +157,18 @@ object EswSegmentDbClient extends App {
       val result = await(client.resetTables())
       if (!result)
         error(s"resetTables failed")
+    }
+
+    if (options.resetSegmentToM1PosTable.isDefined) {
+      val result = await(client.resetSegmentToM1PosTable())
+      if (!result)
+        error(s"resetSegmentToM1PosTable failed")
+    }
+
+    if (options.resetJiraSegmentDataTable.isDefined) {
+      val result = await(client.resetJiraSegmentDataTable())
+      if (!result)
+        error(s"resetJiraSegmentDataTable failed")
     }
 
     if (options.segmentPositions.isDefined) {
