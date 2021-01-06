@@ -19,7 +19,7 @@ object SegmentToM1PosTable {
   private val positionsCol   = "positions"
   private val installDateCol = "install_date"
 
-  // Segment id for missing segments
+  // Segment id for missing/empty segments
   val missingSegmentId = "------"
 
   // Segment id for segments where the state is unknown (when adding a new empty row)
@@ -238,7 +238,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
                    |UPDATE $tableName
                    |SET $positionsCol[${segmentToM1Pos.dbPos}] = '${segmentToM1Pos.maybeId.getOrElse(missingSegmentId)}',
                    |$installDateCol[${segmentToM1Pos.dbPos}] = '$installDate'
-                   |WHERE $positionsCol[${segmentToM1Pos.dbPos}] IN ('$unknownSegmentId', '$missingSegmentId')
+                   |WHERE $positionsCol[${segmentToM1Pos.dbPos}] = '$unknownSegmentId'
                    |AND $dateCol >= '${dateRange2.from}' AND $dateCol <= '${dateRange2.to}'
                    |""".stripMargin)
               .executeAsyncScala()
