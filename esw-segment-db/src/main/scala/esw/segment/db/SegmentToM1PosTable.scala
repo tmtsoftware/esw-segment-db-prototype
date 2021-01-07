@@ -129,8 +129,10 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .executeAsyncScala()
       ) == 1
 
-      val posList = (1 to totalSegments).toList.map(pos => SegmentToM1Pos(installDates(pos-1), idOption(positions(pos-1)), toPosition(pos)))
-      result && await(updateAllPositionsAfter(posList))
+//      val posList = (1 to totalSegments).toList.map(pos => SegmentToM1Pos(installDates(pos-1), idOption(positions(pos-1)), toPosition(pos)))
+//      result && await(updateAllPositionsAfter(posList))
+
+      result
     }
 
   /**
@@ -203,17 +205,17 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       else true
     }
 
-  /**
-   * Calls updatePositionsAfter() recursively on each position in the list
-   * @param posList the positions being inserted
-   * @return true if ok
-   */
-  private def updateAllPositionsAfter(posList: List[SegmentToM1Pos]): Future[Boolean] = async {
-    if (posList.isEmpty) true else {
-      val result = await(updatePositionsAfter(posList.head, posList.head.date))
-      result && await(updateAllPositionsAfter(posList.tail))
-    }
-  }
+//  /**
+//   * Calls updatePositionsAfter() recursively on each position in the list
+//   * @param posList the positions being inserted
+//   * @return true if ok
+//   */
+//  private def updateAllPositionsAfter(posList: List[SegmentToM1Pos]): Future[Boolean] = async {
+//    if (posList.isEmpty) true else {
+//      val result = await(updatePositionsAfter(posList.head, posList.head.date))
+//      result && await(updateAllPositionsAfter(posList.tail))
+//    }
+//  }
 
   /**
    * Update any "unknown" segment ids in rows after the given pos (up to the first known value)
