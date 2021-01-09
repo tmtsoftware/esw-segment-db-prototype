@@ -149,6 +149,7 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
         setErrorMessage(
           status == 200 ? '' : 'Error: Failed to update the database'
         )
+        setFileMenuSelectedKeys([])
         updateDisplay()
       })
   }

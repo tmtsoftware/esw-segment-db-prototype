@@ -5,7 +5,7 @@ import org.jooq.DSLContext
 import csw.database.scaladsl.JooqExtentions._
 import esw.segment.shared.EswSegmentData._
 import SegmentToM1PosTable._
-import esw.segment.shared.SegmentToM1Api
+import esw.segment.shared.{EswSegmentData, SegmentToM1Api}
 
 import scala.async.Async._
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -289,18 +289,17 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
     }
 
   /**
-   * //   * Update the installDates in the current and following rows after the positions were inserted.
-   * //   * (Use recursion to avoid async and thread restrictions.)
-   * //
+   * Update the installDates in the current and following rows after the positions were inserted.
+   * (Use recursion to avoid async and thread restrictions.)
    */
-//  private def updateAllAfterInsert(posList: List[SegmentToM1Pos]): Future[Boolean] =
-//    async {
-//      if (posList.isEmpty) true
-//      else {
-//        val result = await(updateAfterInsert(posList.head))
-//        result && await(updateAllAfterInsert(posList.tail))
-//      }
-//    }
+  private def updateAllAfterInsert(posList: List[SegmentToM1Pos]): Future[Boolean] =
+    async {
+      if (posList.isEmpty) true
+      else {
+        val result = await(updateAfterInsert(posList.head))
+        result && await(updateAllAfterInsert(posList.tail))
+      }
+    }
 
   /**
    * Update the installDate in the current and following rows after a position was inserted
@@ -353,9 +352,13 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
 
   override def setPositions(config: MirrorConfig): Future[Boolean] =
     async {
-      val date    = config.getDate
-      val posList = config.segments.map(p => SegmentToM1Pos(date, p.segmentId, p.position))
-      await(setPositions(posList))
+      //      val posList = config.segments.map(p => SegmentToM1Pos(date, p.segmentId, p.position))
+      //      await(setPositions(posList))
+      val date      = config.getDate
+      val map       = config.segments.map(p => p.position -> p.segmentId).toMap
+      val positions = (1 to totalSegments).toList.map(EswSegmentData.toPosition)
+      val segIds    = positions.map(p => map.get(p).flatten)
+      await(setAllPositions(date, segIds))
     }
 
   // Sets the positions in the list recursively in order to avoid running out of threads and since
@@ -369,7 +372,6 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       }
     }
 
-  // XXX TODO: Remove this? Use setPositions()
   override def setAllPositions(date: Date, allSegmentIds: List[Option[String]]): Future[Boolean] =
     async {
       // Make sure the row exists
@@ -385,11 +387,16 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
                |""".stripMargin)
             .executeAsyncScala()
         ) == 1
-        // Update the installDate fields, use Await to avoid too many parallel thread issues
+
+//        // Update the installDate fields, use Await to avoid too many parallel thread issues
+//        val list = allSegmentIds.zipWithIndex
+//          .map(p => SegmentToM1Pos(date, p._1, toPosition(p._2 + 1)))
+//          .map(p => Await.result(updateAfterInsert(p), 5.second))
+//        status && list.forall(b => b)
+
         val list = allSegmentIds.zipWithIndex
           .map(p => SegmentToM1Pos(date, p._1, toPosition(p._2 + 1)))
-          .map(p => Await.result(updateAfterInsert(p), 5.second))
-        status && list.forall(b => b)
+        status && await(updateAllAfterInsert(list))
       }
       else rowStatus
     }
