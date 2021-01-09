@@ -70,17 +70,6 @@ object EswSegmentData {
   }
 
   /**
-   * Positions of a number of segments on a given date.
-   *
-   * @param date      date of record
-   * @param positions a list of pairs of (maybe-segment-id, segment-position) for zero or more segments
-   *                  to be set/updated for the given date.
-   *                  The value for maybe-segment is Some(segment-id) or None, if a segment is missing.
-   *                  The positions are from A1 to F82.
-   */
-  case class SegmentToM1Positions(date: Date, positions: List[(Option[String], String)])
-
-  /**
    * All of the segment positions for the given date.
    * The first item in the positions list is taken to be the segment position 1 and so on.
    *
@@ -104,5 +93,24 @@ object EswSegmentData {
       list.sortWith((p, q) => q.date.before(p.date))
     else
       list.sortWith((p, q) => p.date.before(q.date))
+  }
+
+  /**
+   * Segment data for import/export from web app
+   * @param position segment poosition (A1 to G82)
+   * @param segmentId SN-xxx for the position
+   */
+  case class SegmentConfig(position: String, segmentId: Option[String])
+
+  /**
+   * Holds a number of segment-id assignments for the mirror
+   * @param date the date for the configuration in the format YYYY-mm-dd
+   * @param segments list of segment assignments
+   */
+  case class MirrorConfig(date: String, segments: List[SegmentConfig]) {
+    def getDate: Date = Date.valueOf(date)
+    def this(date: Date, segments: List[SegmentConfig]) = {
+      this(date.toString, segments)
+    }
   }
 }

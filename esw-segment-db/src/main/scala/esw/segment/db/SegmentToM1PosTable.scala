@@ -107,7 +107,6 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
         .getOrElse((1 to totalSegments).map(_ => unknownSegmentId).toArray)
     }
 
-
   /**
    * Adds a row with the given date and copies the segment positions from the latest entry,
    * if found, or else a row of nulls.
@@ -183,7 +182,14 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
            |""".stripMargin)
           .fetchAsyncScala[Date]
       )
-      SegmentToM1Pos(queryResult.head, segmentToM1Pos.maybeId, segmentToM1Pos.position)
+      if (queryResult.nonEmpty)
+        SegmentToM1Pos(queryResult.head, segmentToM1Pos.maybeId, segmentToM1Pos.position)
+      else {
+        println(
+          s"XXX Empty at withInstallDate(): date: ${segmentToM1Pos.date}, pos: ${segmentToM1Pos.position}, id: ${segmentToM1Pos.maybeId}"
+        )
+        segmentToM1Pos
+      }
     }
 
   /**
@@ -283,6 +289,20 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
     }
 
   /**
+   * //   * Update the installDates in the current and following rows after the positions were inserted.
+   * //   * (Use recursion to avoid async and thread restrictions.)
+   * //
+   */
+//  private def updateAllAfterInsert(posList: List[SegmentToM1Pos]): Future[Boolean] =
+//    async {
+//      if (posList.isEmpty) true
+//      else {
+//        val result = await(updateAfterInsert(posList.head))
+//        result && await(updateAllAfterInsert(posList.tail))
+//      }
+//    }
+
+  /**
    * Update the installDate in the current and following rows after a position was inserted
    */
   private def updateAfterInsert(segmentToM1Pos: SegmentToM1Pos): Future[Boolean] =
@@ -301,38 +321,55 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       await(updateAfterInsert(segmentToM1Pos))
     }
 
-  override def setPositions(date: Date, positions: List[(Option[String], String)]): Future[Boolean] =
+//  // XXX TODO FIXME: Need to use recursion to make smaller statements!!!
+//  override def setPositions(config: MirrorConfig): Future[Boolean] =
+//    async {
+//      val date        = config.getDate
+//      val dbPositions = config.segments.map(p => (p.segmentId, toDbPosition(p.position)))
+//      val rowStatus   = await(rowExists(date)) || await(addRow(date))
+//      if (rowStatus) {
+//        val ids = dbPositions.flatMap(_._1)
+//        removeSegmentIds(date, ids)
+//        val setExpr = dbPositions
+//          .map { p =>
+//            val dbPos   = p._2
+//            val maybeId = p._1
+//            s"$positionsCol[$dbPos] = '${maybeId.getOrElse(missingSegmentId)}'"
+//          }
+//          .mkString(", ")
+//        val status = await(
+//          dsl
+//            .query(s"""
+//             |UPDATE $tableName
+//             |SET $setExpr
+//             |WHERE $dateCol = '$date'
+//             |""".stripMargin)
+//            .executeAsyncScala()
+//        ) == 1
+//        status && await(updateAllAfterInsert(config.segments.map(p => SegmentToM1Pos(date, p.segmentId, p.position))))
+//      }
+//      else rowStatus
+//    }
+
+  override def setPositions(config: MirrorConfig): Future[Boolean] =
     async {
-      val dbPositions = positions.map(p => (p._1, toDbPosition(p._2)))
-      val rowStatus   = await(rowExists(date)) || await(addRow(date))
-      if (rowStatus) {
-        val ids = dbPositions.flatMap(_._1)
-        removeSegmentIds(date, ids)
-        val setExpr = dbPositions
-          .map { p =>
-            val dbPos   = p._2
-            val maybeId = p._1
-            s"$positionsCol[$dbPos] = '${maybeId.getOrElse(missingSegmentId)}'"
-          }
-          .mkString(", ")
-        val status = await(
-          dsl
-            .query(s"""
-             |UPDATE $tableName
-             |SET $setExpr
-             |WHERE $dateCol = '$date'
-             |""".stripMargin)
-            .executeAsyncScala()
-        ) == 1
-        // Update the installDate fields, use Await to avoid too many parallel thread issues
-        val list = positions
-          .map(p => SegmentToM1Pos(date, p._1, p._2))
-          .map(p => Await.result(updateAfterInsert(p), 5.second))
-        status && list.forall(b => b)
-      }
-      else rowStatus
+      val date    = config.getDate
+      val posList = config.segments.map(p => SegmentToM1Pos(date, p.segmentId, p.position))
+      await(setPositions(posList))
     }
 
+  // Sets the positions in the list recursively in order to avoid running out of threads and since
+  // async/await can't be used in a loop
+  private def setPositions(posList: List[SegmentToM1Pos]): Future[Boolean] =
+    async {
+      if (posList.isEmpty) true
+      else {
+        val result = await(setPosition(posList.head))
+        result && await(setPositions(posList.tail))
+      }
+    }
+
+  // XXX TODO: Remove this? Use setPositions()
   override def setAllPositions(date: Date, allSegmentIds: List[Option[String]]): Future[Boolean] =
     async {
       // Make sure the row exists
@@ -349,9 +386,8 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
             .executeAsyncScala()
         ) == 1
         // Update the installDate fields, use Await to avoid too many parallel thread issues
-        val list = allSegmentIds
-          .zipWithIndex
-          .map(p => SegmentToM1Pos(date, p._1, toPosition(p._2+1)))
+        val list = allSegmentIds.zipWithIndex
+          .map(p => SegmentToM1Pos(date, p._1, toPosition(p._2 + 1)))
           .map(p => Await.result(updateAfterInsert(p), 5.second))
         status && list.forall(b => b)
       }
@@ -471,7 +507,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       }
       else {
         val list = queryResult.flatMap { result =>
-          val (dbPositions, installDates)  = result
+          val (dbPositions, installDates) = result
           dbPositions.zipWithIndex
             .map(p => makeSegmentToM1Pos(installDates(p._2), p._1, p._2 + 1))
         }

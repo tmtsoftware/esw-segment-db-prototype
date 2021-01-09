@@ -19,6 +19,7 @@ import csw.logging.api.scaladsl.Logger
 
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Failure
 
 class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDataTable, logger: Logger)(implicit
     ec: ExecutionContext,
@@ -61,8 +62,8 @@ class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDat
         } ~
         // Set positions of a number of segments on a given date
         path("setPositions") {
-          entity(as[SegmentToM1Positions]) { p =>
-            complete(posTable.setPositions(p.date, p.positions).map(if (_) OK else BadRequest))
+          entity(as[MirrorConfig]) { config =>
+            complete(posTable.setPositions(config).map(if (_) OK else BadRequest))
           }
         } ~
         // Set all segment positions

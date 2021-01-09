@@ -4,8 +4,6 @@ import {Button, DatePicker, Tooltip, Typography} from "antd";
 import {LeftOutlined, RightOutlined} from '@ant-design/icons'
 import moment from "moment";
 
-const {Text} = Typography;
-
 type TopbarDateChooserProps = {
   mostRecentChange: Date
   updateDisplay: (refDate: Date) => void
@@ -18,8 +16,6 @@ export const TopbarDateChooser = ({
                                     jiraMode
                                   }: TopbarDateChooserProps): JSX.Element => {
   const [selectedDate, setSelectedDate] = useState<Date>(mostRecentChange)
-
-  // const classes = useStyles()
 
   function nextDate() {
     const requestOptions = {
@@ -51,35 +47,8 @@ export const TopbarDateChooser = ({
       })
   }
 
-  // function today() {
-  //   const requestOptions = {
-  //     method: 'POST',
-  //     headers: {'Content-Type': 'application/json'},
-  //     body: JSON.stringify(new Date().getTime())
-  //   }
-  //   fetch(`${SegmentData.baseUri}/mostRecentChange`, requestOptions)
-  //     .then((response) => response.json())
-  //     .then((result) => {
-  //       const date: Date = new Date(result)
-  //       setSelectedDate(date)
-  //       updateDisplay(date)
-  //     })
-  // }
-
   const handleDateChange = (value: moment.Moment | null) => {
     const newDate = value ? value.toDate() : new Date()
-    // const requestOptions = {
-    //   method: 'POST',
-    //   headers: {'Content-Type': 'application/json'},
-    //   body: JSON.stringify(newDate.getTime())
-    // }
-    // fetch(`${SegmentData.baseUri}/mostRecentChange`, requestOptions)
-    //   .then((response) => response.json())
-    //   .then((result) => {
-    //     const date: Date = new Date(result)
-    //     setSelectedDate(date)
-    //     updateDisplay(date)
-    //   })
     setSelectedDate(newDate)
     updateDisplay(newDate)
 
@@ -100,7 +69,6 @@ export const TopbarDateChooser = ({
         <DatePicker
           style={{backgroundColor: '#b2c4db', border: 0}}
           allowClear={false}
-          // format={"YYYY-MM-DD"}
           format={"ddd ll"}
           showToday={true}
           onChange={handleDateChange}
@@ -115,10 +83,6 @@ export const TopbarDateChooser = ({
           onClick={() => nextDate()}
         />
       </Tooltip>
-
-        {/*// XXX TODO FIXME: Doesn't display most recent date if segment changed and this item was on previous most recent date */}
-        {/*<Text className={'topbarDateChooserText'}>{selectedDate.toLocaleDateString('en-US')}</Text>*/}
-        {/*<Text className={'topbarDateChooserText'}>{selectedDate.toDateString()}</Text>*/}
     </span>
   )
 }

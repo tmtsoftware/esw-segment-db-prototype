@@ -145,7 +145,11 @@ const App = (): JSX.Element => {
         <Layout>
           <Sidebar
             segmentMapSize={segmentMap.size}
-            sidebarOptionsChanged={sidebarOptionsChanged}/>
+            sidebarOptionsChanged={sidebarOptionsChanged}
+            posMap={posMap}
+            date={new Date(mostRecentChange)}
+            updateDisplay={updateData}
+          />
           <Content>
             <Mirror
               showSegmentIds={showSegmentIds}

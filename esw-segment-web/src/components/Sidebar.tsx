@@ -1,16 +1,22 @@
 import React, {useEffect, useState} from 'react'
-import {Divider, Layout, Menu, Popconfirm, Progress} from "antd";
+import {Layout, Menu, Popconfirm, Progress, Upload} from "antd";
 import {MenuInfo, SelectInfo} from 'rc-menu/lib/interface';
-import {SegmentData} from "./SegmentData";
+import {SegmentData, SegmentToM1Pos} from "./SegmentData";
+import SubMenu from "antd/es/menu/SubMenu";
+import { format } from 'date-fns'
+import {UploadChangeParam} from "antd/es/upload";
 
 const {Sider} = Layout;
 
 type SidebarProps = {
-  segmentMapSize:number
+  segmentMapSize: number
   sidebarOptionsChanged: (viewMode: React.Key, showSegmentIds: boolean, showSpares: boolean) => void
+  posMap: Map<string, SegmentToM1Pos>
+  date: Date
+  updateDisplay: () => void
 }
 
-export const Sidebar = ({segmentMapSize, sidebarOptionsChanged}: SidebarProps): JSX.Element => {
+export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, updateDisplay}: SidebarProps): JSX.Element => {
 
   const [viewMode, setViewMode] = useState<string | number>("installed")
   const [showSegmentIds, setShowSegmentIds] = useState<boolean>(false)
@@ -18,10 +24,11 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged}: SidebarProps): 
   const [syncing, setSyncing] = useState<boolean>(false)
   const [syncProgress, setSyncProgress] = useState<number>(0)
   const [syncPopupVisible, setSyncPopupVisible] = useState<boolean>(false)
+  const [fileMenuSelectedKeys, setFileMenuSelectedKeys] = useState<Array<string>>([])
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     if (segmentMapSize == 0) {
-      console.log("XXX useEffect syncWithJira")
       syncWithJira()
     }
   }, [])
@@ -37,24 +44,13 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged}: SidebarProps): 
       setViewMode(info.key)
   }
 
-  function menuOptionSelected(info: SelectInfo) {
+  function viewMenuOptionSelected(info: SelectInfo) {
     switch (info.key) {
       case 'showSegmentIds':
         setShowSegmentIds(true)
         break
       case 'showSpares':
         setShowSpares(true)
-        break
-    }
-  }
-
-  function menuOptionDeselected(info: SelectInfo) {
-    switch (info.key) {
-      case 'showSegmentIds':
-        setShowSegmentIds(false)
-        break
-      case 'showSpares':
-        setShowSpares(false)
         break
     }
   }
@@ -69,37 +65,154 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged}: SidebarProps): 
     }
   }
 
+  function viewMenuOptionDeselected(info: SelectInfo) {
+    switch (info.key) {
+      case 'showSegmentIds':
+        setShowSegmentIds(false)
+        break
+      case 'showSpares':
+        setShowSpares(false)
+        break
+    }
+  }
+
+  function toDbPosition(loc: String): number {
+    const sectorOffset = loc.charCodeAt(0) - 'A'.charCodeAt(0)
+    const n: number = +loc.substr(1)
+    return sectorOffset * 82 + n
+  }
+
+  interface SegmentConfig {
+    position: string,
+    segmentId?: string
+  }
+  interface MirrorConfig {
+    date: string,
+    segments: Array<SegmentConfig>
+  }
+
+  function exportMirrorConfigToFile() {
+    const values: Array<SegmentToM1Pos> = [...posMap.values()].sort((pos1, pos2) => {
+      const a = toDbPosition(pos1.position)
+      const b = toDbPosition(pos2.position)
+      if (a > b) {
+        return 1;
+      } else if (a < b) {
+        return -1;
+      } else {
+        return 0;
+      }
+    })
+    const jsonObject: MirrorConfig = {
+      date: format(date, 'yyyy-MM-dd'),
+      segments: values.map((value: SegmentToM1Pos) => {
+        return {
+          position: value.position,
+          ...value.maybeId && {segmentId: value.maybeId}
+        }
+      })
+    }
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(jsonObject, null, 2)], {
+      type: "text/plain"
+    }));
+    // XXX TODO FIXME: Make popup to ask for file name?
+    a.setAttribute("download", `mirror-${format(date, 'yyyy-MM-dd')}.json`);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function fileMenuOptionSelected(info: SelectInfo) {
+    switch (info.key) {
+      case 'export':
+        exportMirrorConfigToFile()
+        setFileMenuSelectedKeys([])
+        break
+      case 'import':
+        setFileMenuSelectedKeys([])
+        break
+    }
+  }
+
+  function setPositions(config: MirrorConfig) {
+    const requestOptions = {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(config)
+    }
+    fetch(`${SegmentData.baseUri}/setPositions`, requestOptions)
+      .then((response) => response.status)
+      .then((status) => {
+        if (status != 200) console.log(`XXX Error: Failed to update the database`)
+        setErrorMessage(
+          status == 200 ? '' : 'Error: Failed to update the database'
+        )
+        updateDisplay()
+      })
+  }
+
+
+  // XXX TODO FIXME: Ask for date for import?
+  const importProps = {
+    accept: ".json",
+    name: 'file',
+    onChange(info: UploadChangeParam) {
+      if (info.file.status !== 'uploading') {
+        let reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target && e.target.result) {
+            const json: string = e.target.result.toString()
+            const config: MirrorConfig = JSON.parse(json)
+            setPositions(config)
+          }
+        }
+        if (info.file.originFileObj)
+          reader.readAsText(info.file.originFileObj);
+      }
+      if (info.file.status === 'done') {
+        console.log(`XXX ${info.file.name} file uploaded successfully`);
+      } else if (info.file.status === 'error') {
+        console.log(`XXX ${info.file.name} file upload failed.`);
+      }
+    },
+  }
+
   return (
     <Sider>
       <Menu
         theme="dark"
         onClick={menuItemSelected}
         defaultSelectedKeys={['installed']}
+        defaultOpenKeys={['jira']}
         mode="inline">
         <Menu.Item key="installed">
           Installed
         </Menu.Item>
-        <Menu.Item key="planned">
-          Planned
-        </Menu.Item>
-        <Menu.Item key="segmentAllocation">
-          Segment Allocation
-        </Menu.Item>
-        <Menu.Item key="itemLocation">
-          Item Location
-        </Menu.Item>
-        <Menu.Item key="riskOfLoss">
-          Risk Of Loss
-        </Menu.Item>
-        <Menu.Item key="components">
-          Components
-        </Menu.Item>
-        <Menu.Item key="status">
-          Status
-        </Menu.Item>
-        <Menu.Item key="syncWithJira" disabled={syncing}>
-          Sync with JIRA
-        </Menu.Item>
+        <SubMenu key="jira" title="Planning">
+          <Menu.Item key="planned">
+            Segments
+          </Menu.Item>
+          <Menu.Item key="segmentAllocation">
+            Segment Allocation
+          </Menu.Item>
+          <Menu.Item key="itemLocation">
+            Item Location
+          </Menu.Item>
+          <Menu.Item key="riskOfLoss">
+            Risk Of Loss
+          </Menu.Item>
+          <Menu.Item key="components">
+            Components
+          </Menu.Item>
+          <Menu.Item key="status">
+            Status
+          </Menu.Item>
+          <Menu.Item key="syncWithJira" disabled={syncing}>
+            Sync with JIRA
+          </Menu.Item>
+        </SubMenu>
       </Menu>
       <Popconfirm
         placement="right"
@@ -115,19 +228,44 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged}: SidebarProps): 
           className="syncWithJiraProgress"
           style={{margin: '0 0 0 20px', display: syncing ? 'block' : 'none'}}/>
       </div>
-      <Divider dashed style={{backgroundColor: '#b2c4db'}}/>
+      {/*<Divider dashed style={{backgroundColor: '#b2c4db'}}/>*/}
+      <Menu
+        multiple={false}
+        theme="dark"
+        onSelect={fileMenuOptionSelected}
+        defaultOpenKeys={['file']}
+        selectedKeys={fileMenuSelectedKeys}
+        mode="inline">
+        <SubMenu key="file" title="File">
+          <Menu.Item key="export">
+            Export
+          </Menu.Item>
+          <Menu.Item key="import">
+            {/*<Upload*/}
+            {/*  accept={".json"}*/}
+            {/*  action={"/importMirrorConfig"}*/}
+            {/*>*/}
+            <Upload {...importProps}>
+              <div style={{color: '#ffffffa6'}}>Import</div>
+            </Upload>
+          </Menu.Item>
+        </SubMenu>
+      </Menu>
       <Menu
         multiple={true}
         theme="dark"
-        onSelect={menuOptionSelected}
-        onDeselect={menuOptionDeselected}
+        defaultOpenKeys={['view']}
+        onSelect={viewMenuOptionSelected}
+        onDeselect={viewMenuOptionDeselected}
         mode="inline">
-        <Menu.Item key="showSegmentIds">
-          Show Segment IDs
-        </Menu.Item>
-        <Menu.Item key="showSpares">
-          Show Spares
-        </Menu.Item>
+        <SubMenu key="view" title="View">
+          <Menu.Item key="showSegmentIds">
+            Show Segment IDs
+          </Menu.Item>
+          <Menu.Item key="showSpares">
+            Show Spares
+          </Menu.Item>
+        </SubMenu>
       </Menu>
     </Sider>
   )

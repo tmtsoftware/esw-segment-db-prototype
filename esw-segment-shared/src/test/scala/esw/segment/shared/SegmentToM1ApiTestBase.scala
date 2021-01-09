@@ -43,6 +43,22 @@ class SegmentToM1ApiTestBase(posTable: SegmentToM1Api) extends AsyncFunSuite {
       assert(await(posTable.setPosition(new SegmentToM1Pos(Date.valueOf("2020-10-10"), "SN32-1", "A32"))))
       assert(await(posTable.setPosition(SegmentToM1Pos(Date.valueOf("2020-10-10"), None, "A33"))))
 
+      assert(
+        await(
+          posTable.setPositions(
+            new MirrorConfig(
+              Date.valueOf("2020-10-23"),
+              List(
+                SegmentConfig("A78", Some("SN-483")),
+                SegmentConfig("B78", Some("SN-484")),
+                SegmentConfig("D78", Some("SN-486"))
+              )
+            )
+          )
+        )
+      )
+
+
     }
 
   private def populateAllSegments(date: Date): Future[Unit] =
@@ -124,7 +140,10 @@ class SegmentToM1ApiTestBase(posTable: SegmentToM1Api) extends AsyncFunSuite {
           new SegmentToM1Pos(Date.valueOf("2020-10-21"), "SN05-1", "F5"),
           new SegmentToM1Pos(Date.valueOf("2020-10-23"), "SN08-1", "A12"),
           new SegmentToM1Pos(Date.valueOf("2020-10-22"), "SN05-1", "B23"),
-          new SegmentToM1Pos(Date.valueOf("2020-10-22"), "SN07-1", "F82")
+          new SegmentToM1Pos(Date.valueOf("2020-10-22"), "SN07-1", "F82"),
+          new SegmentToM1Pos(Date.valueOf("2020-10-23"), "SN-483", "A78"),
+          new SegmentToM1Pos(Date.valueOf("2020-10-23"), "SN-484", "B78"),
+          new SegmentToM1Pos(Date.valueOf("2020-10-23"), "SN-486", "D78"),
         )
       )
 
@@ -136,7 +155,10 @@ class SegmentToM1ApiTestBase(posTable: SegmentToM1Api) extends AsyncFunSuite {
           new SegmentToM1Pos(Date.valueOf("2020-10-23"), "SN08-1", "A12"),
           new SegmentToM1Pos(Date.valueOf("2020-10-10"), "SN32-1", "A32"),
           new SegmentToM1Pos(Date.valueOf("2020-10-22"), "SN05-1", "B23"),
-          new SegmentToM1Pos(Date.valueOf("2020-10-22"), "SN07-1", "F82")
+          new SegmentToM1Pos(Date.valueOf("2020-10-22"), "SN07-1", "F82"),
+          new SegmentToM1Pos(Date.valueOf("2020-10-23"), "SN-483", "A78"),
+          new SegmentToM1Pos(Date.valueOf("2020-10-23"), "SN-484", "B78"),
+          new SegmentToM1Pos(Date.valueOf("2020-10-23"), "SN-486", "D78"),
         )
       )
 
@@ -180,7 +202,10 @@ class SegmentToM1ApiTestBase(posTable: SegmentToM1Api) extends AsyncFunSuite {
           new SegmentToM1Pos(Date.valueOf("2020-10-10"), "SN32-1", "A32"),
           new SegmentToM1Pos(Date.valueOf("2020-10-23"), "SN08-1", "A12"),
           new SegmentToM1Pos(Date.valueOf("2020-10-22"), "SN05-1", "B23"),
-          new SegmentToM1Pos(Date.valueOf("2020-10-22"), "SN07-1", "F82")
+          new SegmentToM1Pos(Date.valueOf("2020-10-22"), "SN07-1", "F82"),
+          new SegmentToM1Pos(Date.valueOf("2020-10-23"), "SN-483", "A78"),
+          new SegmentToM1Pos(Date.valueOf("2020-10-23"), "SN-484", "B78"),
+          new SegmentToM1Pos(Date.valueOf("2020-10-23"), "SN-486", "D78"),
         )
       )
 

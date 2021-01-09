@@ -73,8 +73,8 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
     postSet(Uri(s"$baseUri/setPosition"), segmentToM1Pos.toJson.compactPrint)
   }
 
-  override def setPositions(date: Date, positions: List[(Option[String], String)]): Future[Boolean] = {
-    postSet(Uri(s"$baseUri/setPositions"), SegmentToM1Positions(date, positions).toJson.compactPrint)
+  override def setPositions(config: MirrorConfig): Future[Boolean] = {
+    postSet(Uri(s"$baseUri/setPositions"), config.toJson.compactPrint)
   }
 
   override def setAllPositions(date: Date, allSegmentIds: List[Option[String]]): Future[Boolean] = {

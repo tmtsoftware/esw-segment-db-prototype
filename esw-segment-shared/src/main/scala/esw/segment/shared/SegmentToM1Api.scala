@@ -1,8 +1,7 @@
 package esw.segment.shared
 
 import java.sql.Date
-
-import esw.segment.shared.EswSegmentData.{DateRange, SegmentToM1Pos}
+import esw.segment.shared.EswSegmentData.{DateRange, MirrorConfig, SegmentToM1Pos}
 
 import scala.concurrent.Future
 
@@ -18,18 +17,16 @@ trait SegmentToM1Api {
   /**
    * Sets or updates the positions of the given segments for the given date in the table and returns true if successful.
    *
-   * @param date      the date corresponding to the positions
-   * @param positions a list of pairs of (segment-id, segment-position) for zero or more segments to be set/updated
-   *                  for the given date. segment-id can be None if missing. Segment positions are from A1 to F82.
+   * @param config      the configuration for the mirror (date and segmentid assignments)
    * @return true if there were no problems
    */
-  def setPositions(date: Date, positions: List[(Option[String], String)]): Future[Boolean]
+  def setPositions(config: MirrorConfig): Future[Boolean]
 
   /**
-   * Sets all 492 segment ids for the given date and returns true if successful.
+   * Sets all segment ids (including spares) for the given date and returns true if successful.
    *
    * @param date         the date corresponding to the positions
-   * @param allSegmentIds list of all 492 segment ids (In order for segments A1 to F82, Missing segments should be None,
+   * @param allSegmentIds list of all segment ids (In order for segments A1 to G82, Missing segments should be None,
    *                     present segments should be Some(segment-id))
    * @return true if all is OK, false if the number of positions is less than 492 or the table row
    *         could not be added or updated
