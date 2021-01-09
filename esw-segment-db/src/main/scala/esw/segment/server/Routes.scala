@@ -19,7 +19,6 @@ import csw.logging.api.scaladsl.Logger
 
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Failure
 
 class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDataTable, logger: Logger)(implicit
     ec: ExecutionContext,
@@ -37,7 +36,7 @@ class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDat
     async {
       val list    = await(f)
       val results = await(Future.sequence(list.map(posTable.currentSegmentPosition)))
-      list.zip(results).filter(_._2.isEmpty).map(_._1)
+      list.zip(results).filter(p => p._2.isEmpty || p._2.get.position.head == 'G').map(_._1)
     }
 
   // Convert callback to stream for progress on sync

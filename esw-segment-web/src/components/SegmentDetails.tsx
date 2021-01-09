@@ -65,6 +65,7 @@ export const SegmentDetails = ({
           : [...data, emptyId]
         const uniqueIds = [...new Set(ids)]
         setAvailableSegmentIds(uniqueIds)
+        setSelectedSegmentId(id || emptyId)
       })
   }
 
