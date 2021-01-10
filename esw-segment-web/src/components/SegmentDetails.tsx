@@ -129,11 +129,11 @@ export const SegmentDetails = ({
     return (
       <Form.Item name="date-picker" label={helpText}>
         <DatePicker
-          // format={"YYYY-MM-DD"}
           format={"ddd ll"}
           showToday={true}
           onChange={handleDateChange}
           value={moment(selectedDate)}
+          defaultValue={moment(date)}
         />
       </Form.Item>
     )

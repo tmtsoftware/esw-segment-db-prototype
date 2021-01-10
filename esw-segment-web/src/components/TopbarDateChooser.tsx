@@ -72,6 +72,7 @@ export const TopbarDateChooser = ({
           format={"ddd ll"}
           showToday={true}
           onChange={handleDateChange}
+          defaultValue={moment(selectedDate)}
           value={moment(selectedDate)}
         />
       </Tooltip>

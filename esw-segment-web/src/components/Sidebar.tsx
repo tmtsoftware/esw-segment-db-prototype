@@ -1,10 +1,11 @@
-import React, {useEffect, useState} from 'react'
-import {Layout, Menu, Popconfirm, Progress, Upload} from "antd";
+import React, {ChangeEvent, useEffect, useState} from 'react'
+import {DatePicker, Form, Input, Layout, Menu, Modal, Popconfirm, Progress, Upload} from "antd";
 import {MenuInfo, SelectInfo} from 'rc-menu/lib/interface';
 import {SegmentData, SegmentToM1Pos} from "./SegmentData";
 import SubMenu from "antd/es/menu/SubMenu";
 import { format } from 'date-fns'
 import {UploadChangeParam} from "antd/es/upload";
+import moment from "moment";
 
 const {Sider} = Layout;
 
@@ -26,6 +27,9 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
   const [syncPopupVisible, setSyncPopupVisible] = useState<boolean>(false)
   const [fileMenuSelectedKeys, setFileMenuSelectedKeys] = useState<Array<string>>([])
   const [errorMessage, setErrorMessage] = useState('')
+  const [isExportModalVisible, setExportModalVisible] = useState(false);
+  const [selectedExportDate, setSelectedExportDate] = useState(date);
+  const [selectedExportBaseFileName, setSelectedExportBaseFileName] = useState('mirror');
 
   useEffect(() => {
     if (segmentMapSize == 0) {
@@ -117,8 +121,8 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
     a.href = URL.createObjectURL(new Blob([JSON.stringify(jsonObject, null, 2)], {
       type: "text/plain"
     }));
-    // XXX TODO FIXME: Make popup to ask for file name?
-    a.setAttribute("download", `mirror-${format(date, 'yyyy-MM-dd')}.json`);
+    const selectedDate = format(selectedExportDate, 'yyyy-MM-dd')
+    a.setAttribute("download", `${selectedExportBaseFileName}-${selectedDate}.json`);
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -127,8 +131,8 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
   function fileMenuOptionSelected(info: SelectInfo) {
     switch (info.key) {
       case 'export':
-        exportMirrorConfigToFile()
-        setFileMenuSelectedKeys([])
+        // setSelectedExportDate(date)
+        setExportModalVisible(true);
         break
       case 'import':
         setFileMenuSelectedKeys([])
@@ -154,8 +158,6 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
       })
   }
 
-
-  // XXX TODO FIXME: Ask for date for import?
   const importProps = {
     accept: ".json",
     name: 'file',
@@ -178,6 +180,31 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
         console.log(`XXX ${info.file.name} file upload failed.`);
       }
     },
+  }
+
+  const doExport = () => {
+    exportMirrorConfigToFile()
+    setFileMenuSelectedKeys([])
+    setExportModalVisible(false);
+  };
+
+  const cancelExport = () => {
+    setExportModalVisible(false);
+  };
+
+  const [exportForm] = Form.useForm();
+  const exportLayout = {
+    labelCol: {span: 8},
+    wrapperCol: {span: 16},
+  };
+
+  const handleExportDateChange = (value: moment.Moment | null) => {
+    const newDate = value ? value.toDate() : date
+    setSelectedExportDate(newDate)
+  }
+
+  const handleExportBaseFileNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setSelectedExportBaseFileName(event.target.value)
   }
 
   return (
@@ -241,11 +268,34 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
           <Menu.Item key="export">
             Export
           </Menu.Item>
+          <Modal
+            centered
+            title="Export Currently Displayed Segment Allocation"
+            visible={isExportModalVisible}
+            onOk={doExport}
+            onCancel={cancelExport}>
+            <Form
+              form={exportForm}
+              size={'small'}
+              {...exportLayout}>
+              <Form.Item name="date-picker" label={'Date'} rules={[{ required: true }]}>
+                <DatePicker
+                  format={"ddd ll"}
+                  showToday={true}
+                  onChange={handleExportDateChange}
+                  defaultValue={moment(selectedExportDate)}
+                  value={moment(selectedExportDate)}
+                />
+              </Form.Item>
+              <Form.Item name="base-file-name" label={'Base file name'} rules={[{ required: true }]}>
+                <Input
+                  defaultValue={selectedExportBaseFileName}
+                  onChange={handleExportBaseFileNameChange}
+                />
+              </Form.Item>
+            </Form>
+          </Modal>
           <Menu.Item key="import">
-            {/*<Upload*/}
-            {/*  accept={".json"}*/}
-            {/*  action={"/importMirrorConfig"}*/}
-            {/*>*/}
             <Upload {...importProps}>
               <div style={{color: '#ffffffa6'}}>Import</div>
             </Upload>
