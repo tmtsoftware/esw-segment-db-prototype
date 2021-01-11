@@ -34,4 +34,5 @@ case class EswSegmentClientOptions(
     importFile: Option[File] = None,
     exportFile: Option[File] = None,
     exportPlan: Option[File] = None,
+    exportJiraData: Option[File] = None,
 )

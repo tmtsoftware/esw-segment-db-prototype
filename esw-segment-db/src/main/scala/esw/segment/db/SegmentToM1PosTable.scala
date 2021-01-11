@@ -319,27 +319,35 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       await(updateAfterInsert(segmentToM1Pos))
     }
 
+  // XXX TODO Overwrite row with only the given positions?
+//  override def setPositions(config: MirrorConfig): Future[Boolean] =
+//    async {
+//      //      val posList = config.segments.map(p => SegmentToM1Pos(date, p.segmentId, p.position))
+//      //      await(setPositions(posList))
+//      val date      = config.getDate
+//      val map       = config.segments.map(p => p.position -> p.segmentId).toMap
+//      val positions = (1 to totalSegments).toList.map(EswSegmentData.toPosition)
+//      val segIds    = positions.map(p => map.get(p).flatten)
+//      await(setAllPositions(date, segIds))
+//    }
+
   override def setPositions(config: MirrorConfig): Future[Boolean] =
     async {
-      //      val posList = config.segments.map(p => SegmentToM1Pos(date, p.segmentId, p.position))
-      //      await(setPositions(posList))
-      val date      = config.getDate
-      val map       = config.segments.map(p => p.position -> p.segmentId).toMap
-      val positions = (1 to totalSegments).toList.map(EswSegmentData.toPosition)
-      val segIds    = positions.map(p => map.get(p).flatten)
-      await(setAllPositions(date, segIds))
+      val date    = config.getDate
+      val posList = config.segments.map(p => SegmentToM1Pos(date, p.segmentId, p.position))
+      await(setPositions(posList))
     }
 
-//  // Sets the positions in the list recursively in order to avoid running out of threads and since
-//  // async/await can't be used in a loop
-//  private def setPositions(posList: List[SegmentToM1Pos]): Future[Boolean] =
-//    async {
-//      if (posList.isEmpty) true
-//      else {
-//        val result = await(setPosition(posList.head))
-//        result && await(setPositions(posList.tail))
-//      }
-//    }
+  // Sets the positions in the list recursively in order to avoid running out of threads and since
+  // async/await can't be used in a loop
+  private def setPositions(posList: List[SegmentToM1Pos]): Future[Boolean] =
+    async {
+      if (posList.isEmpty) true
+      else {
+        val result = await(setPosition(posList.head))
+        result && await(setPositions(posList.tail))
+      }
+    }
 
   override def setAllPositions(date: Date, allSegmentIds: List[Option[String]]): Future[Boolean] =
     async {

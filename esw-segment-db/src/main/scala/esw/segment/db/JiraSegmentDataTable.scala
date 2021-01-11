@@ -3,7 +3,8 @@ package esw.segment.db
 import org.jooq.DSLContext
 import csw.database.scaladsl.JooqExtentions._
 import esw.segment.jira.JiraClient
-import esw.segment.shared.{JiraSegmentData, JiraSegmentDataApi}
+import esw.segment.shared.{JiraSegmentData, JiraSegmentDataApi, JsonSupport}
+import spray.json._
 
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
@@ -12,17 +13,53 @@ import esw.segment.jira.JiraClient.{jiraBrowseUri, toPos}
 import esw.segment.shared.EswSegmentData.SegmentToM1Pos
 import esw.segment.shared.EswSegmentData._
 
+import java.nio.charset.StandardCharsets
+
 object JiraSegmentDataTable {
   // Table and column names
   private[db] val tableName = "jira_segment_data"
 
-  private val segmentIdCol                      = "segment_id"
-  private val sectorCol                         = "sector"
-  private val segmentTypeCol                    = "segment_type"
-  private val statusCol                         = "status"
+  private val segmentIdCol   = "segment_id"
+  private val sectorCol      = "sector"
+  private val segmentTypeCol = "segment_type"
+  private val statusCol      = "status"
 }
 
-class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec: ExecutionContext) extends JiraSegmentDataApi {
+class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec: ExecutionContext)
+    extends JiraSegmentDataApi
+    with JsonSupport {
+
+  // If the JIRA segment data table is empty, initialize it from a resource file,
+  // which will be update periodically. You can still "sync with JIRA" to get the latest
+  // data if needed, or used the command line client to generate a new resource file.
+  private def maybeInitFromResourceFile(): Future[Boolean] =
+    async {
+      val count = await(segmentDataCount())
+      if (count != 0) true
+      else {
+        val bytes       = getClass.getResourceAsStream("/jiraData.json").readAllBytes()
+        val json        = new String(bytes, StandardCharsets.UTF_8)
+        val segmentData = json.parseJson.convertTo[List[JiraSegmentData]]
+        await(insertDb(segmentData))
+      }
+    }
+
+  // Return count of JIRA segment data rows in the DB
+  private def segmentDataCount(): Future[Int] =
+    async {
+      val queryResult = await(
+        dsl
+          .resultQuery(s"""
+                          |SELECT COUNT(*)
+                          |FROM $tableName
+                          |WHERE $sectorCol >= 1 AND $sectorCol <= 7
+                          |AND $segmentTypeCol >= 1 AND $segmentTypeCol <= 82
+                          |AND $statusCol != 'Disposed'
+                          |""".stripMargin)
+          .fetchAsyncScala[Int]
+      )
+      queryResult.head
+    }
 
   // Recursively insert the list items in the DB and return true if OK
   private def insertDb(list: List[JiraSegmentData]): Future[Boolean] = {
@@ -57,7 +94,7 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
     }
   }
 
-  def syncWithJira(progress: Int => Unit): Future[Boolean] =
+  override def syncWithJira(progress: Int => Unit): Future[Boolean] =
     async {
       val data = await(jiraClient.getAllJiraSegmentData(progress))
       await(resetJiraSegmentDataTable()) && await(insertDb(data))
@@ -65,6 +102,7 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
 
   override def availableSegmentIdsForPos(position: String): Future[List[String]] =
     async {
+      await(maybeInitFromResourceFile())
       val sector      = position.head - 'A' + 1
       val segmentType = position.tail.toInt
       assert(
@@ -86,6 +124,7 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
 
   override def plannedPositions(): Future[List[SegmentToM1Pos]] =
     async {
+      await(maybeInitFromResourceFile())
       val date = currentDate()
       val queryResult = await(
         dsl
@@ -113,6 +152,7 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
 
   override def segmentData(): Future[List[JiraSegmentData]] =
     async {
+      await(maybeInitFromResourceFile())
       val queryResult = await(
         dsl
           .resultQuery(s"""
@@ -170,5 +210,4 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
     async {
       await(dsl.truncate(tableName).executeAsyncScala()) >= 0
     }
-
 }

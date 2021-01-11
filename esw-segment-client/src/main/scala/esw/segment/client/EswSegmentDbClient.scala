@@ -72,6 +72,10 @@ object EswSegmentDbClient extends App with JsonSupport {
       c.copy(segmentIds = Some(()))
     } text "Gets a list of segment ids that were in the given position in the given date range (Requires --position)"
 
+    opt[Unit]("availableSegmentIdsForPos") action { (_, c) =>
+      c.copy(availableSegmentIdsForPos = Some(()))
+    } text "Gets a list of segment-ids that can be installed at the given position (Requires --position)"
+
     opt[Unit]("newlyInstalledSegments") action { (_, c) =>
       c.copy(newlyInstalledSegments = Some(()))
     } text "Gets a list of segments that were installed since the given date (Requires --date)"
@@ -120,13 +124,17 @@ object EswSegmentDbClient extends App with JsonSupport {
       c.copy(importFile = Some(x))
     } text "Import the given JSON file with date and segment position assignments that was previously exported"
 
-    opt[File]('e', "export") valueName "<mirror-file.json>" action { (x, c) =>
+    opt[File]('e', "export") valueName "<file.json>" action { (x, c) =>
       c.copy(exportFile = Some(x))
     } text "Export the segment position assignments for the current or given date to the given JSON file (use with --date option)"
 
-    opt[File]('e', "exportPlan") valueName "<mirror-file.json>" action { (x, c) =>
+    opt[File]( "exportPlan") valueName "<file.json>" action { (x, c) =>
       c.copy(exportPlan = Some(x))
     } text "Export the planned segment position assignments (according to JIRA) to the given JSON file"
+
+    opt[File]( "exportJiraData") valueName "<file.json>" action { (x, c) =>
+      c.copy(exportJiraData = Some(x))
+    } text "Export all the segment data that was extracted from the M1ST JIRA tasks to the given JSON file"
 
     help("help")
     version("version")
@@ -262,7 +270,6 @@ object EswSegmentDbClient extends App with JsonSupport {
       val config = MirrorConfig(dateFormat.format(date), segments)
       val json   = config.toJson.prettyPrint
       Files.write(file.toPath, json.getBytes(StandardCharsets.UTF_8))
-
     }
 
     if (options.exportFile.isDefined) {
@@ -277,6 +284,14 @@ object EswSegmentDbClient extends App with JsonSupport {
       if (file.exists()) error(s"File $file exists")
       val segments = await(client.plannedPositions()).map(s => SegmentConfig(s.position, s.maybeId))
       saveMirrorConfig(file, segments)
+    }
+
+    if (options.exportJiraData.isDefined) {
+      val file = options.exportJiraData.get
+      if (file.exists()) error(s"File $file exists")
+      val segmentData = await(client.segmentData())
+      val json   = segmentData.toJson.prettyPrint
+      Files.write(file.toPath, json.getBytes(StandardCharsets.UTF_8))
     }
   }
 }

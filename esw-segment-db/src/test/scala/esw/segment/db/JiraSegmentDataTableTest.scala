@@ -20,15 +20,7 @@ class JiraSegmentDataTableTest extends AsyncFunSuite {
 
   test("Test sync with JIRA") {
     async {
-      val testPos = "A32"
-      val list = {
-        val x = await(jiraSegmentDataTable.availableSegmentIdsForPos(testPos))
-        if (x.nonEmpty) x
-        else {
-          await(jiraSegmentDataTable.syncWithJira(progress))
-          await(jiraSegmentDataTable.availableSegmentIdsForPos(testPos))
-        }
-      }
+      val list = await(jiraSegmentDataTable.availableSegmentIdsForPos("A32"))
       assert(List("SN-032", "SN-034", "SN-035", "SN-036", "SN-037", "SN-038", "SN-050") == list.sorted)
     }
   }
