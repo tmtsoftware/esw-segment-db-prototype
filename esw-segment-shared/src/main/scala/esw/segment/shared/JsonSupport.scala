@@ -21,7 +21,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val dateRangeFormat = jsonFormat2(DateRange)
   implicit val segmentToM1PosFormat = jsonFormat3(SegmentToM1Pos)
   implicit val allPositionsFormat = jsonFormat2(AllSegmentPositions)
-  implicit val JiraSegmentDataFormat = jsonFormat16(JiraSegmentData)
-  implicit val SegmentConfigFormat = jsonFormat2(SegmentConfig)
-  implicit val MirrorConfigFormat = jsonFormat2(MirrorConfig)
+  implicit val jiraSegmentDataFormat = jsonFormat16(JiraSegmentData)
+  implicit val segmentConfigFormat = jsonFormat2(SegmentConfig)
+  implicit val mirrorConfigFormat = jsonFormat2(MirrorConfig)
 }

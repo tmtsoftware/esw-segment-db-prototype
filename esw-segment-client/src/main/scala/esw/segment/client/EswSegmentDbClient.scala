@@ -5,13 +5,19 @@ import akka.actor.ActorSystem
 import buildinfo.BuildInfo
 import esw.segment.client.EswSegmentClientOptions.defaultPort
 import esw.segment.shared.EswSegmentData._
+import esw.segment.shared.JsonSupport
 import scopt.Read.reads
 import scopt.Read
+import spray.json._
 
+import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.io.Source
 
-object EswSegmentDbClient extends App {
+object EswSegmentDbClient extends App with JsonSupport {
   val dateFormat                   = new java.text.SimpleDateFormat("yyyy-MM-dd")
   implicit val system: ActorSystem = ActorSystem()
 
@@ -109,6 +115,18 @@ object EswSegmentDbClient extends App {
     opt[Unit]("resetJiraSegmentDataTable") action { (_, c) =>
       c.copy(resetJiraSegmentDataTable = Some(()))
     } text "Drops and recreates the jira_segment_data database table (for testing)"
+
+    opt[File]('i', "import") valueName "<mirror-file.json>" action { (x, c) =>
+      c.copy(importFile = Some(x))
+    } text "Import the given JSON file with date and segment position assignments that was previously exported"
+
+    opt[File]('e', "export") valueName "<mirror-file.json>" action { (x, c) =>
+      c.copy(exportFile = Some(x))
+    } text "Export the segment position assignments for the current or given date to the given JSON file (use with --date option)"
+
+    opt[File]('e', "exportPlan") valueName "<mirror-file.json>" action { (x, c) =>
+      c.copy(exportPlan = Some(x))
+    } text "Export the planned segment position assignments (according to JIRA) to the given JSON file"
 
     help("help")
     version("version")
@@ -226,6 +244,39 @@ object EswSegmentDbClient extends App {
       if (position.isEmpty) error("--position option is required")
       val result = await(client.availableSegmentIdsForPos(position.get))
       result.foreach(println)
+    }
+
+    if (options.importFile.isDefined) {
+      val file = options.importFile.get
+      if (!file.exists()) error(s"File $file does not exist")
+      val source = Source.fromFile(file)
+      val json   = source.getLines().mkString("\n")
+      source.close()
+      val mirrorConfig = json.parseJson.convertTo[MirrorConfig]
+      val result       = await(client.setPositions(mirrorConfig))
+      if (!result)
+        error(s"Import file failed")
+    }
+
+    def saveMirrorConfig(file: File, segments: List[SegmentConfig]): Unit = {
+      val config = MirrorConfig(dateFormat.format(date), segments)
+      val json   = config.toJson.prettyPrint
+      Files.write(file.toPath, json.getBytes(StandardCharsets.UTF_8))
+
+    }
+
+    if (options.exportFile.isDefined) {
+      val file = options.exportFile.get
+      if (file.exists()) error(s"File $file exists")
+      val segments = await(client.positionsOnDate(date)).map(s => SegmentConfig(s.position, s.maybeId))
+      saveMirrorConfig(file, segments)
+    }
+
+    if (options.exportPlan.isDefined) {
+      val file = options.exportPlan.get
+      if (file.exists()) error(s"File $file exists")
+      val segments = await(client.plannedPositions()).map(s => SegmentConfig(s.position, s.maybeId))
+      saveMirrorConfig(file, segments)
     }
   }
 }

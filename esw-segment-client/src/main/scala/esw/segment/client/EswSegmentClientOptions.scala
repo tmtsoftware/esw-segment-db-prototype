@@ -1,5 +1,6 @@
 package esw.segment.client
 
+import java.io.File
 import java.util.Date
 
 object EswSegmentClientOptions {
@@ -30,4 +31,7 @@ case class EswSegmentClientOptions(
     resetTables: Option[Unit] = None,
     resetSegmentToM1PosTable: Option[Unit] = None,
     resetJiraSegmentDataTable: Option[Unit] = None,
+    importFile: Option[File] = None,
+    exportFile: Option[File] = None,
+    exportPlan: Option[File] = None,
 )
