@@ -67,6 +67,14 @@ trait SegmentToM1Api {
   def newlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]]
 
   /**
+   * Returns a list of segment exchanges since the given date.
+   * Each object in the returned list contains the date and the list of position/segmentId that changed.
+   *
+   * @param since starting date
+   */
+  def segmentExchanges(since: Date): Future[List[MirrorConfig]]
+
+  /**
    * Returns the current segment positions
    * (Missing segments are also included in the returned list).
    */

@@ -263,18 +263,45 @@ class SegmentToM1ApiTestBase(posTable: SegmentToM1Api) extends AsyncFunSuite wit
 //    }
 //  }
 
-  test("Test History") {
+  test("Test getting list of segment exchanges") {
     async {
       assert(await(posTable.resetSegmentToM1PosTable()))
+      println(s"Start import")
       await(populateAllSegments("mirror-2021-01-01.json"))
       await(populateAllSegments("mirror-2021-01-02.json"))
       await(populateAllSegments("mirror-2021-01-03.json"))
-      await(populateAllSegments("mirror-2021-01-04.json"))
-      await(populateAllSegments("mirror-2021-01-05.json"))
-      await(populateAllSegments("mirror-2021-01-06.json"))
+//      await(populateAllSegments("mirror-2021-01-04.json"))
+//      await(populateAllSegments("mirror-2021-01-05.json"))
+//      await(populateAllSegments("mirror-2021-01-06.json"))
+      println(s"End import")
 
-      // XXX TODO
-      assert(true)
+      val changeList = await(posTable.segmentExchanges(Date.valueOf("2021-01-02")))
+      val map        = changeList.map(mirrorConfig => mirrorConfig.date -> mirrorConfig.segments.toSet).toMap
+
+      assert(map("2021-01-02") == Set(SegmentConfig("F1", None), SegmentConfig("F2", None)))
+      assert(
+        map("2021-01-03") == Set(
+          SegmentConfig("A8", Some("SN-393")),
+          SegmentConfig("A11", Some("SN-400")),
+          SegmentConfig("B19", Some("SN-404")),
+          SegmentConfig("B24", Some("SN-408")),
+          SegmentConfig("C12", Some("SN-397")),
+          SegmentConfig("C20", Some("SN-224")),
+          SegmentConfig("D7", None),
+          SegmentConfig("D14", Some("SN-399")),
+          SegmentConfig("E9", Some("SN-395")),
+          SegmentConfig("F1", Some("SN-018")),
+          SegmentConfig("F2", Some("SN-455")),
+          SegmentConfig("G8", None),
+          SegmentConfig("G9", None),
+          SegmentConfig("G11", None),
+          SegmentConfig("G12", None),
+          SegmentConfig("G14", None),
+          SegmentConfig("G19", None),
+          SegmentConfig("G20", None),
+          SegmentConfig("G24", None)
+        )
+      )
     }
   }
 }

@@ -5,7 +5,7 @@ import org.jooq.DSLContext
 import csw.database.scaladsl.JooqExtentions._
 import esw.segment.shared.EswSegmentData._
 import SegmentToM1PosTable._
-import esw.segment.shared.{EswSegmentData, SegmentToM1Api}
+import esw.segment.shared.SegmentToM1Api
 
 import scala.async.Async._
 import scala.concurrent.{ExecutionContext, Future}
@@ -450,6 +450,16 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       val fList     = (1 to totalSegments).toList.map(pos => segmentIds(dateRange, toPosition(pos)))
       // await(Future.sequence(fList)).flatten.filter(_.date.after(since))
       await(Future.sequence(fList)).flatten.filter(_.date.getTime >= since.getTime)
+    }
+
+  override def segmentExchanges(since: Date): Future[List[MirrorConfig]] =
+    async {
+      val date      = await(mostRecentChange(since))
+      val nextDate  = await(nextChange(date))
+      // XXX FIXME date comparison?
+      val list      = await(positionsOnDate(date)).filter(_.date.getTime == date.getTime)
+      val m         = new MirrorConfig(date, list.map(s => SegmentConfig(s.position, s.maybeId)))
+      if (nextDate == date) List(m) else m :: await(segmentExchanges(nextDate))
     }
 
   override def currentPositions(): Future[List[SegmentToM1Pos]] = positionsOnDate(currentDate())

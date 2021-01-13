@@ -89,6 +89,12 @@ class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDat
             complete(posTable.newlyInstalledSegments(date))
           }
         } ~
+        // Returns a list of segment exchanges since the given date.
+        path("segmentExchanges") {
+          entity(as[Date]) { date =>
+            complete(posTable.segmentExchanges(date))
+          }
+        } ~
         // Returns the segment positions as they were on the given date, sorted by position
         path("positionsOnDate") {
           entity(as[Date]) { date =>

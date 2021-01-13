@@ -100,6 +100,16 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
     postGetList(Uri(s"$baseUri/newlyInstalledSegments"), since.toJson.compactPrint)
   }
 
+  override def segmentExchanges(since: Date): Future[List[MirrorConfig]] =
+    async {
+      val uri      = Uri(s"$baseUri/segmentExchanges")
+      val json     = since.toJson.compactPrint
+      val entity   = HttpEntity(ContentTypes.`application/json`, json)
+      val request  = HttpRequest(HttpMethods.POST, uri = uri, entity = entity)
+      val response = await(Http().singleRequest(request))
+      await(Unmarshal(response).to[List[MirrorConfig]])
+    }
+
   override def positionsOnDate(date: Date): Future[List[SegmentToM1Pos]] = {
     postGetList(Uri(s"$baseUri/positionsOnDate"), date.toJson.compactPrint)
   }
@@ -172,19 +182,21 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
     getOption(Uri(s"$baseUri/currentSegmentAtPosition/$position"))
   }
 
-  override def resetJiraSegmentDataTable(): Future[Boolean] = async {
-    val uri      = Uri(s"$baseUri/resetJiraSegmentDataTable")
-    val request  = HttpRequest(HttpMethods.POST, uri = uri)
-    val response = await(Http().singleRequest(request))
-    response.status == OK
-  }
+  override def resetJiraSegmentDataTable(): Future[Boolean] =
+    async {
+      val uri      = Uri(s"$baseUri/resetJiraSegmentDataTable")
+      val request  = HttpRequest(HttpMethods.POST, uri = uri)
+      val response = await(Http().singleRequest(request))
+      response.status == OK
+    }
 
-  override def resetSegmentToM1PosTable(): Future[Boolean] = async {
-    val uri      = Uri(s"$baseUri/resetSegmentToM1PosTable")
-    val request  = HttpRequest(HttpMethods.POST, uri = uri)
-    val response = await(Http().singleRequest(request))
-    response.status == OK
-  }
+  override def resetSegmentToM1PosTable(): Future[Boolean] =
+    async {
+      val uri      = Uri(s"$baseUri/resetSegmentToM1PosTable")
+      val request  = HttpRequest(HttpMethods.POST, uri = uri)
+      val response = await(Http().singleRequest(request))
+      response.status == OK
+    }
 
   /**
    * Drops and recreates the database tables (for testing)
