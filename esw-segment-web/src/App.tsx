@@ -7,6 +7,7 @@ import {Layout} from "antd"
 import 'antd/dist/antd.css'
 import {Sidebar} from "./components/Sidebar";
 import {Legend} from "./components/Legend";
+import {format} from "date-fns";
 
 const {Content} = Layout;
 
@@ -15,7 +16,7 @@ const App = (): JSX.Element => {
   const [showSpares, setShowSpares] = useState<boolean>(false)
   const [posMap, setPosMap] = useState<Map<string, SegmentToM1Pos>>(new Map())
   const [segmentMap, setSegmentMap] = useState<Map<string, JiraSegmentData>>(new Map())
-  const [mostRecentChange, setMostRecentChange] = useState<number>(0)
+  const [mostRecentChange, setMostRecentChange] = useState<Date>(new Date(0))
   const [viewMode, setViewMode] = useState<React.Key>("installed")
   const [jiraMode, setJiraMode] = useState<boolean>(false)
 
@@ -23,7 +24,7 @@ const App = (): JSX.Element => {
     const requestOptions = {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(refDate.getTime())
+      body: JSON.stringify(format(refDate, 'yyyy-MM-dd'))
     }
 
     const [
@@ -36,7 +37,8 @@ const App = (): JSX.Element => {
       fetch(`${SegmentData.baseUri}/segmentData`),
     ])
 
-    const mostRecentChange: number = await mostRecentChangeResponse.json()
+    const dateStr: string = await mostRecentChangeResponse.json()
+    const mostRecentChange: Date = new Date(dateStr)
     const positionsOnDate: Array<SegmentToM1Pos> = await positionsOnDateResponse.json()
     const segmentData: Array<JiraSegmentData> = await segmentDataResponse.json()
 
@@ -108,12 +110,13 @@ const App = (): JSX.Element => {
     const requestOptions = {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(new Date().getTime())
+      body: JSON.stringify(format(new Date(), 'yyyy-MM-dd'))
     }
     fetch(`${SegmentData.baseUri}/mostRecentChange`, requestOptions)
       .then((response) => response.json())
       .then((result) => {
-        const date: Date = new Date(result)
+        const dateStr: string = result
+        const date: Date = new Date(dateStr)
         updateDataNow(date)
       })
   }
@@ -133,12 +136,12 @@ const App = (): JSX.Element => {
     setShowSpares(showSpares)
   }
 
-  if (mostRecentChange == 0) return <div/>
+  if (mostRecentChange.getTime() == 0) return <div/>
   else
     return (
       <Layout className='App'>
         <Topbar
-          mostRecentChange={new Date(mostRecentChange)}
+          mostRecentChange={mostRecentChange}
           updateDisplay={updateDisplay}
           jiraMode={jiraMode}
         />
@@ -147,7 +150,7 @@ const App = (): JSX.Element => {
             segmentMapSize={segmentMap.size}
             sidebarOptionsChanged={sidebarOptionsChanged}
             posMap={posMap}
-            date={new Date(mostRecentChange)}
+            date={mostRecentChange}
             updateDisplay={updateData}
           />
           <Content>

@@ -7,8 +7,8 @@ type SegmentProps = {
   id?: string
   pos: string
   segmentData: JiraSegmentData
-  date?: number
-  mostRecentChange: number
+  date?: Date
+  mostRecentChange: Date
   showSegmentIds: boolean
   x: number
   y: number
@@ -45,7 +45,7 @@ export const Segment = ({
   const sector = pos.charAt(0)
   const fill = getFillColor()
   const labelXOffset = pos.length == 2 ? -4 : -6
-  const dateStr = date ? new Date(date).toDateString() : ''
+  const dateStr = date ? date.toDateString() : ''
   const idStr = id ? id : ''
   const label = showSegmentIds ? idStr.substr(3) : pos
   const fontSize = showSegmentIds ? 6 : 7

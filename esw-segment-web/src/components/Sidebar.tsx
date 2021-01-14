@@ -90,6 +90,7 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
     position: string,
     segmentId?: string
   }
+
   interface MirrorConfig {
     date: string,
     segments: Array<SegmentConfig>

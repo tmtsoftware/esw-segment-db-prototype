@@ -3,6 +3,7 @@ import {SegmentData} from './SegmentData'
 import {Button, DatePicker, Tooltip, Typography} from "antd";
 import {LeftOutlined, RightOutlined} from '@ant-design/icons'
 import moment from "moment";
+import {format} from "date-fns";
 
 type TopbarDateChooserProps = {
   mostRecentChange: Date
@@ -21,8 +22,9 @@ export const TopbarDateChooser = ({
     const requestOptions = {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(selectedDate.getTime())
-    }
+      body: JSON.stringify(format(selectedDate, 'yyyy-MM-dd'))
+
+  }
     fetch(`${SegmentData.baseUri}/nextChange`, requestOptions)
       .then((response) => response.json())
       .then((result) => {
@@ -36,7 +38,7 @@ export const TopbarDateChooser = ({
     const requestOptions = {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(selectedDate.getTime())
+      body: JSON.stringify(format(selectedDate, 'yyyy-MM-dd'))
     }
     fetch(`${SegmentData.baseUri}/prevChange`, requestOptions)
       .then((response) => response.json())

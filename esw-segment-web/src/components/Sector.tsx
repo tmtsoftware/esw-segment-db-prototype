@@ -7,7 +7,7 @@ type SectorProps = {
   sector: string
   posMap: Map<string, SegmentToM1Pos>
   segmentMap: Map<string, JiraSegmentData>
-  mostRecentChange: number
+  mostRecentChange: Date
   showSegmentIds: boolean
   updateDisplay: () => void
   viewMode: React.Key
@@ -71,7 +71,7 @@ export const Sector = ({
         }
         const id = segmentToM1Pos ? segmentToM1Pos.maybeId || '' : ''
         const key = pos
-        const date = segmentToM1Pos ? segmentToM1Pos.date : undefined
+        const date = segmentToM1Pos ? new Date(segmentToM1Pos.date) : undefined
         return (
           <Segment
             id={id}

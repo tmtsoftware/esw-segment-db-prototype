@@ -9,7 +9,7 @@ type MirrorProps = {
   showSpares: boolean
   posMap: Map<string, SegmentToM1Pos>
   segmentMap: Map<string, JiraSegmentData>
-  mostRecentChange: number
+  mostRecentChange: Date
   updateDisplay: () => void
   viewMode: React.Key
 }
@@ -35,7 +35,7 @@ export const Mirror = ({
                          updateDisplay,
                          viewMode
                        }: MirrorProps): JSX.Element => {
-  if (posMap.size == 0 || mostRecentChange == 0) {
+  if (posMap.size == 0 || mostRecentChange.getTime() == 0) {
     return <div/>
   } else {
     const sectors = showSpares ? ['G'] : ['A', 'B', 'C', 'D', 'E', 'F']

@@ -3,6 +3,7 @@ import {JiraSegmentData, SegmentData, SegmentToM1Pos} from './SegmentData'
 import {PositionHistory} from './PositionHistory'
 import {Button, DatePicker, Divider, Drawer, Form, Select, Typography} from "antd"
 import moment from 'moment'
+import {format} from "date-fns";
 
 const {Option} = Select;
 
@@ -12,7 +13,7 @@ const {Option} = Select;
 type SegmentDetailsProps = {
   id?: string
   pos: string
-  date?: number
+  date?: Date
   open: boolean,
   closeDialog: () => void
   updateDisplay: () => void
@@ -50,7 +51,7 @@ export const SegmentDetails = ({
   const [selectedSegmentId, setSelectedSegmentId] = useState(id || emptyId)
   const [errorMessage, setErrorMessage] = useState('')
   const [selectedDate, setSelectedDate] = useState<Date>(
-    date ? new Date(date) : new Date()
+    date ? date : new Date()
   )
   const [saveEnabled, setSaveEnabled] = useState(false)
   const [changed, setChanged] = useState(1)
@@ -88,7 +89,7 @@ export const SegmentDetails = ({
   const changeSegmentId = (selectedId: string) => {
     setSelectedSegmentId(selectedId)
     // Default to current date, since the segment id changed
-    if (date == selectedDate.getTime()) {
+    if ((date ? date  : new Date()).getTime() == selectedDate.getTime()) {
       setSelectedDate(new Date())
     }
     setSaveEnabled(true)
@@ -133,7 +134,7 @@ export const SegmentDetails = ({
           showToday={true}
           onChange={handleDateChange}
           value={moment(selectedDate)}
-          defaultValue={moment(date)}
+          // defaultValue={moment(date)}
         />
       </Form.Item>
     )
@@ -144,7 +145,7 @@ export const SegmentDetails = ({
   function cancel(): void {
     if (viewMode == "installed") {
       setSaveEnabled(false)
-      setSelectedDate(date ? new Date(date) : new Date())
+      setSelectedDate(date ? date : new Date())
       setSelectedSegmentId(id || emptyId)
     }
     closeDialog()
@@ -152,10 +153,9 @@ export const SegmentDetails = ({
   }
 
   function saveChanges() {
-    const date = selectedDate.getTime()
     const maybeId = selectedSegmentId == emptyId ? undefined : selectedSegmentId
-    const segmentToM1Pos: SegmentToM1Pos = {
-      date: date,
+    const segmentToM1Pos = {
+      date: format(selectedDate, 'yyyy-MM-dd'),
       maybeId: maybeId,
       position: pos
     }
@@ -287,6 +287,9 @@ export const SegmentDetails = ({
         <Form
           form={form}
           size={'small'}
+          initialValues={{
+            ["date-picker"]: moment(date)
+          }}
           {...layout}>
           {installedFormItems()}
         </Form>

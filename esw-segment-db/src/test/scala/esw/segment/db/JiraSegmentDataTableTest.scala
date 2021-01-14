@@ -10,10 +10,6 @@ object JiraSegmentDataTableTest {
   import DbWiring._
   val wiring                                          = new DbWiring(testDbName)
   lazy val jiraSegmentDataTable: JiraSegmentDataTable = wiring.jiraSegmentDataTable
-
-  private def progress(percent: Int): Unit = {
-    println(s"Progress: $percent%")
-  }
 }
 
 class JiraSegmentDataTableTest extends AsyncFunSuite {

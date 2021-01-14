@@ -1,7 +1,7 @@
 package esw.segment.client
 
 import java.io.File
-import java.util.Date
+import java.time.LocalDate
 
 object EswSegmentClientOptions {
   val defaultPort = 9192
@@ -10,9 +10,9 @@ object EswSegmentClientOptions {
 case class EswSegmentClientOptions(
     host: String = "localhost",
     port: Int = EswSegmentClientOptions.defaultPort,
-    date: Date = new Date(),
-    from: Date = new Date(),
-    to: Date = new Date(),
+    date: LocalDate = LocalDate.now(),
+    from: LocalDate = LocalDate.now(),
+    to: LocalDate = LocalDate.now(),
     segmentId: Option[String] = None,
     position: Option[String] = None,
     setPosition: Option[Unit] = None,

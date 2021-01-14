@@ -1,7 +1,6 @@
 package esw.segment.shared
 
-import java.sql.Date
-import scala.language.implicitConversions
+import java.time.LocalDate
 
 object EswSegmentData {
 
@@ -42,11 +41,7 @@ object EswSegmentData {
     s"$sector$num"
   }
 
-  implicit def toSqlDate(date: java.util.Date): java.sql.Date = {
-    new java.sql.Date(date.getTime)
-  }
-
-  def currentDate(): Date = new Date(System.currentTimeMillis())
+  def currentDate(): LocalDate = LocalDate.now()
 
   /**
    * Position of a segment on a given date
@@ -55,11 +50,11 @@ object EswSegmentData {
    * @param maybeId the segment id, if the segment is present, None if it is missing
    * @param position  position of segment (For example: A32, B19, F82)
    */
-  case class SegmentToM1Pos(date: Date, maybeId: Option[String], position: String) {
-    def this(date: Date, id: String, position: String) = {
+  case class SegmentToM1Pos(date: LocalDate, maybeId: Option[String], position: String) {
+    def this(date: LocalDate, id: String, position: String) = {
       this(date, Some(id), position)
     }
-    def this(date: Date, id: String, dbPos: Int) = {
+    def this(date: LocalDate, id: String, dbPos: Int) = {
       this(date, Some(id), toPosition(dbPos))
     }
 
@@ -77,7 +72,7 @@ object EswSegmentData {
    * @param allPositions list of all 492 segment positions from A1 to F82 (Missing segments should be None,
    *                     present segments should be Some(segment-id)
    */
-  case class AllSegmentPositions(date: Date, allPositions: List[Option[String]])
+  case class AllSegmentPositions(date: LocalDate, allPositions: List[Option[String]])
 
   /**
    * A range of dates
@@ -85,14 +80,14 @@ object EswSegmentData {
    * @param from start of the date range
    * @param to   end of the date range
    */
-  case class DateRange(from: Date, to: Date)
+  case class DateRange(from: LocalDate, to: LocalDate)
 
 
   def sortByDate(list: List[SegmentToM1Pos], desc: Boolean = false): List[SegmentToM1Pos] = {
     if (desc)
-      list.sortWith((p, q) => q.date.before(p.date))
+      list.sortWith((p, q) => q.date.compareTo(p.date) < 0)
     else
-      list.sortWith((p, q) => p.date.before(q.date))
+      list.sortWith((p, q) => p.date.compareTo(q.date) > 0)
   }
 
   /**
@@ -104,13 +99,8 @@ object EswSegmentData {
 
   /**
    * Holds a number of segment-id assignments for the mirror
-   * @param date the date for the configuration in the format YYYY-mm-dd
+   * @param date the date for the configuration
    * @param segments list of segment assignments
    */
-  case class MirrorConfig(date: String, segments: List[SegmentConfig]) {
-    def getDate: Date = Date.valueOf(date)
-    def this(date: Date, segments: List[SegmentConfig]) = {
-      this(date.toString, segments)
-    }
-  }
+  case class MirrorConfig(date: LocalDate, segments: List[SegmentConfig])
 }

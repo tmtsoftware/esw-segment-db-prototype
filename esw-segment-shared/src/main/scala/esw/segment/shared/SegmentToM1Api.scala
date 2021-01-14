@@ -1,8 +1,8 @@
 package esw.segment.shared
 
-import java.sql.Date
 import esw.segment.shared.EswSegmentData.{DateRange, MirrorConfig, SegmentToM1Pos}
 
+import java.time.LocalDate
 import scala.concurrent.Future
 
 trait SegmentToM1Api {
@@ -31,7 +31,7 @@ trait SegmentToM1Api {
    * @return true if all is OK, false if the number of positions is less than 492 or the table row
    *         could not be added or updated
    */
-  def setAllPositions(date: Date, allSegmentIds: List[Option[String]]): Future[Boolean]
+  def setAllPositions(date: LocalDate, allSegmentIds: List[Option[String]]): Future[Boolean]
 
   /**
    * Gets a list of segments positions for the given segment id in the given date range.
@@ -64,7 +64,7 @@ trait SegmentToM1Api {
    *
    * @param since the cutoff date for newly installed segments
    */
-  def newlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]]
+  def newlyInstalledSegments(since: LocalDate): Future[List[SegmentToM1Pos]]
 
   /**
    * Returns a list of segment exchanges since the given date.
@@ -72,7 +72,7 @@ trait SegmentToM1Api {
    *
    * @param since starting date
    */
-  def segmentExchanges(since: Date): Future[List[MirrorConfig]]
+  def segmentExchanges(since: LocalDate): Future[List[MirrorConfig]]
 
   /**
    * Returns the current segment positions
@@ -100,25 +100,25 @@ trait SegmentToM1Api {
    * Returns the segment positions as they were on the given date, sorted by date
    * (Missing segments are also included in the returned list).
    */
-  def positionsOnDate(date: Date): Future[List[SegmentToM1Pos]]
+  def positionsOnDate(date: LocalDate): Future[List[SegmentToM1Pos]]
 
   /**
    * Returns the most recent date that segments were changed up to the given date, or the current date,
    * if there are no segments installed yet.
    */
-  def mostRecentChange(date: Date): Future[Date]
+  def mostRecentChange(date: LocalDate): Future[LocalDate]
 
   /**
    * Returns the next date after the given one where segments were changed, or the most recent change date,
    * if there are no newer changes.
    */
-  def nextChange(date: Date): Future[Date]
+  def nextChange(date: LocalDate): Future[LocalDate]
 
   /**
    * Returns the previous date before the given one where segments were changed, or the first date,
    * if there are no older changes.
    */
-  def prevChange(date: Date): Future[Date]
+  def prevChange(date: LocalDate): Future[LocalDate]
 
   /**
    * Gets the segment position for the given segment id on the given date.
@@ -127,7 +127,7 @@ trait SegmentToM1Api {
    * @param segmentId the segment id to search for
    * @return Some object indicating the positions of the given segment, or None if the segment is not installed
    */
-  def segmentPositionOnDate(date: Date, segmentId: String): Future[Option[SegmentToM1Pos]]
+  def segmentPositionOnDate(date: LocalDate, segmentId: String): Future[Option[SegmentToM1Pos]]
 
   /**
    * Gets the id of the segment that was installed in the given position on the given date.
@@ -136,7 +136,7 @@ trait SegmentToM1Api {
    * @param position  the segment position to search for
    * @return Some object indicating the id of the segment, or None if no segment was installed at that position on the given date
    */
-  def segmentAtPositionOnDate(date: Date, position: String): Future[Option[SegmentToM1Pos]]
+  def segmentAtPositionOnDate(date: LocalDate, position: String): Future[Option[SegmentToM1Pos]]
 
   /**
    * Drops and recreates the database tables (for testing)

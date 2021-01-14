@@ -1,12 +1,13 @@
 package esw.segment.db
 
-import java.sql.Date
 import org.jooq.DSLContext
 import csw.database.scaladsl.JooqExtentions._
 import esw.segment.shared.EswSegmentData._
 import SegmentToM1PosTable._
 import esw.segment.shared.SegmentToM1Api
 
+import java.sql.Date
+import java.time.LocalDate
 import scala.async.Async._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -31,7 +32,7 @@ object SegmentToM1PosTable {
 
   def quoted(s: String): String = "\"" + s + "\""
 
-  private def makeSegmentToM1Pos(date: Date, id: String, dbPos: Int): SegmentToM1Pos = {
+  private def makeSegmentToM1Pos(date: LocalDate, id: String, dbPos: Int): SegmentToM1Pos = {
     val position = toPosition(dbPos)
     SegmentToM1Pos(date, idOption(id), position)
   }
@@ -47,7 +48,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
    *
    * @param date the date to search for
    */
-  private def rowExists(date: Date): Future[Boolean] =
+  private def rowExists(date: LocalDate): Future[Boolean] =
     async {
       await(
         dsl
@@ -60,7 +61,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
    * Returns an array of install dates for all segment ids as of the given date as stored in the database,
    * or a list of with the given date, if there are no database rows yet.
    */
-  private def getInstallDates(date: Date): Future[Array[Date]] =
+  private def getInstallDates(date: LocalDate): Future[Array[LocalDate]] =
     async {
       import scala.jdk.CollectionConverters._
       import scala.compat.java8.FutureConverters.CompletionStageOps
@@ -78,6 +79,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .toScala
           .map(_.asScala.map(_.into(classOf[Object]).asInstanceOf[Array[Date]]).toArray)
       ).headOption
+        .map(a => a.map(_.toLocalDate))
         .getOrElse((1 to totalSegments).map(_ => date).toArray)
     }
 
@@ -85,7 +87,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
    * Returns an array of all segment ids as of the given date as stored in the database,
    * or a list of unknownSegmentId, if there are no database rows yet.
    */
-  private def getPositions(date: Date): Future[Array[String]] =
+  private def getPositions(date: LocalDate): Future[Array[String]] =
     async {
       import scala.jdk.CollectionConverters._
       import scala.compat.java8.FutureConverters.CompletionStageOps
@@ -113,7 +115,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
    * @param date the date to search for
    * @return true if successful
    */
-  private def addRow(date: Date): Future[Boolean] =
+  private def addRow(date: LocalDate): Future[Boolean] =
     async {
       val positions          = await(getPositions(date))
       val installDates       = await(getInstallDates(date))
@@ -138,7 +140,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
    *
    * @param date the date to search for
    */
-  private def addEmptyRow(date: Date): Future[Boolean] =
+  private def addEmptyRow(date: LocalDate): Future[Boolean] =
     async {
       await(
         dsl
@@ -182,7 +184,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .fetchAsyncScala[Date]
       )
       if (queryResult.nonEmpty)
-        SegmentToM1Pos(queryResult.head, segmentToM1Pos.maybeId, segmentToM1Pos.position)
+        SegmentToM1Pos(queryResult.head.toLocalDate, segmentToM1Pos.maybeId, segmentToM1Pos.position)
       else {
         println(
           s"XXX Empty at withInstallDate(): date: ${segmentToM1Pos.date}, pos: ${segmentToM1Pos.position}, id: ${segmentToM1Pos.maybeId}"
@@ -199,7 +201,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
    * @param segmentIds list of segment ids to remove
    * @return true if all ok
    */
-  private def removeSegmentIds(date: Date, segmentIds: List[String]): Future[Boolean] =
+  private def removeSegmentIds(date: LocalDate, segmentIds: List[String]): Future[Boolean] =
     async {
       if (segmentIds.nonEmpty) {
         val dateRange        = DateRange(date, date)
@@ -228,11 +230,11 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
    * @param installDate the initial install date for the segment
    * @return true if OK
    */
-  private def updatePositionsAfter(segmentToM1Pos: SegmentToM1Pos, installDate: Date): Future[Boolean] =
+  private def updatePositionsAfter(segmentToM1Pos: SegmentToM1Pos, installDate: LocalDate): Future[Boolean] =
     async {
       // If inserting before the most recent row, need to update any following "unknown" segment-ids for this pos
       val date = await(mostRecentChange(currentDate()))
-      if (segmentToM1Pos.date.before(date)) {
+      if (segmentToM1Pos.date.compareTo(date) < 0) {
         val dateRange = DateRange(segmentToM1Pos.date, date)
         val list = await(getSegmentIds(dateRange, segmentToM1Pos.position, includeEmpty = true, withInstallDate = false))
           .drop(1)
@@ -274,7 +276,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
    * @param installDate the initial install date for the segment
    * @return true if OK
    */
-  private def updateInstallDate(segmentToM1Pos: SegmentToM1Pos, installDate: Date): Future[Boolean] =
+  private def updateInstallDate(segmentToM1Pos: SegmentToM1Pos, installDate: LocalDate): Future[Boolean] =
     async {
       await(
         dsl
@@ -333,8 +335,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
 
   override def setPositions(config: MirrorConfig): Future[Boolean] =
     async {
-      val date    = config.getDate
-      val posList = config.segments.map(p => SegmentToM1Pos(date, p.segmentId, p.position))
+      val posList = config.segments.map(p => SegmentToM1Pos(config.date, p.segmentId, p.position))
       await(setPositions(posList))
     }
 
@@ -349,7 +350,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       }
     }
 
-  override def setAllPositions(date: Date, allSegmentIds: List[Option[String]]): Future[Boolean] =
+  override def setAllPositions(date: LocalDate, allSegmentIds: List[Option[String]]): Future[Boolean] =
     async {
       // Make sure the row exists
       val rowStatus = allSegmentIds.size == totalSegments && (await(rowExists(date)) || await(addEmptyRow(date)))
@@ -388,7 +389,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
         val (dbPositions, installDates) = result
         dbPositions.zipWithIndex
           .find(segmentId == _._1)
-          .map(p => makeSegmentToM1Pos(installDates(p._2), segmentId, p._2 + 1))
+          .map(p => makeSegmentToM1Pos(installDates(p._2).toLocalDate, segmentId, p._2 + 1))
       }
       sortByDate(list.distinct)
     }
@@ -424,7 +425,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
           .fetchAsyncScala[(Date, String, Date)]
       )
       val list = queryResult.map { result =>
-        val date      = if (withInstallDate) result._3 else result._1
+        val date      = if (withInstallDate) result._3.toLocalDate else result._1.toLocalDate
         val segmentId = result._2
         makeSegmentToM1Pos(date, segmentId, dbPos)
       }
@@ -439,26 +440,24 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
 
   override def allSegmentIds(position: String): Future[List[SegmentToM1Pos]] =
     async {
-      val dateRange = DateRange(new Date(0), currentDate())
+      val dateRange = DateRange(LocalDate.EPOCH, LocalDate.now())
       val list      = await(getSegmentIds(dateRange, position, includeEmpty = true, withInstallDate = true))
       sortByDate(list.distinct, desc = true)
     }
 
-  override def newlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]] =
+  override def newlyInstalledSegments(since: LocalDate): Future[List[SegmentToM1Pos]] =
     async {
       val dateRange = DateRange(since, currentDate())
       val fList     = (1 to totalSegments).toList.map(pos => segmentIds(dateRange, toPosition(pos)))
-      // await(Future.sequence(fList)).flatten.filter(_.date.after(since))
-      await(Future.sequence(fList)).flatten.filter(_.date.getTime >= since.getTime)
+      await(Future.sequence(fList)).flatten.filter(_.date.compareTo(since) >= 0)
     }
 
-  override def segmentExchanges(since: Date): Future[List[MirrorConfig]] =
+  override def segmentExchanges(since: LocalDate): Future[List[MirrorConfig]] =
     async {
-      val date      = await(mostRecentChange(since))
-      val nextDate  = await(nextChange(date))
-      // XXX FIXME date comparison?
-      val list      = await(positionsOnDate(date)).filter(_.date.getTime == date.getTime)
-      val m         = new MirrorConfig(date, list.map(s => SegmentConfig(s.position, s.maybeId)))
+      val date     = await(mostRecentChange(since))
+      val nextDate = await(nextChange(date))
+      val list     = await(positionsOnDate(date)).filter(_.date.compareTo(date) == 0)
+      val m        = MirrorConfig(date, list.map(s => SegmentConfig(s.position, s.maybeId)))
       if (nextDate == date) List(m) else m :: await(segmentExchanges(nextDate))
     }
 
@@ -475,7 +474,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
       await(currentPositions()).find(_.dbPos == dbPos)
     }
 
-  override def positionsOnDate(date: Date): Future[List[SegmentToM1Pos]] =
+  override def positionsOnDate(date: LocalDate): Future[List[SegmentToM1Pos]] =
     async {
       val queryResult = await(
         dsl
@@ -496,13 +495,13 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
         val list = queryResult.flatMap { result =>
           val (dbPositions, installDates) = result
           dbPositions.zipWithIndex
-            .map(p => makeSegmentToM1Pos(installDates(p._2), p._1, p._2 + 1))
+            .map(p => makeSegmentToM1Pos(installDates(p._2).toLocalDate, p._1, p._2 + 1))
         }
         sortByDate(list.distinct)
       }
     }
 
-  override def mostRecentChange(date: Date): Future[Date] =
+  override def mostRecentChange(date: LocalDate): Future[LocalDate] =
     async {
       await(
         dsl
@@ -514,10 +513,10 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
          |LIMIT 1
          |""".stripMargin)
           .fetchAsyncScala[Date]
-      ).headOption.getOrElse(currentDate())
+      ).headOption.map(_.toLocalDate).getOrElse(currentDate())
     }
 
-  override def nextChange(date: Date): Future[Date] =
+  override def nextChange(date: LocalDate): Future[LocalDate] =
     async {
       val lastDate = await(mostRecentChange(currentDate()))
       await(
@@ -530,10 +529,10 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
                         |LIMIT 1
                         |""".stripMargin)
           .fetchAsyncScala[Date]
-      ).headOption.getOrElse(lastDate)
+      ).headOption.map(_.toLocalDate).getOrElse(lastDate)
     }
 
-  override def prevChange(date: Date): Future[Date] =
+  override def prevChange(date: LocalDate): Future[LocalDate] =
     async {
       await(
         dsl
@@ -545,15 +544,15 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
                         |LIMIT 1
                         |""".stripMargin)
           .fetchAsyncScala[Date]
-      ).headOption.getOrElse(date)
+      ).headOption.map(_.toLocalDate).getOrElse(date)
     }
 
-  override def segmentPositionOnDate(date: Date, segmentId: String): Future[Option[SegmentToM1Pos]] =
+  override def segmentPositionOnDate(date: LocalDate, segmentId: String): Future[Option[SegmentToM1Pos]] =
     async {
       await(positionsOnDate(date)).find(_.maybeId.contains(segmentId))
     }
 
-  override def segmentAtPositionOnDate(date: Date, position: String): Future[Option[SegmentToM1Pos]] =
+  override def segmentAtPositionOnDate(date: LocalDate, position: String): Future[Option[SegmentToM1Pos]] =
     async {
       val dbPos = toDbPosition(position)
       await(positionsOnDate(date)).find(_.dbPos == dbPos)

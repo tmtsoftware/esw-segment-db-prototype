@@ -1,6 +1,5 @@
 package esw.segment.client
 
-import java.sql.Date
 import esw.segment.shared.{EswSegmentData, JiraSegmentData, JiraSegmentDataApi, JsonSupport, SegmentToM1Api}
 import EswSegmentData._
 import akka.actor.ActorSystem
@@ -11,6 +10,7 @@ import spray.json._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import EswSegmentClientOptions._
 
+import java.time.LocalDate
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -43,13 +43,13 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
       await(Unmarshal(response).to[List[SegmentToM1Pos]])
     }
 
-  private def postGetDate(uri: Uri, date: Date) =
+  private def postGetDate(uri: Uri, date: LocalDate) =
     async {
       val json     = date.toJson.compactPrint
       val entity   = HttpEntity(ContentTypes.`application/json`, json)
       val request  = HttpRequest(HttpMethods.POST, uri = uri, entity = entity)
       val response = await(Http().singleRequest(request))
-      await(Unmarshal(response).to[Date])
+      await(Unmarshal(response).to[LocalDate])
     }
 
   private def postGetOption(uri: Uri, json: String): Future[Option[SegmentToM1Pos]] =
@@ -77,7 +77,7 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
     postSet(Uri(s"$baseUri/setPositions"), config.toJson.compactPrint)
   }
 
-  override def setAllPositions(date: Date, allSegmentIds: List[Option[String]]): Future[Boolean] = {
+  override def setAllPositions(date: LocalDate, allSegmentIds: List[Option[String]]): Future[Boolean] = {
     postSet(Uri(s"$baseUri/setAllPositions"), AllSegmentPositions(date, allSegmentIds).toJson.compactPrint)
   }
 
@@ -96,11 +96,11 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
       await(Unmarshal(response).to[List[SegmentToM1Pos]])
     }
 
-  override def newlyInstalledSegments(since: Date): Future[List[SegmentToM1Pos]] = {
+  override def newlyInstalledSegments(since: LocalDate): Future[List[SegmentToM1Pos]] = {
     postGetList(Uri(s"$baseUri/newlyInstalledSegments"), since.toJson.compactPrint)
   }
 
-  override def segmentExchanges(since: Date): Future[List[MirrorConfig]] =
+  override def segmentExchanges(since: LocalDate): Future[List[MirrorConfig]] =
     async {
       val uri      = Uri(s"$baseUri/segmentExchanges")
       val json     = since.toJson.compactPrint
@@ -110,27 +110,27 @@ class EswSegmentHttpClient(host: String = "localhost", port: Int = defaultPort)(
       await(Unmarshal(response).to[List[MirrorConfig]])
     }
 
-  override def positionsOnDate(date: Date): Future[List[SegmentToM1Pos]] = {
+  override def positionsOnDate(date: LocalDate): Future[List[SegmentToM1Pos]] = {
     postGetList(Uri(s"$baseUri/positionsOnDate"), date.toJson.compactPrint)
   }
 
-  override def mostRecentChange(date: Date): Future[Date] = {
+  override def mostRecentChange(date: LocalDate): Future[LocalDate] = {
     postGetDate(Uri(s"$baseUri/mostRecentChange"), date)
   }
 
-  override def nextChange(date: Date): Future[Date] = {
+  override def nextChange(date: LocalDate): Future[LocalDate] = {
     postGetDate(Uri(s"$baseUri/nextChange"), date)
   }
 
-  override def prevChange(date: Date): Future[Date] = {
+  override def prevChange(date: LocalDate): Future[LocalDate] = {
     postGetDate(Uri(s"$baseUri/prevChange"), date)
   }
 
-  override def segmentPositionOnDate(date: Date, segmentId: String): Future[Option[SegmentToM1Pos]] = {
+  override def segmentPositionOnDate(date: LocalDate, segmentId: String): Future[Option[SegmentToM1Pos]] = {
     postGetOption(Uri(s"$baseUri/segmentPositionOnDate/$segmentId"), date.toJson.compactPrint)
   }
 
-  override def segmentAtPositionOnDate(date: Date, position: String): Future[Option[SegmentToM1Pos]] = {
+  override def segmentAtPositionOnDate(date: LocalDate, position: String): Future[Option[SegmentToM1Pos]] = {
     postGetOption(Uri(s"$baseUri/segmentAtPositionOnDate/$position"), date.toJson.compactPrint)
   }
 

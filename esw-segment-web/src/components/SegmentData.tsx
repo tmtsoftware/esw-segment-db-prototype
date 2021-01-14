@@ -8,7 +8,7 @@ export class SegmentData {
  * The object returned from the server for each segment
  */
 export interface SegmentToM1Pos {
-  date: number
+  date: string
   maybeId?: string
   position: string
 }

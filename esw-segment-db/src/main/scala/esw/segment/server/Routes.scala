@@ -2,13 +2,11 @@ package esw.segment.server
 
 import akka.NotUsed
 import akka.actor.typed.ActorSystem
-
-import java.sql.Date
-import akka.http.scaladsl.model.HttpRequest
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest, HttpResponse}
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.sse.ServerSentEvent
 import akka.http.scaladsl.server.directives.{DebuggingDirectives, LoggingMagnet}
-import akka.http.scaladsl.server.{Directive0, Directives, Route}
+import akka.http.scaladsl.server.{Directive0, Directives, ExceptionHandler, RejectionHandler, Route}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Source
 import esw.segment.db.{JiraSegmentDataTable, SegmentToM1PosTable}
@@ -17,6 +15,7 @@ import esw.segment.shared.JsonSupport
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import csw.logging.api.scaladsl.Logger
 
+import java.time.LocalDate
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -27,7 +26,7 @@ class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDat
     with JsonSupport {
 
   val logRequest: HttpRequest => Unit = req => {
-    logger.debug(s"${req.method.value} ${req.uri.toString()}")
+    logger.info(s"${req.method.value} ${req.uri.toString()}")
   }
 
   val routeLogger: Directive0 = DebuggingDirectives.logRequest(LoggingMagnet(_ => logRequest))
@@ -49,6 +48,31 @@ class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDat
     jiraSegmentDataTable.syncWithJira(callback)
     source
   }
+
+  implicit def myExceptionHandler: ExceptionHandler =
+    ExceptionHandler {
+      case ex: Exception =>
+        extractUri { uri =>
+          println(s"Request to $uri could not be handled normally")
+          ex.printStackTrace()
+          complete(HttpResponse(InternalServerError, entity = "Internal error"))
+        }
+    }
+
+  implicit def myRejectionHandler: RejectionHandler =
+    RejectionHandler.default
+      .mapRejectionResponse {
+        case res @ HttpResponse(_, _, ent: HttpEntity.Strict, _) =>
+          // since all Akka default rejection responses are Strict this will handle all rejections
+          val message = ent.data.utf8String.replaceAll("\"", """\"""")
+
+          // we copy the response in order to keep all headers and status code, wrapping the message as hand rolled JSON
+          // you could the entity using your favourite marshalling library (e.g. spray json or anything else)
+          res.withEntity(HttpEntity(ContentTypes.`application/json`, s"""{"rejection": "$message"}"""))
+
+        case x => x // pass through all other types of responses
+      }
+
 
   val route: Route = cors() {
     routeLogger {
@@ -85,31 +109,31 @@ class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDat
         } ~
         // Returns a list of segments that were installed since the given date
         path("newlyInstalledSegments") {
-          entity(as[Date]) { date =>
+          entity(as[LocalDate]) { date =>
             complete(posTable.newlyInstalledSegments(date))
           }
         } ~
         // Returns a list of segment exchanges since the given date.
         path("segmentExchanges") {
-          entity(as[Date]) { date =>
+          entity(as[LocalDate]) { date =>
             complete(posTable.segmentExchanges(date))
           }
         } ~
         // Returns the segment positions as they were on the given date, sorted by position
         path("positionsOnDate") {
-          entity(as[Date]) { date =>
+          entity(as[LocalDate]) { date =>
             complete(posTable.positionsOnDate(date))
           }
         } ~
         // Gets the segment position for the given segment id on the given date.
         path("segmentPositionOnDate" / Segment) { segmentId =>
-          entity(as[Date]) { date =>
+          entity(as[LocalDate]) { date =>
             complete(posTable.segmentPositionOnDate(date, segmentId))
           }
         } ~
         // Gets the id of the segment that was installed in the given location on the given date
         path("segmentAtPositionOnDate" / Segment) { position =>
-          entity(as[Date]) { date =>
+          entity(as[LocalDate]) { date =>
             complete(posTable.segmentAtPositionOnDate(date, position))
           }
         } ~
@@ -128,19 +152,19 @@ class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDat
         } ~
         // Returns the most recent date that segments were changed up to the given date, or the current date
         path("mostRecentChange") {
-          entity(as[Date]) { date =>
+          entity(as[LocalDate]) { date =>
             complete(posTable.mostRecentChange(date))
           }
         } ~
         // Returns the next date after the given one where segments were changed, or the current date, if there are no newer changes.
         path("nextChange") {
-          entity(as[Date]) { date =>
+          entity(as[LocalDate]) { date =>
             complete(posTable.nextChange(date))
           }
         } ~
         // Returns the previous date before the given one where segments were changed, or the first date, if there are no older changes.
         path("prevChange") {
-          entity(as[Date]) { date =>
+          entity(as[LocalDate]) { date =>
             complete(posTable.prevChange(date))
           }
         }

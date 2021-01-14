@@ -1,6 +1,5 @@
 package esw.segment.client
 
-import java.util.Date
 import akka.actor.ActorSystem
 import buildinfo.BuildInfo
 import esw.segment.client.EswSegmentClientOptions.defaultPort
@@ -13,19 +12,19 @@ import spray.json._
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.time.LocalDate
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.io.Source
 
 object EswSegmentDbClient extends App with JsonSupport {
-  val dateFormat                   = new java.text.SimpleDateFormat("yyyy-MM-dd")
   implicit val system: ActorSystem = ActorSystem()
 
   import system._
 
-  implicit val durationRead: Read[Date] =
+  implicit val durationRead: Read[LocalDate] =
     reads {
-      dateFormat.parse
+      LocalDate.parse
     }
 
   // Parser for the command line options
@@ -40,15 +39,15 @@ object EswSegmentDbClient extends App with JsonSupport {
       c.copy(port = x)
     } text s"The port number to use for the server (default: $defaultPort)"
 
-    opt[Date]("date") valueName dateFormat.toPattern action { (x, c) =>
+    opt[LocalDate]("date") valueName "yyyy-MM-dd" action { (x, c) =>
       c.copy(date = x)
     } text "The date to use (default: current date)"
 
-    opt[Date]("from") valueName dateFormat.toPattern action { (x, c) =>
+    opt[LocalDate]("from") valueName "yyyy-MM-dd" action { (x, c) =>
       c.copy(from = x)
     } text "The starting date to use for a date range (default: current date)"
 
-    opt[Date]("to") valueName dateFormat.toPattern action { (x, c) =>
+    opt[LocalDate]("to") valueName "yyyy-MM-dd" action { (x, c) =>
       c.copy(to = x)
     } text "The ending date to use for a date range (default: current date)"
 
@@ -161,7 +160,7 @@ object EswSegmentDbClient extends App with JsonSupport {
   }
 
   private def showResults(result: List[SegmentToM1Pos]): Unit = {
-    result.foreach(r => println(s"${dateFormat.format(r.date)} ${r.maybeId.getOrElse("------")} ${r.position}"))
+    result.foreach(r => println(s"${r.date} ${r.maybeId.getOrElse("------")} ${r.position}"))
   }
 
   private def await[T](future: Future[T]): T = Await.result(future, Duration.Inf)
@@ -267,7 +266,7 @@ object EswSegmentDbClient extends App with JsonSupport {
     }
 
     def saveMirrorConfig(file: File, segments: List[SegmentConfig]): Unit = {
-      val config = MirrorConfig(dateFormat.format(date), segments)
+      val config = MirrorConfig(date, segments)
       val json   = config.toJson.prettyPrint
       Files.write(file.toPath, json.getBytes(StandardCharsets.UTF_8))
     }
