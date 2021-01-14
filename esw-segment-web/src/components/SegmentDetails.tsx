@@ -128,7 +128,7 @@ export const SegmentDetails = ({
     const helpText = id ? `Installed on` : 'Date installed'
     // XXX TODO FIXME: Display current value again after edit/cancel
     return (
-      <Form.Item name="date-picker" label={helpText}>
+      <Form.Item name={`${pos}-date-picker`} label={helpText}>
         <DatePicker
           format={"ddd ll"}
           showToday={true}
@@ -288,7 +288,7 @@ export const SegmentDetails = ({
           form={form}
           size={'small'}
           initialValues={{
-            ["date-picker"]: moment(date)
+            [`${pos}-date-picker`]: moment(date)
           }}
           {...layout}>
           {installedFormItems()}
