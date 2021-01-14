@@ -1,11 +1,12 @@
 import React, {ChangeEvent, useEffect, useState} from 'react'
-import {DatePicker, Form, Input, Layout, Menu, Modal, Popconfirm, Progress, Upload} from "antd";
+import {DatePicker, Form, Input, Layout, Menu, Modal, Popconfirm, Progress, Select, Upload} from "antd";
 import {MenuInfo, SelectInfo} from 'rc-menu/lib/interface';
 import {SegmentData, SegmentToM1Pos} from "./SegmentData";
 import SubMenu from "antd/es/menu/SubMenu";
 import { format } from 'date-fns'
 import {UploadChangeParam} from "antd/es/upload";
 import moment from "moment";
+import ValueType = WebAssembly.ValueType;
 
 const {Sider} = Layout;
 
@@ -30,10 +31,11 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
   const [isExportModalVisible, setExportModalVisible] = useState(false);
   const [selectedExportDate, setSelectedExportDate] = useState(date);
   const [selectedExportBaseFileName, setSelectedExportBaseFileName] = useState('mirror');
+  const [selectedExportOpt, setSelectedExportOpt] = useState('recent');
 
   useEffect(() => {
     if (segmentMapSize == 0) {
-      syncWithJira()
+      // syncWithJira()
     }
   }, [])
 
@@ -96,8 +98,16 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
     segments: Array<SegmentConfig>
   }
 
+  function exportFilter(pos: SegmentToM1Pos): Boolean {
+    const spare = pos.position.charAt(0) == 'G'
+    if (spare) return false
+    return (selectedExportOpt == 'recent') ? new Date(pos.date) >= date : true
+  }
+
   function exportMirrorConfigToFile() {
-    const values: Array<SegmentToM1Pos> = [...posMap.values()].sort((pos1, pos2) => {
+    const values: Array<SegmentToM1Pos> = [...posMap.values()]
+      .filter(exportFilter)
+      .sort((pos1, pos2) => {
       const a = toDbPosition(pos1.position)
       const b = toDbPosition(pos2.position)
       if (a > b) {
@@ -132,7 +142,7 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
   function fileMenuOptionSelected(info: SelectInfo) {
     switch (info.key) {
       case 'export':
-        // setSelectedExportDate(date)
+        setSelectedExportDate(date)
         setExportModalVisible(true);
         break
       case 'import':
@@ -208,6 +218,10 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
     setSelectedExportBaseFileName(event.target.value)
   }
 
+  const handleExportOptChange = (value: ValueType) => {
+    setSelectedExportOpt(value)
+  }
+
   return (
     <Sider>
       <Menu
@@ -277,6 +291,11 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
             onCancel={cancelExport}>
             <Form
               form={exportForm}
+              initialValues={{
+                ['export-option']: 'recent',
+                'date-picker': moment(date),
+                'base-file-name': selectedExportBaseFileName
+              }}
               size={'small'}
               {...exportLayout}>
               <Form.Item name="date-picker" label={'Date'} rules={[{ required: true }]}>
@@ -284,15 +303,19 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
                   format={"ddd ll"}
                   showToday={true}
                   onChange={handleExportDateChange}
-                  defaultValue={moment(selectedExportDate)}
                   value={moment(selectedExportDate)}
                 />
               </Form.Item>
               <Form.Item name="base-file-name" label={'Base file name'} rules={[{ required: true }]}>
                 <Input
-                  defaultValue={selectedExportBaseFileName}
                   onChange={handleExportBaseFileNameChange}
                 />
+              </Form.Item>
+              <Form.Item name="export-option" label={'File contents'} rules={[{ required: false }]}>
+                <Select onChange={handleExportOptChange}>
+                  <Select.Option value="all">All positions</Select.Option>
+                  <Select.Option value="recent">Only most recent changes</Select.Option>
+                </Select>
               </Form.Item>
             </Form>
           </Modal>
