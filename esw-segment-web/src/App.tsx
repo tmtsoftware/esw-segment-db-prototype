@@ -147,7 +147,6 @@ const App = (): JSX.Element => {
         />
         <Layout>
           <Sidebar
-            segmentMapSize={segmentMap.size}
             sidebarOptionsChanged={sidebarOptionsChanged}
             posMap={posMap}
             date={mostRecentChange}

@@ -11,14 +11,13 @@ import ValueType = WebAssembly.ValueType;
 const {Sider} = Layout;
 
 type SidebarProps = {
-  segmentMapSize: number
   sidebarOptionsChanged: (viewMode: React.Key, showSegmentIds: boolean, showSpares: boolean) => void
   posMap: Map<string, SegmentToM1Pos>
   date: Date
   updateDisplay: () => void
 }
 
-export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, updateDisplay}: SidebarProps): JSX.Element => {
+export const Sidebar = ({sidebarOptionsChanged, posMap, date, updateDisplay}: SidebarProps): JSX.Element => {
 
   const [viewMode, setViewMode] = useState<string | number>("installed")
   const [showSegmentIds, setShowSegmentIds] = useState<boolean>(false)
@@ -27,21 +26,18 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
   const [syncProgress, setSyncProgress] = useState<number>(0)
   const [syncPopupVisible, setSyncPopupVisible] = useState<boolean>(false)
   const [fileMenuSelectedKeys, setFileMenuSelectedKeys] = useState<Array<string>>([])
-  const [errorMessage, setErrorMessage] = useState('')
   const [isExportModalVisible, setExportModalVisible] = useState(false);
   const [selectedExportDate, setSelectedExportDate] = useState(date);
   const [selectedExportBaseFileName, setSelectedExportBaseFileName] = useState('mirror');
   const [selectedExportOpt, setSelectedExportOpt] = useState('recent');
 
   useEffect(() => {
-    if (segmentMapSize == 0) {
-      // syncWithJira()
-    }
-  }, [])
-
-  useEffect(() => {
     sidebarOptionsChanged(viewMode, showSegmentIds, showSpares)
   }, [viewMode, showSegmentIds, showSpares])
+
+  useEffect(() => {
+    setSelectedExportDate(date)
+  }, [date])
 
   function menuItemSelected(info: MenuInfo) {
     if (info.key == "syncWithJira")
@@ -142,7 +138,6 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
   function fileMenuOptionSelected(info: SelectInfo) {
     switch (info.key) {
       case 'export':
-        setSelectedExportDate(date)
         setExportModalVisible(true);
         break
       case 'import':
@@ -160,10 +155,7 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
     fetch(`${SegmentData.baseUri}/setPositions`, requestOptions)
       .then((response) => response.status)
       .then((status) => {
-        if (status != 200) console.log(`XXX Error: Failed to update the database`)
-        setErrorMessage(
-          status == 200 ? '' : 'Error: Failed to update the database'
-        )
+        if (status != 200) alert(`Error: Failed to update the database`)
         setFileMenuSelectedKeys([])
         updateDisplay()
       })
@@ -185,10 +177,11 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
         if (info.file.originFileObj)
           reader.readAsText(info.file.originFileObj);
       }
+      // TODO: Add busy, error or green check icon to menu item as feedback?
       if (info.file.status === 'done') {
         console.log(`XXX ${info.file.name} file uploaded successfully`);
       } else if (info.file.status === 'error') {
-        console.log(`XXX ${info.file.name} file upload failed.`);
+        alert(`${info.file.name} file upload failed.`);
       }
     },
   }
@@ -211,6 +204,7 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
 
   const handleExportDateChange = (value: moment.Moment | null) => {
     const newDate = value ? value.toDate() : date
+    console.log(`XXX 2 setSelectedExportDate(${date})`)
     setSelectedExportDate(newDate)
   }
 
@@ -293,7 +287,7 @@ export const Sidebar = ({segmentMapSize, sidebarOptionsChanged, posMap, date, up
               form={exportForm}
               initialValues={{
                 ['export-option']: 'recent',
-                'date-picker': moment(date),
+                'date-picker': moment(selectedExportDate),
                 'base-file-name': selectedExportBaseFileName
               }}
               size={'small'}
