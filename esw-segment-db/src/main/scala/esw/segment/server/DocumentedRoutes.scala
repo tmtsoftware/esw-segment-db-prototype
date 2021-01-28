@@ -32,16 +32,29 @@ import sttp.tapir.openapi.OpenAPI
 import sttp.tapir.server.akkahttp.AkkaHttpServerInterpreter
 import sttp.tapir.swagger.akkahttp.SwaggerAkka
 import sttp.tapir.openapi.circe.yaml._
+import sttp.tapir.generic.Derived
 
 import java.time.LocalDate
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
 
+object DocumentedRoutes {
+  // See https://tapir.softwaremill.com/en/latest/endpoint/customtypes.html?highlight=path%5B#customising-derived-schemas
+  // Add descriptions to schema fields here so we don't need to add tapir as a dependency to the esw-segment-shared project that
+  // contains the case classes.
+  implicit val customSegmentToM1PosSchema: Schema[SegmentToM1Pos] = implicitly[Derived[Schema[SegmentToM1Pos]]].value
+    .modify(_.date)(_.description("date of record"))
+    .modify(_.maybeId)(_.description("the segment id, if the segment is present"))
+    .modify(_.position)(_.description("position of segment (For example: A32, B19, F82)"))
+}
+
 //noinspection TypeAnnotation
-class Server2(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDataTable, logger: Logger)(implicit
+class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDataTable, logger: Logger)(implicit
     ec: ExecutionContext,
     sys: ActorSystem[_]
 ) extends JsonSupport {
+
+  import DocumentedRoutes._
 
   private val today = currentDate()
 
@@ -95,6 +108,18 @@ class Server2(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDa
       "Position of a segment on a given date. A segment id can be empty if no segment is installed at the position."
     )
     .example(SegmentToM1Pos(today, Some("SN-513"), "A2"))
+
+  // Tapir description of List[SegmentToM1Pos] JSON result
+  private val segmentToM1PosListBody = jsonBody[List[SegmentToM1Pos]]
+    .description(
+      "A list of objects mapping segment id to position on a given date"
+    )
+    .example(
+      List(
+        SegmentToM1Pos(today, Some("SN-484"), "B78"),
+        SegmentToM1Pos(today, None, "D78")
+      )
+    )
 
   // Tapir description of MirrorConfig JSON argument
   private val mirrorConfigBody = jsonBody[MirrorConfig]
@@ -208,29 +233,29 @@ class Server2(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDa
     }
   }
 
-  //        // Gets a list of segments positions for the given segment id in the given date range.
-  //        path("segmentPositions" / Segment) { segmentId =>
-  //          entity(as[DateRange]) { dateRange =>
-  //            complete(posTable.segmentPositions(dateRange, segmentId))
-  //          }
-  //        } ~
-
-  // Note: Tapir Endpoint[I, E, O, S], where:
-  //    I is the type of the input parameters
-  //    E is the type of the error-output parameters
-  //    O is the type of the output parameters
-  //    S is the type of streams that are used by the endpoint’s inputs/outputs
-
   private object segmentPositions extends DocRoute[(String, DateRange), Unit, List[SegmentToM1Pos]] {
     override val doc: Endpoint[(String, DateRange), Unit, List[SegmentToM1Pos], Any] =
-      endpoint.get
+      endpoint.post
         .description("Gets a list of segments positions for the given segment id in the given date range")
-        .in("segmentPositions" / path[String]("segmentId"))
-        .in(dateRangeBody)
-        .out(jsonBody[List[SegmentToM1Pos]])
+        .in("segmentPositions" / path[String]("segmentId").description("the segment id to search for").example("SN-484"))
+        .in(dateRangeBody.description("The range of dates to search for"))
+        .out(segmentToM1PosListBody)
 
     override def impl(p: (String, DateRange)): Future[Either[Unit, List[SegmentToM1Pos]]] = {
       posTable.segmentPositions(p._2, p._1).map(r => Right(r))
+    }
+  }
+
+  private object segmentIds extends DocRoute[(String, DateRange), Unit, List[SegmentToM1Pos]] {
+    override val doc: Endpoint[(String, DateRange), Unit, List[SegmentToM1Pos], Any] =
+      endpoint.post
+        .description("Gets a list of segment ids that were in the given position in the given date range.")
+        .in("segmentIds" / path[String]("position").description("the segment position to search for (A1 to F82)").example("A32"))
+        .in(dateRangeBody)
+        .out(segmentToM1PosListBody)
+
+    override def impl(p: (String, DateRange)): Future[Either[Unit, List[SegmentToM1Pos]]] = {
+      posTable.segmentIds(p._2, p._1).map(r => Right(r))
     }
   }
 
@@ -252,13 +277,13 @@ class Server2(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDa
 
   private val openApiDocs: OpenAPI =
     OpenAPIDocsInterpreter.toOpenAPI(
-      List(setPosition.doc, setPositions.doc, setAllPositions.doc, segmentPositions.doc),
+      List(setPosition.doc, setPositions.doc, setAllPositions.doc, segmentPositions.doc, segmentIds.doc),
       "The ESW Segment DB API",
       BuildInfo.version
     )
   private val openApiYml: String = openApiDocs.toYaml
 
-  val routes = {
+  val routes: Route = {
     import akka.http.scaladsl.server.Directives._
     cors() {
       routeLogger {
@@ -267,6 +292,7 @@ class Server2(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDa
           setPositions.route,
           setAllPositions.route,
           segmentPositions.route,
+          segmentIds.route,
           new SwaggerAkka(openApiYml).routes
         )
       }

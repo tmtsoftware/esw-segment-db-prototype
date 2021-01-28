@@ -1,8 +1,8 @@
 import sbt._
 
 object Libs {
-  val `scopt` = "com.github.scopt" %% "scopt" % "3.7.1" //MIT License
-  val `scalaTest` = "org.scalatest" %% "scalatest" % "3.1.4" // ApacheV2
+  val `scopt` = "com.github.scopt" %% "scopt" % "4.0.0" //MIT License
+  val `scalaTest` = "org.scalatest" %% "scalatest" % "3.2.3" // ApacheV2
   val `scala-async` = "org.scala-lang.modules" %% "scala-async" % "1.0.0-M1" //BSD 3-clause "New" or "Revised" License
 }
 
@@ -19,7 +19,8 @@ object Tapir {
 
 object CSW {
   private val Org = "com.github.tmtsoftware.csw"
-  private val Version = "0.1.0-SNAPSHOT"
+//  private val Version = "0.1.0-SNAPSHOT"
+  private val Version = "3.0.1"
 
   val `csw-logging-client` = Org %% "csw-logging-client" % Version
   val `csw-commons` = Org %% "csw-commons" % Version
@@ -29,17 +30,17 @@ object CSW {
 }
 
 object AkkaHttp { //ApacheV2
-  val Version = "10.2.1"
+  val Version = "10.2.3"
   val `akka-http` = "com.typesafe.akka" %% "akka-http" % Version
   val `akka-http-core` = "com.typesafe.akka" %% "akka-http-core" % Version
   val `akka-http-testkit` = "com.typesafe.akka" %% "akka-http-testkit" % Version
   val `akka-http-spray-json` = "com.typesafe.akka" %% "akka-http-spray-json" % Version
 
-  val `akka-http-cors` = "ch.megard" %% "akka-http-cors" % "1.1.0"
+  val `akka-http-cors` = "ch.megard" %% "akka-http-cors" % "1.1.1"
 }
 
 object Akka {
-  val Version = "2.6.10" //all akka is Apache License 2.0
+  val Version = "2.6.11" //all akka is Apache License 2.0
 
   val `akka-stream`              = "com.typesafe.akka" %% "akka-stream"              % Version
   val `akka-stream-typed`        = "com.typesafe.akka" %% "akka-stream-typed"        % Version
@@ -56,4 +57,6 @@ object Akka {
   val `akka-slf4j`               = "com.typesafe.akka" %% "akka-slf4j"               % Version
   val `cluster-sharding`         = "com.typesafe.akka" %% "akka-cluster-sharding"    % Version
   val `akka-persistence`         = "com.typesafe.akka" %% "akka-persistence"         % Version
+
+  //, akka-pki
 }
