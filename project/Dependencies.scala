@@ -5,6 +5,13 @@ object Dependencies {
   val `esw-segment-db-deps` = Seq(
     CSW.`csw-location-client`,
     CSW.`csw-database`,
+    Tapir.`tapir-json-spray`,
+    Tapir.`tapir-core`,
+    Tapir.`tapir-akka-http-server`,
+    Tapir.`tapir-openapi-docs`,
+    Tapir.`tapir-openapi-circe-yaml`,
+    Tapir.`tapir-swagger-ui-akka-http`,
+    Tapir.`tapir-redoc-akka-http`,
     AkkaHttp.`akka-http`,
     AkkaHttp.`akka-http-core`,
     AkkaHttp.`akka-http-spray-json`,

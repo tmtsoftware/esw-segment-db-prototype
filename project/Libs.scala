@@ -6,6 +6,17 @@ object Libs {
   val `scala-async` = "org.scala-lang.modules" %% "scala-async" % "1.0.0-M1" //BSD 3-clause "New" or "Revised" License
 }
 
+object Tapir {
+  private val Version = "0.17.7"
+  val `tapir-json-spray` = "com.softwaremill.sttp.tapir" %% "tapir-json-spray" % Version
+  val `tapir-core` = "com.softwaremill.sttp.tapir" %% "tapir-core" % Version
+  val `tapir-akka-http-server` = "com.softwaremill.sttp.tapir" %% "tapir-akka-http-server" % Version
+  val `tapir-openapi-docs` = "com.softwaremill.sttp.tapir" %% "tapir-openapi-docs" % Version
+  val `tapir-openapi-circe-yaml` = "com.softwaremill.sttp.tapir" %% "tapir-openapi-circe-yaml" % Version
+  val `tapir-swagger-ui-akka-http` = "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-akka-http" % Version
+  val `tapir-redoc-akka-http` = "com.softwaremill.sttp.tapir" %% "tapir-redoc-akka-http" % Version
+}
+
 object CSW {
   private val Org = "com.github.tmtsoftware.csw"
   private val Version = "0.1.0-SNAPSHOT"

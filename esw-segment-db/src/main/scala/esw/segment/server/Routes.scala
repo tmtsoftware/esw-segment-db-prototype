@@ -73,7 +73,6 @@ class Routes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDat
         case x => x // pass through all other types of responses
       }
 
-
   val route: Route = cors() {
     routeLogger {
       post {
