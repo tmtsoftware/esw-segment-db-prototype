@@ -69,7 +69,7 @@ object EswSegmentData {
    * The first item in the positions list is taken to be the segment position 1 and so on.
    *
    * @param date         the date corresponding to the positions
-   * @param allPositions list of all 492 segment positions from A1 to F82 (Missing segments should be None,
+   * @param allPositions list of all 574 segment positions from A1 to G82 (Missing segments should be None,
    *                     present segments should be Some(segment-id)
    */
   case class AllSegmentPositions(date: LocalDate, allPositions: List[Option[String]])
