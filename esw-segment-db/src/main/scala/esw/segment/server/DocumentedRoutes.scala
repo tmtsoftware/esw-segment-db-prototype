@@ -2,10 +2,9 @@ package esw.segment.server
 
 import akka.NotUsed
 import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.model.sse.ServerSentEvent
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest, HttpResponse}
-import akka.http.scaladsl.server.{Directive0, ExceptionHandler, RejectionHandler, Route}
+import akka.http.scaladsl.model.HttpRequest
+import akka.http.scaladsl.server.{Directive0, Route}
 import akka.http.scaladsl.server.directives.{DebuggingDirectives, LoggingMagnet}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Source
@@ -13,14 +12,7 @@ import buildinfo.BuildInfo
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives.cors
 import csw.logging.api.scaladsl.Logger
 import esw.segment.db.{JiraSegmentDataTable, SegmentToM1PosTable}
-import esw.segment.shared.EswSegmentData.{
-  AllSegmentPositions,
-  DateRange,
-  MirrorConfig,
-  SegmentConfig,
-  SegmentToM1Pos,
-  currentDate
-}
+import esw.segment.shared.EswSegmentData.{AllSegmentPositions, DateRange, MirrorConfig, SegmentConfig, SegmentToM1Pos, currentDate}
 import sttp.tapir._
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto._
@@ -38,8 +30,18 @@ import sttp.tapir.generic.Derived
 import java.time.LocalDate
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
-object DocumentedRoutes {
+object DocumentedRoutes extends JsonSupport {
+//  type ErrorInfo = String
+//
+//  def handleErrors[T](f: Future[T]): Future[Either[ErrorInfo, T]] =
+//    f.transform {
+//      case Success(v) => Success(Right(v))
+//      case Failure(e) =>
+//        Success(Left(e.getMessage))
+//    }
+
   // See https://tapir.softwaremill.com/en/latest/endpoint/customtypes.html?highlight=path%5B#customising-derived-schemas
   // Add descriptions to schema fields here so we don't need to add tapir as a dependency to the esw-segment-shared project that
   // contains the case classes.
@@ -66,66 +68,15 @@ object DocumentedRoutes {
   implicit val customDateRangeSchema: Schema[DateRange] = implicitly[Derived[Schema[DateRange]]].value
     .modify(_.from)(_.description("start of the date range"))
     .modify(_.to)(_.description("end of the date range"))
-}
 
-//noinspection TypeAnnotation,DuplicatedCode
-class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDataTable, logger: Logger)(implicit
-    ec: ExecutionContext,
-    sys: ActorSystem[_]
-) extends JsonSupport {
-
-  import DocumentedRoutes._
+  // --- Schema Descriptions ---
 
   private val today = currentDate()
-
-  private def availableSegmentIds(f: Future[List[String]]): Future[List[String]] =
-    async {
-      val list    = await(f)
-      val results = await(Future.sequence(list.map(posTable.currentSegmentPosition)))
-      list.zip(results).filter(p => p._2.isEmpty || p._2.get.position.head == 'G').map(_._1)
-    }
-
-  // Convert callback to stream for progress on sync
-  private def syncWithJiraStream(): Source[Int, NotUsed] = {
-    val sourceDecl      = Source.queue[Int](bufferSize = 2, OverflowStrategy.backpressure)
-    val (queue, source) = sourceDecl.preMaterialize()
-    def callback(percent: Int): Unit = {
-      queue.offer(percent)
-    }
-    jiraSegmentDataTable.syncWithJira(callback)
-    source
-  }
-
-  private implicit def myExceptionHandler: ExceptionHandler = {
-    import akka.http.scaladsl.server.Directives._
-    ExceptionHandler {
-      case ex: Exception =>
-        extractUri { uri =>
-          println(s"Request to $uri could not be handled normally")
-          ex.printStackTrace()
-          complete(HttpResponse(InternalServerError, entity = "Internal error"))
-        }
-    }
-  }
-
-  private implicit def myRejectionHandler: RejectionHandler =
-    RejectionHandler.default
-      .mapRejectionResponse {
-        case res @ HttpResponse(_, _, ent: HttpEntity.Strict, _) =>
-          // since all Akka default rejection responses are Strict this will handle all rejections
-          val message = ent.data.utf8String.replaceAll("\"", """\"""")
-
-          // we copy the response in order to keep all headers and status code, wrapping the message as hand rolled JSON
-          // you could the entity using your favourite marshalling library (e.g. spray json or anything else)
-          res.withEntity(HttpEntity(ContentTypes.`application/json`, s"""{"rejection": "$message"}"""))
-
-        case x => x // pass through all other types of responses
-      }
 
   // Tapir description of SegmentToM1Pos JSON argument
   private val segmentToM1PosBody = jsonBody[SegmentToM1Pos]
     .description(
-      "Position of a segment on a given date. A segment id can be empty if no segment is installed at the position."
+      "Position of a segment on a given date. The segment id is optional and can be missing if no segment is installed at the position."
     )
     .example(SegmentToM1Pos(today, Some("SN-513"), "A2"))
 
@@ -161,7 +112,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   // Tapir description of MirrorConfig JSON argument
   private val mirrorConfigBody = jsonBody[MirrorConfig]
     .description(
-      "Holds a number of segment-id assignments for the mirror. A segment id can be empty if no segment is installed at the position."
+      "Holds a number of segment-id assignments for the mirror. A segment id is optional and can be misisng if no segment is installed at the position."
     )
     .example(
       MirrorConfig(
@@ -239,6 +190,8 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
       LocalDate.parse("2020-10-23")
     )
 
+  // ---
+
   // Convert a Boolean result to an Either
   private def booleanToEither(b: Boolean) = if (b) Right(()) else Left(())
 
@@ -258,6 +211,34 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
 
     // Returns the akka-http route for this endpoint
     final def route: Route = AkkaHttpServerInterpreter.toRoute(doc)(i => impl(i))
+  }
+
+}
+
+//noinspection TypeAnnotation
+class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDataTable, logger: Logger)(implicit
+    ec: ExecutionContext,
+    sys: ActorSystem[_]
+) {
+  import DocumentedRoutes._
+
+  // Returns
+  private def availableSegmentIds(f: Future[List[String]]): Future[List[String]] =
+    async {
+      val list    = await(f)
+      val results = await(Future.sequence(list.map(posTable.currentSegmentPosition)))
+      list.zip(results).filter(p => p._2.isEmpty || p._2.get.position.head == 'G').map(_._1)
+    }
+
+  // Convert callback to stream for progress on sync
+  private def syncWithJiraStream(): Source[Int, NotUsed] = {
+    val sourceDecl      = Source.queue[Int](bufferSize = 2, OverflowStrategy.backpressure)
+    val (queue, source) = sourceDecl.preMaterialize()
+    def callback(percent: Int): Unit = {
+      queue.offer(percent)
+    }
+    jiraSegmentDataTable.syncWithJira(callback)
+    source
   }
 
   // --- Endpoints ---

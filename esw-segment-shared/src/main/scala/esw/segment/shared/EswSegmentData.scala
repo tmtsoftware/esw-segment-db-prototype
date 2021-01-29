@@ -30,6 +30,14 @@ object EswSegmentData {
     sectorOffset * segmentsPerSector + n
   }
 
+  def validatePosition(pos: String): Unit = {
+    try {
+      toDbPosition(pos)
+    } catch {
+      case e: Exception => throw new IllegalArgumentException(s"Invalid segment position: '$pos'")
+    }
+  }
+
   /**
    * Convert a one based index in an array of all segments to a segment position like F32 or A2
    */
@@ -51,6 +59,7 @@ object EswSegmentData {
    * @param position  position of segment (For example: A32, B19, F82)
    */
   case class SegmentToM1Pos(date: LocalDate, maybeId: Option[String], position: String) {
+    validatePosition(position)
     def this(date: LocalDate, id: String, position: String) = {
       this(date, Some(id), position)
     }
@@ -95,7 +104,9 @@ object EswSegmentData {
    * @param position segment poosition (A1 to G82)
    * @param segmentId SN-xxx for the position
    */
-  case class SegmentConfig(position: String, segmentId: Option[String])
+  case class SegmentConfig(position: String, segmentId: Option[String]) {
+    validatePosition(position)
+  }
 
   /**
    * Holds a number of segment-id assignments for the mirror
