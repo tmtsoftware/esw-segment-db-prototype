@@ -46,6 +46,22 @@ object DocumentedRoutes {
     .modify(_.date)(_.description("date of record"))
     .modify(_.maybeId)(_.description("the segment id, if the segment is present"))
     .modify(_.position)(_.description("position of segment (For example: A32, B19, F82)"))
+
+  implicit val customSegmentConfigSchema: Schema[SegmentConfig] = implicitly[Derived[Schema[SegmentConfig]]].value
+    .modify(_.position)(_.description("segment poosition (A1 to G82)"))
+    .modify(_.segmentId)(_.description("the segment id, if the segment is present"))
+
+  implicit val customMirrorConfigSchema: Schema[MirrorConfig] = implicitly[Derived[Schema[MirrorConfig]]].value
+    .modify(_.date)(_.description("the date for the configuration"))
+    .modify(_.segments)(_.description("list of segment assignments"))
+
+  implicit val customAllSegmentPositionsSchema: Schema[AllSegmentPositions] = implicitly[Derived[Schema[AllSegmentPositions]]].value
+    .modify(_.date)(_.description("the date corresponding to the positions"))
+    .modify(_.allPositions)(_.description("list of all 574 segment positions from A1 to G82. Missing segments have the value null."))
+
+  implicit val customDateRangeSchema: Schema[DateRange] = implicitly[Derived[Schema[DateRange]]].value
+    .modify(_.from)(_.description("start of the date range"))
+    .modify(_.to)(_.description("end of the date range"))
 }
 
 //noinspection TypeAnnotation
@@ -121,6 +137,17 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
       )
     )
 
+  // Tapir description of Option[SegmentToM1Pos] JSON result
+  private val segmentToM1PosOptionBody = jsonBody[Option[SegmentToM1Pos]]
+    .description(
+      "An optional object mapping segment id to position on a given date"
+    )
+    .example(
+      Some(
+        SegmentToM1Pos(today, Some("SN-484"), "B78")
+      )
+    )
+
   // Tapir description of MirrorConfig JSON argument
   private val mirrorConfigBody = jsonBody[MirrorConfig]
     .description(
@@ -137,10 +164,35 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
       )
     )
 
+  // Tapir description of MirrorConfig List JSON argument
+  private val mirrorConfigListBody = jsonBody[List[MirrorConfig]]
+    .description(
+      "Holds a MirrirConfig, representing segment changes on different dates."
+    )
+    .example(
+      List(
+        MirrorConfig(
+          LocalDate.parse("2021-01-29"),
+          List(
+            SegmentConfig("A78", Some("SN-483")),
+            SegmentConfig("B78", Some("SN-484")),
+            SegmentConfig("D78", Some("SN-486"))
+          )
+        ),
+        MirrorConfig(
+          LocalDate.parse("2021-01-30"),
+          List(
+            SegmentConfig("A5", Some("SN-007")),
+            SegmentConfig("B78", None)
+          )
+        )
+      )
+    )
+
   // Tapir description of AllSegmentPositions JSON argument
   private val allSegmentPositionsBody = jsonBody[AllSegmentPositions]
     .description(
-      "Holds all 574 segment-id assignments (A1 to G8, including spares) for the mirror. A segment id can be empty if no segment is installed at the position."
+      "Holds all 574 segment-id assignments (A1 to G8, including spares) for the mirror. A segment id can be null if no segment is installed at the position."
     )
     .example(
       AllSegmentPositions(
@@ -168,6 +220,15 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
       )
     )
 
+  // Tapir description of a LocalDate JSON argument
+  private val localDateBody = jsonBody[LocalDate]
+    .description(
+      "A date in the format yyyy-mm-dd"
+    )
+    .example(
+      LocalDate.parse("2020-10-23")
+    )
+
   // Convert a Boolean result to an Either
   private def booleanToEither(b: Boolean) = if (b) Right(()) else Left(())
 
@@ -182,11 +243,11 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
     // Documents the route
     def doc: Endpoint[I, E, O, AkkaStreams with WebSockets]
 
-    // Implements the route
+    // Implements the server route
     def impl(i: I): Future[Either[E, O]]
 
     // Returns the akka-http route for this endpoint
-    def route: Route = AkkaHttpServerInterpreter.toRoute(doc)(i => impl(i))
+    final def route: Route = AkkaHttpServerInterpreter.toRoute(doc)(i => impl(i))
   }
 
   // --- Endpoints ---
@@ -259,42 +320,233 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
     }
   }
 
-  // ---
-  // ---
-  // ---
-  // ---
-  // ---
+  private object newlyInstalledSegments extends DocRoute[LocalDate, Unit, List[SegmentToM1Pos]] {
+    override val doc: Endpoint[LocalDate, Unit, List[SegmentToM1Pos], Any] =
+      endpoint.post
+        .description("Returns a list of segments that were installed since the given date.")
+        .in("newlyInstalledSegments")
+        .in(localDateBody)
+        .out(segmentToM1PosListBody)
+
+    override def impl(date: LocalDate): Future[Either[Unit, List[SegmentToM1Pos]]] = {
+      posTable.newlyInstalledSegments(date).map(r => Right(r))
+    }
+  }
+
+  private object segmentExchanges extends DocRoute[LocalDate, Unit, List[MirrorConfig]] {
+    override val doc: Endpoint[LocalDate, Unit, List[MirrorConfig], Any] =
+      endpoint.post
+        .description("Returns a list of segment exchanges since the given date.")
+        .in("segmentExchanges")
+        .in(localDateBody)
+        .out(mirrorConfigListBody)
+
+    override def impl(date: LocalDate): Future[Either[Unit, List[MirrorConfig]]] = {
+      posTable.segmentExchanges(date).map(r => Right(r))
+    }
+  }
+
+  private object positionsOnDate extends DocRoute[LocalDate, Unit, List[SegmentToM1Pos]] {
+    override val doc: Endpoint[LocalDate, Unit, List[SegmentToM1Pos], Any] =
+      endpoint.post
+        .description("Returns the segment positions as they were on the given date.")
+        .in("positionsOnDate")
+        .in(localDateBody)
+        .out(segmentToM1PosListBody)
+
+    override def impl(date: LocalDate): Future[Either[Unit, List[SegmentToM1Pos]]] = {
+      posTable.positionsOnDate(date).map(r => Right(r))
+    }
+  }
+
+  private object segmentPositionOnDate extends DocRoute[(String, LocalDate), Unit, Option[SegmentToM1Pos]] {
+    override val doc: Endpoint[(String, LocalDate), Unit, Option[SegmentToM1Pos], Any] =
+      endpoint.post
+        .description("Gets the segment position for the given segment id on the given date.")
+        .in("segmentPositionOnDate" / path[String]("segmentId").description("the segment id to search for").example("SN-019"))
+        .in(localDateBody)
+        .out(segmentToM1PosOptionBody)
+
+    override def impl(p: (String, LocalDate)): Future[Either[Unit, Option[SegmentToM1Pos]]] = {
+      posTable.segmentPositionOnDate(p._2, p._1).map(r => Right(r))
+    }
+  }
+
+  private object segmentAtPositionOnDate extends DocRoute[(String, LocalDate), Unit, Option[SegmentToM1Pos]] {
+    override val doc: Endpoint[(String, LocalDate), Unit, Option[SegmentToM1Pos], Any] =
+      endpoint.post
+        .description("Gets the id of the segment that was installed in the given location on the given date.")
+        .in("segmentAtPositionOnDate" / path[String]("position").description("the segment position to search for").example("A82"))
+        .in(localDateBody)
+        .out(segmentToM1PosOptionBody)
+
+    override def impl(p: (String, LocalDate)): Future[Either[Unit, Option[SegmentToM1Pos]]] = {
+      posTable.segmentAtPositionOnDate(p._2, p._1).map(r => Right(r))
+    }
+  }
+
+  private object resetTables extends DocRoute[Unit, Unit, Unit] {
+    override val doc: Endpoint[Unit, Unit, Unit, Any] =
+      endpoint.post
+        .description("Drops and recreates the database tables (for testing)")
+        .in("resetTables")
+        .out(statusCode(StatusCode.Ok))
+        .errorOut(statusCode(StatusCode.BadRequest))
+
+    override def impl(x: Unit): Future[Either[Unit, Unit]] = {
+      val f1 = jiraSegmentDataTable.resetJiraSegmentDataTable()
+      val f2 = posTable.resetSegmentToM1PosTable()
+      Future.sequence(List(f1, f2)).map(_.forall(b => b)).map(booleanToEither)
+    }
+  }
+
+  private object resetJiraSegmentDataTable extends DocRoute[Unit, Unit, Unit] {
+    override val doc: Endpoint[Unit, Unit, Unit, Any] =
+      endpoint.post
+        .description("Drops and recreates the JIRA segment database table (for testing)")
+        .in("resetJiraSegmentDataTable")
+        .out(statusCode(StatusCode.Ok))
+        .errorOut(statusCode(StatusCode.BadRequest))
+
+    override def impl(x: Unit): Future[Either[Unit, Unit]] = {
+      jiraSegmentDataTable.resetJiraSegmentDataTable().map(booleanToEither)
+    }
+  }
+
+  private object resetSegmentToM1PosTable extends DocRoute[Unit, Unit, Unit] {
+    override val doc: Endpoint[Unit, Unit, Unit, Any] =
+      endpoint.post
+        .description("Drops and recreates the segment database table (for testing)")
+        .in("resetSegmentToM1PosTable")
+        .out(statusCode(StatusCode.Ok))
+        .errorOut(statusCode(StatusCode.BadRequest))
+
+    override def impl(x: Unit): Future[Either[Unit, Unit]] = {
+      posTable.resetSegmentToM1PosTable().map(booleanToEither)
+    }
+  }
+
+  private object mostRecentChange extends DocRoute[LocalDate, Unit, LocalDate] {
+    override val doc: Endpoint[LocalDate, Unit, LocalDate, Any] =
+      endpoint.post
+        .description("Returns the most recent date that segments were changed up to the given date, or the current date, if there are no segments installed yet.")
+        .in("mostRecentChange")
+        .in(localDateBody)
+        .out(localDateBody)
+
+    override def impl(date: LocalDate): Future[Either[Unit, LocalDate]] = {
+      posTable.mostRecentChange(date).map(r => Right(r))
+    }
+  }
+
+  // Note: Tapir Endpoint[I, E, O, S], where:
+  //    I is the type of the input parameters
+  //    E is the type of the error-output parameters
+  //    O is the type of the output parameters
+  //    S is the type of streams that are used by the endpoint’s inputs/outputs
+
+  //        // Returns the most recent date that segments were changed up to the given date, or the current date
+  //        path("mostRecentChange") {
+  //          entity(as[LocalDate]) { date =>
+  //            complete(posTable.mostRecentChange(date))
+  //          }
+  //        } ~
+  //        // Returns the next date after the given one where segments were changed, or the current date, if there are no newer changes.
+  //        path("nextChange") {
+  //          entity(as[LocalDate]) { date =>
+  //            complete(posTable.nextChange(date))
+  //          }
+  //        } ~
+  //        // Returns the previous date before the given one where segments were changed, or the first date, if there are no older changes.
+  //        path("prevChange") {
+  //          entity(as[LocalDate]) { date =>
+  //            complete(posTable.prevChange(date))
+  //          }
+  //        }
+  //      } ~
+  //      get {
+  //        // Returns the current segment positions, sorted by position
+  //        path("currentPositions") {
+  //          complete(posTable.currentPositions())
+  //        } ~
+  //        path("plannedPositions") {
+  //          complete(jiraSegmentDataTable.plannedPositions())
+  //        } ~
+  //        path("segmentData") {
+  //          complete(jiraSegmentDataTable.segmentData())
+  //        } ~
+  //        // Gets the current segment position for the given segment id.
+  //        path("currentSegmentPosition" / Segment) { segmentId =>
+  //          complete(posTable.currentSegmentPosition(segmentId))
+  //        } ~
+  //        // Gets the id of the segment currently in the given location
+  //        path("currentSegmentAtPosition" / Segment) { position =>
+  //          complete(posTable.currentSegmentAtPosition(position))
+  //        } ~
+  //        // Gets a list of segment-ids that can be installed at the given position
+  //        path("availableSegmentIdsForPos" / Segment) { position =>
+  //          complete(availableSegmentIds(jiraSegmentDataTable.availableSegmentIdsForPos(position)))
+  //        } ~
+  //        // Gets a list of all segment ids that were in the given location.
+  //        path("allSegmentIds" / Segment) { position =>
+  //          complete(posTable.allSegmentIds(position))
+  //        } ~
+  //        path("syncWithJira") {
+  //          import akka.http.scaladsl.marshalling.sse.EventStreamMarshalling._
+  //          complete {
+  //            syncWithJiraStream()
+  //              .map(p => ServerSentEvent(p.toString))
+  //          }
+  //        }
+
   // ---
   // ---
   // ---
   // ---
 
+  // All documented routes
+  private val docRoutes = List(
+    setPosition,
+    setPositions,
+    setAllPositions,
+    segmentPositions,
+    segmentIds,
+    newlyInstalledSegments,
+    segmentExchanges,
+    positionsOnDate,
+    segmentPositionOnDate,
+    segmentAtPositionOnDate,
+    resetTables,
+    resetJiraSegmentDataTable,
+    resetSegmentToM1PosTable,
+    mostRecentChange
+  )
+
+  // Automatically log http requests
   private val logRequest: HttpRequest => Unit = req => {
     logger.info(s"${req.method.value} ${req.uri.toString()}")
   }
 
   private val routeLogger: Directive0 = DebuggingDirectives.logRequest(LoggingMagnet(_ => logRequest))
 
+  // Enable the Open API routes
   private val openApiDocs: OpenAPI =
     OpenAPIDocsInterpreter.toOpenAPI(
-      List(setPosition.doc, setPositions.doc, setAllPositions.doc, segmentPositions.doc, segmentIds.doc),
+      docRoutes.map(_.doc),
       "The ESW Segment DB API",
       BuildInfo.version
     )
   private val openApiYml: String = openApiDocs.toYaml
 
+  /**
+   * The routes for this server
+   */
   val routes: Route = {
     import akka.http.scaladsl.server.Directives._
+    val routeList = new SwaggerAkka(openApiYml).routes :: docRoutes.map(_.route)
     cors() {
       routeLogger {
-        concat(
-          setPosition.route,
-          setPositions.route,
-          setAllPositions.route,
-          segmentPositions.route,
-          segmentIds.route,
-          new SwaggerAkka(openApiYml).routes
-        )
+        concat(routeList: _*)
       }
     }
   }
