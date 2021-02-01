@@ -1,5 +1,7 @@
 # esw-segment-web
-This project is a sample React web application.
+This subproject contains the Typescript based ESW Segment DB web app.
+
+![screenshot](images/esw-segment-web.png)
 
 ## Prerequisites Required for Running App
 
