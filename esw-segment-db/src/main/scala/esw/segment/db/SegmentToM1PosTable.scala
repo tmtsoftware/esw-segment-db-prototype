@@ -374,13 +374,16 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
 
   override def segmentPositions(dateRange: DateRange, segmentId: String): Future[List[SegmentToM1Pos]] =
     async {
+      val latestDate = await(mostRecentChange(dateRange.to))
+      val from = if (dateRange.from.isAfter(latestDate)) latestDate else dateRange.from
+      val to = if (dateRange.to.isAfter(latestDate)) latestDate else dateRange.to
       val queryResult = await(
         dsl
           .resultQuery(
             s"""
          |SELECT $positionsCol, $installDateCol
          |FROM $tableName
-         |WHERE $dateCol >= '${dateRange.from}' AND $dateCol <= '${dateRange.to}'
+         |WHERE $dateCol >= '$from' AND $dateCol <= '$to'
          |""".stripMargin
           )
           .fetchAsyncScala[(Array[String], Array[Date])]
@@ -412,13 +415,16 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
     async {
       val dbPos = toDbPosition(position)
       val cond  = if (includeEmpty) "" else s"AND $positionsCol[$dbPos] NOT IN ('$missingSegmentId', '$unknownSegmentId')"
+      val latestDate = await(mostRecentChange(dateRange.to))
+      val from = if (dateRange.from.isAfter(latestDate)) latestDate else dateRange.from
+      val to = if (dateRange.to.isAfter(latestDate)) latestDate else dateRange.to
       val queryResult = await(
         dsl
           .resultQuery(s"""
                           |SELECT $dateCol, $positionsCol[$dbPos], $installDateCol[$dbPos]
                           |FROM $tableName
-                          |WHERE $dateCol >= '${dateRange.from}'
-                          |AND $dateCol <= '${dateRange.to}'
+                          |WHERE $dateCol >= '$from'
+                          |AND $dateCol <= '$to'
                           |$cond
                           |ORDER BY $dateCol
                           |""".stripMargin)
