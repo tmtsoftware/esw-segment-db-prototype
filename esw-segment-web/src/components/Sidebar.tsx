@@ -59,6 +59,12 @@ export const Sidebar = ({sidebarOptionsChanged, posMap, date, updateDisplay}: Si
 
   async function syncWithJira() {
     const eventSource = new EventSource(`${SegmentData.baseUri}/syncWithJira`)
+    eventSource.onerror = _ => {
+      setSyncing(false)
+      setSyncPopupVisible(false)
+      console.log("Failed to sync with JIRA")
+      alert("Failed to sync with JIRA")
+    }
     eventSource.onmessage = e => {
       const progress: number = +e.data
       setSyncing(progress < 100)

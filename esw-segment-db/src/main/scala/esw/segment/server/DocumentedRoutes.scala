@@ -214,9 +214,10 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
     def impl(i: I): Future[Either[ErrorInfo, O]]
 
     // Returns the akka-http route for this endpoint
-    final def route: Route = AkkaHttpServerInterpreter.toRoute(doc) { i =>
-      handleErrors(impl(i))
-    }
+    final def route: Route =
+      AkkaHttpServerInterpreter.toRoute(doc) { i =>
+        handleErrors(impl(i))
+      }
   }
 
   // Returns
@@ -228,15 +229,18 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
     }
 
   // Convert callback to stream for progress on sync
-  private def syncWithJiraStream(): Source[Int, NotUsed] = {
-    val sourceDecl      = Source.queue[Int](bufferSize = 2, OverflowStrategy.backpressure)
-    val (queue, source) = sourceDecl.preMaterialize()
-    def callback(percent: Int): Unit = {
-      queue.offer(percent)
+  private def syncWithJiraStream(): Future[Source[Int, NotUsed]] =
+    async {
+      val sourceDecl      = Source.queue[Int](bufferSize = 2, OverflowStrategy.backpressure)
+      val (queue, source) = sourceDecl.preMaterialize()
+      def callback(percent: Int): Unit = {
+        queue.offer(percent)
+      }
+      if (await(jiraSegmentDataTable.syncWithJira(callback)))
+        source
+      else
+        throw new IllegalAccessException("Failed to sync with JIRA")
     }
-    jiraSegmentDataTable.syncWithJira(callback)
-    source
-  }
 
   // --- Endpoints ---
 
@@ -285,7 +289,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
     }
   }
 
-  private object segmentPositions extends DocRoute[(String, DateRange),  List[SegmentToM1Pos]] {
+  private object segmentPositions extends DocRoute[(String, DateRange), List[SegmentToM1Pos]] {
     override val doc: Endpoint[(String, DateRange), ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.post
         .description("Gets a list of segments positions for the given segment id in the given date range")
@@ -595,7 +599,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
         import akka.http.scaladsl.marshalling.sse.EventStreamMarshalling._
         complete {
           syncWithJiraStream()
-            .map(p => ServerSentEvent(p.toString))
+            .map(_.map(p => ServerSentEvent(p.toString)))
         }
       }
     }

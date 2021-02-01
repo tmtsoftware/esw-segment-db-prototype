@@ -3,7 +3,7 @@
 This project contains a server, command line client and web app for keeping track of TMT mirror segments.
 
 The server uses Postgres to manage the data and makes use of the CSW Database Service.
-It provides an HTTP API, by default on port 9192.
+It provides an HTTP API, by default on port 9192. You can use the `--port` option to override this.
 
 The command line client makes use the the HTTP service to provide some access via the command line.
 
@@ -37,11 +37,14 @@ The following environment variables need to be defined (Required by csw-services
 
 PGDATA is the directory containing the data for the Postgres database.
 
-In addition, in order for the server to get information about the segments from JIRA, the 
+In addition, in order for the server to update information about the segments from JIRA (via the 
+"Sync with JIRA" item in the web app), the 
 following environment variables need to be defined and the user must have read access to the `M1ST` JIRA project:
 
 * JIRA_USER
 * JIRA_API_TOKEN
+
+The basic JIRA information is included by default.
 
 See [here](https://developer.atlassian.com/cloud/jira/platform/basic-auth-for-rest-apis/) for more information.
 

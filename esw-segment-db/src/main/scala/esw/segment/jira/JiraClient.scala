@@ -19,12 +19,6 @@ object JiraClient extends SprayJsonSupport with DefaultJsonProtocol with NullOpt
   private val jiraSearchUri = s"$jiraBaseUri/rest/api/latest/search"
   val jiraBrowseUri         = s"$jiraBaseUri/browse"
 
-  if (!(sys.env.contains("JIRA_USER") && sys.env.contains("JIRA_API_TOKEN"))) {
-    throw new RuntimeException("Please set JIRA_USER and JIRA_API_TOKEN environment variables.")
-  }
-  private val jiraUser     = sys.env("JIRA_USER")
-  private val jiraApiToken = sys.env("JIRA_API_TOKEN")
-
   private val customFieldMap = Map(
     "sector"                         -> "customfield_12000",
     "segmentType"                    -> "customfield_11909",
@@ -127,17 +121,25 @@ object JiraClient extends SprayJsonSupport with DefaultJsonProtocol with NullOpt
   private case class IssueCount(startAt: Int, maxResults: Int, total: Int, issues: List[String])
   private implicit val IssueCountFormat = jsonFormat4(IssueCount)
 
-  private val authHeaders = List(Authorization(BasicHttpCredentials(jiraUser, jiraApiToken)))
-
   // Convert sector and segmentType from JIRA to position like F32
   def toPos(sector: Int, segmentType: Int): String = {
     val sectorName = ('A' + sector - 1).toChar
-    s"${sectorName}$segmentType"
+    s"$sectorName$segmentType"
   }
 }
 
 class JiraClient()(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec: ExecutionContextExecutor) {
   import JiraClient._
+
+  // Get the JIRA credentials from the environment variables JIRA_USER and JIRA_API_TOKEN
+  private def getJiraAuthorization: List[Authorization] = {
+    if (!(sys.env.contains("JIRA_USER") && sys.env.contains("JIRA_API_TOKEN"))) {
+      throw new IllegalAccessException("Please set JIRA_USER and JIRA_API_TOKEN environment variables.")
+    }
+    val jiraUser     = sys.env("JIRA_USER")
+    val jiraApiToken = sys.env("JIRA_API_TOKEN")
+    List(Authorization(BasicHttpCredentials(jiraUser, jiraApiToken)))
+  }
 
   /**
    * Gets the JIRA segment data for the given segment number
@@ -147,47 +149,48 @@ class JiraClient()(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec:
   def getJiraSegmentData(
       issueNumber: Int
   ): Future[JiraSegmentData] =
-    async {
-      val uri                            = issueUri(issueNumber)
-      val request                        = HttpRequest(HttpMethods.GET, uri = uri, headers = authHeaders)
-      val response                       = await(Http().singleRequest(request))
-      val jiraData                       = await(Unmarshal(response).to[JiraData])
-      val segmentId                      = jiraData.fields.summary.replace("M1 Segment ", "")
-      val jiraKey                        = jiraData.key
-      val jiraUri                        = s"$jiraBrowseUri/$jiraKey"
-      val sector                         = jiraData.fields.sector.value.split(' ').head.toIntOption.getOrElse(-1)
-      val segmentType                    = jiraData.fields.segmentType.value.toIntOption.getOrElse(-1)
-      val pos                            = JiraClient.toPos(sector, segmentType)
-      val partNumber                     = jiraData.fields.partNumber
-      val originalPartnerBlankAllocation = jiraData.fields.originalPartnerBlankAllocation.value
-      val itemLocation                   = jiraData.fields.itemLocation.value
-      val riskOfLoss                     = jiraData.fields.riskOfLoss.value
-      val components                     = jiraData.fields.components.headOption.map(_.name).getOrElse("Unknown")
-      val status                         = jiraData.fields.status.name
-      val workPackages                   = jiraData.fields.workPackages
-      val acceptanceCertificates         = jiraData.fields.acceptanceCertificates
-      val acceptanceDateBlank            = jiraData.fields.acceptanceDateBlank
-      val shippingAuthorizations         = jiraData.fields.shippingAuthorizations
+  async {
+    val authHeaders                    = getJiraAuthorization
+    val uri                            = issueUri(issueNumber)
+    val request                        = HttpRequest(HttpMethods.GET, uri = uri, headers = authHeaders)
+    val response                       = await(Http().singleRequest(request))
+    val jiraData                       = await(Unmarshal(response).to[JiraData])
+    val segmentId                      = jiraData.fields.summary.replace("M1 Segment ", "")
+    val jiraKey                        = jiraData.key
+    val jiraUri                        = s"$jiraBrowseUri/$jiraKey"
+    val sector                         = jiraData.fields.sector.value.split(' ').head.toIntOption.getOrElse(-1)
+    val segmentType                    = jiraData.fields.segmentType.value.toIntOption.getOrElse(-1)
+    val pos                            = JiraClient.toPos(sector, segmentType)
+    val partNumber                     = jiraData.fields.partNumber
+    val originalPartnerBlankAllocation = jiraData.fields.originalPartnerBlankAllocation.value
+    val itemLocation                   = jiraData.fields.itemLocation.value
+    val riskOfLoss                     = jiraData.fields.riskOfLoss.value
+    val components                     = jiraData.fields.components.headOption.map(_.name).getOrElse("Unknown")
+    val status                         = jiraData.fields.status.name
+    val workPackages                   = jiraData.fields.workPackages
+    val acceptanceCertificates         = jiraData.fields.acceptanceCertificates
+    val acceptanceDateBlank            = jiraData.fields.acceptanceDateBlank
+    val shippingAuthorizations         = jiraData.fields.shippingAuthorizations
 
-      JiraSegmentData(
-        pos,
-        segmentId,
-        jiraKey,
-        jiraUri,
-        sector,
-        segmentType,
-        partNumber,
-        originalPartnerBlankAllocation,
-        itemLocation,
-        riskOfLoss,
-        components,
-        status,
-        workPackages,
-        acceptanceCertificates,
-        acceptanceDateBlank,
-        shippingAuthorizations
-      )
-    }
+    JiraSegmentData(
+      pos,
+      segmentId,
+      jiraKey,
+      jiraUri,
+      sector,
+      segmentType,
+      partNumber,
+      originalPartnerBlankAllocation,
+      itemLocation,
+      riskOfLoss,
+      components,
+      status,
+      workPackages,
+      acceptanceCertificates,
+      acceptanceDateBlank,
+      shippingAuthorizations
+    )
+  }
 
   /**
    * Gets the JIRA segment data for the given segment number
@@ -223,6 +226,7 @@ class JiraClient()(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec:
    */
   def getAllJiraSegmentData(progress: Int => Unit): Future[List[JiraSegmentData]] =
     async {
+      val authHeaders = getJiraAuthorization
       val uri        = s"$jiraSearchUri?jql=project=SE-M1SEG&maxResults=0"
       val request    = HttpRequest(HttpMethods.GET, uri = uri, headers = authHeaders)
       val response   = await(Http().singleRequest(request))

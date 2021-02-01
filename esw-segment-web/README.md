@@ -3,6 +3,15 @@ This subproject contains the Typescript based ESW Segment DB web app.
 
 ![screenshot](../images/esw-segment-web.png)
 
+The "Installed" view shows the sectors of the TMT mirror with their positions (A1 to F82).
+Optionally, you can view the segment ids instead. The outlined segments are the
+ones that changed most recently. Using the arrow buttons in the tool bar you can
+go back and forth in time to see the previous configurations of the mirror.
+
+On the left are some controls that let you view various information gathered from the
+JIRA tasks that are used to manage segment information.
+Updating the JIRA information (via the "Sync with JIRA" item) requires a valid JIRA token.
+
 ## Prerequisites Required for Running App
 
 The latest version of [Node.js](https://nodejs.org/en/download/package-manager/) must be installed.
