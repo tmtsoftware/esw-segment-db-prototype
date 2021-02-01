@@ -52,6 +52,7 @@ $ csw-services start
 $ ./target/universal/stage/bin/esw-segment-db
 ...
 Server online at http://0:0:0:0:0:0:0:0:9192
+For HTTP API docs see: http://localhost:9192/docs
 ```
 
 The --help option displays the command line options:
@@ -62,6 +63,9 @@ Usage: esw-segment-db [options]
   --port <number>  The port number to use for the server (default: 9192)
   -t, --testMode   Use a test database instead of the normal one
 ```
+
+Interactive HTTP API documentation is available under 
+[http://localhost:9192/docs](http://localhost:9192/docs).
 
 ## Running the command line client
 
@@ -114,6 +118,8 @@ once. Then to start the web app server for development:
     $ npm start
 
 This automatically opens the browser to [http://localhost:8080/](http://localhost:8080/).
+
+![screenshot](images/esw-segment-web.png)
 
 # Deploying the Web App
 
