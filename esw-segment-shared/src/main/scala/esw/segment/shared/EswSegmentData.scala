@@ -23,26 +23,24 @@ object EswSegmentData {
   /**
    * Convert a segment position like F32 to a one based index in an array of all segments
    */
-  def toDbPosition(loc: String): Int = {
-    val sectorOffset = loc.head - 'A'
-    val n          = loc.tail.toInt
-    assert(sectorOffset >= 0 && sectorOffset <= numSectors && n >= 1 && n <= segmentsPerSector)
+  def toDbPosition(pos: String): Int = {
+    val sectorOffset = pos.head - 'A'
+    val n          = pos.tail.toInt
+    val valid = (sectorOffset >= 0 && sectorOffset <= numSectors && n >= 1 && n <= segmentsPerSector)
+    if (!valid) throw new IllegalArgumentException(s"Invalid segment position: '$pos'")
     sectorOffset * segmentsPerSector + n
   }
 
   def validatePosition(pos: String): Unit = {
-    try {
       toDbPosition(pos)
-    } catch {
-      case e: Exception => throw new IllegalArgumentException(s"Invalid segment position: '$pos'")
-    }
   }
 
   /**
    * Convert a one based index in an array of all segments to a segment position like F32 or A2
    */
   def toPosition(dbPos: Int): String = {
-    assert(dbPos >= 1 && dbPos <= totalSegments)
+    val valid = dbPos >= 1 && dbPos <= totalSegments
+    if (!valid) throw new IllegalArgumentException(s"Invalid segment position index: '$dbPos'")
     val sectorOffset = (dbPos - 1) / 82
     val sector       = ('A' + sectorOffset).toChar
     val num          = (dbPos - 1) % segmentsPerSector + 1

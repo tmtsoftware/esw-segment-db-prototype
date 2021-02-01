@@ -105,10 +105,8 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
       await(maybeInitFromResourceFile())
       val sector      = position.head - 'A' + 1
       val segmentType = position.tail.toInt
-      assert(
-        sector >= 1 && sector <= numSectors + 1
-          && segmentType >= 1 && segmentType <= segmentsPerSector
-      )
+      val valid = sector >= 1 && sector <= numSectors + 1 && segmentType >= 1 && segmentType <= segmentsPerSector
+      if (!valid) throw new IllegalArgumentException(s"Invalid segment position: '$position'")
       await(
         dsl
           .resultQuery(

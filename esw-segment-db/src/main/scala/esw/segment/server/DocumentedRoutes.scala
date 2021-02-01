@@ -33,20 +33,15 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 object DocumentedRoutes extends JsonSupport {
-//  type ErrorInfo = String
-//
-//  def handleErrors[T](f: Future[T]): Future[Either[ErrorInfo, T]] =
-//    f.transform {
-//      case Success(v) => Success(Right(v))
-//      case Failure(e) =>
-//        Success(Left(e.getMessage))
-//    }
+  // Type returned for errors (plain text error message)
+  private type ErrorInfo = String
+  private val errorOutWithDoc = plainBody[ErrorInfo].example("Error message.")
 
   // See https://tapir.softwaremill.com/en/latest/endpoint/customtypes.html?highlight=path%5B#customising-derived-schemas
   // Add descriptions to schema fields here so we don't need to add tapir as a dependency to the esw-segment-shared project that
   // contains the case classes.
   implicit val customSegmentToM1PosSchema: Schema[SegmentToM1Pos] = implicitly[Derived[Schema[SegmentToM1Pos]]].value
-    .modify(_.date)(_.description("date of record"))
+    .modify(_.date)(_.description("date of record in the format yyyy-mm-dd"))
     .modify(_.maybeId)(_.description("the segment id, if the segment is present"))
     .modify(_.position)(_.description("position of segment (For example: A32, B19, F82)"))
 
@@ -55,7 +50,7 @@ object DocumentedRoutes extends JsonSupport {
     .modify(_.segmentId)(_.description("the segment id, if the segment is present"))
 
   implicit val customMirrorConfigSchema: Schema[MirrorConfig] = implicitly[Derived[Schema[MirrorConfig]]].value
-    .modify(_.date)(_.description("the date for the configuration"))
+    .modify(_.date)(_.description("the date for the configuration in the format yyyy-mm-dd"))
     .modify(_.segments)(_.description("list of segment assignments"))
 
   implicit val customAllSegmentPositionsSchema: Schema[AllSegmentPositions] =
@@ -66,8 +61,8 @@ object DocumentedRoutes extends JsonSupport {
       )
 
   implicit val customDateRangeSchema: Schema[DateRange] = implicitly[Derived[Schema[DateRange]]].value
-    .modify(_.from)(_.description("start of the date range"))
-    .modify(_.to)(_.description("end of the date range"))
+    .modify(_.from)(_.description("start of the date range in the format yyyy-mm-dd"))
+    .modify(_.to)(_.description("end of the date range in the format yyyy-mm-dd"))
 
   // --- Schema Descriptions ---
 
@@ -193,26 +188,7 @@ object DocumentedRoutes extends JsonSupport {
   // ---
 
   // Convert a Boolean result to an Either
-  private def booleanToEither(b: Boolean) = if (b) Right(()) else Left(())
-
-  // Note: Tapir Endpoint[I, E, O, S], where:
-  //    I is the type of the input parameters
-  //    E is the type of the error-output parameters
-  //    O is the type of the output parameters
-  //    S is the type of streams that are used by the endpoint’s inputs/outputs
-
-  // Combines Tapir/OpenAPI doc with akka-http route
-  private trait DocRoute[I, E, O] {
-    // Documents the route
-    def doc: Endpoint[I, E, O, AkkaStreams with WebSockets]
-
-    // Implements the server route
-    def impl(i: I): Future[Either[E, O]]
-
-    // Returns the akka-http route for this endpoint
-    final def route: Route = AkkaHttpServerInterpreter.toRoute(doc)(i => impl(i))
-  }
-
+  private def booleanToEither(b: Boolean): Either[ErrorInfo, Unit] = if (b) Right(()) else Left("Internal error")
 }
 
 //noinspection TypeAnnotation
@@ -221,6 +197,27 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
     sys: ActorSystem[_]
 ) {
   import DocumentedRoutes._
+
+  // Combines Tapir/OpenAPI doc with akka-http route
+  private trait DocRoute[I, O] {
+    private def handleErrors[T](f: Future[Either[ErrorInfo, T]]): Future[Either[ErrorInfo, T]] =
+      f.transform {
+        case Success(v) => Success(v)
+        case Failure(e) =>
+          Success(Left(e.getMessage))
+      }
+
+    // Documents the route
+    def doc: Endpoint[I, ErrorInfo, O, AkkaStreams with WebSockets]
+
+    // Implements the server route
+    def impl(i: I): Future[Either[ErrorInfo, O]]
+
+    // Returns the akka-http route for this endpoint
+    final def route: Route = AkkaHttpServerInterpreter.toRoute(doc) { i =>
+      handleErrors(impl(i))
+    }
+  }
 
   // Returns
   private def availableSegmentIds(f: Future[List[String]]): Future[List[String]] =
@@ -243,182 +240,202 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
 
   // --- Endpoints ---
 
-  private object setPosition extends DocRoute[SegmentToM1Pos, Unit, Unit] {
-    override val doc: Endpoint[SegmentToM1Pos, Unit, Unit, Any] =
+  private object setPosition extends DocRoute[SegmentToM1Pos, Unit] {
+    override val doc: Endpoint[SegmentToM1Pos, ErrorInfo, Unit, Any] =
       endpoint.post
         .description("Insert/update segment to M1 positions mapping")
         .in("setPosition")
         .in(segmentToM1PosBody)
         .out(statusCode(StatusCode.Ok))
         .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(segmentToM1Pos: SegmentToM1Pos): Future[Either[Unit, Unit]] = {
+    override def impl(segmentToM1Pos: SegmentToM1Pos): Future[Either[ErrorInfo, Unit]] = {
       posTable.setPosition(segmentToM1Pos).map(booleanToEither)
     }
   }
 
-  private object setPositions extends DocRoute[MirrorConfig, Unit, Unit] {
-    override val doc: Endpoint[MirrorConfig, Unit, Unit, Any] =
+  private object setPositions extends DocRoute[MirrorConfig, Unit] {
+    override val doc: Endpoint[MirrorConfig, ErrorInfo, Unit, Any] =
       endpoint.post
         .description("Set positions of a number of segments on a given date")
         .in("setPositions")
         .in(mirrorConfigBody)
         .out(statusCode(StatusCode.Ok))
         .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(mirrorConfig: MirrorConfig): Future[Either[Unit, Unit]] = {
+    override def impl(mirrorConfig: MirrorConfig): Future[Either[ErrorInfo, Unit]] = {
       posTable.setPositions(mirrorConfig).map(booleanToEither)
     }
   }
 
-  private object setAllPositions extends DocRoute[AllSegmentPositions, Unit, Unit] {
-    override val doc: Endpoint[AllSegmentPositions, Unit, Unit, Any] =
+  private object setAllPositions extends DocRoute[AllSegmentPositions, Unit] {
+    override val doc: Endpoint[AllSegmentPositions, ErrorInfo, Unit, Any] =
       endpoint.post
         .description("Sets all 574 segment positions (A1 to G82) for a given date")
         .in("setAllPositions")
         .in(allSegmentPositionsBody)
         .out(statusCode(StatusCode.Ok))
         .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(allSegmentPositions: AllSegmentPositions): Future[Either[Unit, Unit]] = {
+    override def impl(allSegmentPositions: AllSegmentPositions): Future[Either[ErrorInfo, Unit]] = {
       posTable.setAllPositions(allSegmentPositions.date, allSegmentPositions.allPositions).map(booleanToEither)
     }
   }
 
-  private object segmentPositions extends DocRoute[(String, DateRange), Unit, List[SegmentToM1Pos]] {
-    override val doc: Endpoint[(String, DateRange), Unit, List[SegmentToM1Pos], Any] =
+  private object segmentPositions extends DocRoute[(String, DateRange),  List[SegmentToM1Pos]] {
+    override val doc: Endpoint[(String, DateRange), ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.post
         .description("Gets a list of segments positions for the given segment id in the given date range")
         .in("segmentPositions" / path[String]("segmentId").description("the segment id to search for").example("SN-484"))
         .in(dateRangeBody.description("The range of dates to search for"))
         .out(segmentToM1PosListBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(p: (String, DateRange)): Future[Either[Unit, List[SegmentToM1Pos]]] = {
+    override def impl(p: (String, DateRange)): Future[Either[ErrorInfo, List[SegmentToM1Pos]]] = {
       posTable.segmentPositions(p._2, p._1).map(r => Right(r))
     }
   }
 
-  private object segmentIds extends DocRoute[(String, DateRange), Unit, List[SegmentToM1Pos]] {
-    override val doc: Endpoint[(String, DateRange), Unit, List[SegmentToM1Pos], Any] =
+  private object segmentIds extends DocRoute[(String, DateRange), List[SegmentToM1Pos]] {
+    override val doc: Endpoint[(String, DateRange), ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.post
         .description("Gets a list of segment ids that were in the given position in the given date range.")
         .in("segmentIds" / path[String]("position").description("the segment position to search for (A1 to F82)").example("A32"))
         .in(dateRangeBody)
         .out(segmentToM1PosListBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(p: (String, DateRange)): Future[Either[Unit, List[SegmentToM1Pos]]] = {
+    override def impl(p: (String, DateRange)): Future[Either[ErrorInfo, List[SegmentToM1Pos]]] = {
       posTable.segmentIds(p._2, p._1).map(r => Right(r))
     }
   }
 
-  private object newlyInstalledSegments extends DocRoute[LocalDate, Unit, List[SegmentToM1Pos]] {
-    override val doc: Endpoint[LocalDate, Unit, List[SegmentToM1Pos], Any] =
+  private object newlyInstalledSegments extends DocRoute[LocalDate, List[SegmentToM1Pos]] {
+    override val doc: Endpoint[LocalDate, ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.post
         .description("Returns a list of segments that were installed since the given date.")
         .in("newlyInstalledSegments")
         .in(localDateBody)
         .out(segmentToM1PosListBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(date: LocalDate): Future[Either[Unit, List[SegmentToM1Pos]]] = {
+    override def impl(date: LocalDate): Future[Either[ErrorInfo, List[SegmentToM1Pos]]] = {
       posTable.newlyInstalledSegments(date).map(r => Right(r))
     }
   }
 
-  private object segmentExchanges extends DocRoute[LocalDate, Unit, List[MirrorConfig]] {
-    override val doc: Endpoint[LocalDate, Unit, List[MirrorConfig], Any] =
+  private object segmentExchanges extends DocRoute[LocalDate, List[MirrorConfig]] {
+    override val doc: Endpoint[LocalDate, ErrorInfo, List[MirrorConfig], Any] =
       endpoint.post
         .description("Returns a list of segment exchanges since the given date.")
         .in("segmentExchanges")
         .in(localDateBody)
         .out(mirrorConfigListBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(date: LocalDate): Future[Either[Unit, List[MirrorConfig]]] = {
+    override def impl(date: LocalDate): Future[Either[ErrorInfo, List[MirrorConfig]]] = {
       posTable.segmentExchanges(date).map(r => Right(r))
     }
   }
 
-  private object positionsOnDate extends DocRoute[LocalDate, Unit, List[SegmentToM1Pos]] {
-    override val doc: Endpoint[LocalDate, Unit, List[SegmentToM1Pos], Any] =
+  private object positionsOnDate extends DocRoute[LocalDate, List[SegmentToM1Pos]] {
+    override val doc: Endpoint[LocalDate, ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.post
         .description("Returns the segment positions as they were on the given date.")
         .in("positionsOnDate")
         .in(localDateBody)
         .out(segmentToM1PosListBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(date: LocalDate): Future[Either[Unit, List[SegmentToM1Pos]]] = {
+    override def impl(date: LocalDate): Future[Either[ErrorInfo, List[SegmentToM1Pos]]] = {
       posTable.positionsOnDate(date).map(r => Right(r))
     }
   }
 
-  private object segmentPositionOnDate extends DocRoute[(String, LocalDate), Unit, Option[SegmentToM1Pos]] {
-    override val doc: Endpoint[(String, LocalDate), Unit, Option[SegmentToM1Pos], Any] =
+  private object segmentPositionOnDate extends DocRoute[(String, LocalDate), Option[SegmentToM1Pos]] {
+    override val doc: Endpoint[(String, LocalDate), ErrorInfo, Option[SegmentToM1Pos], Any] =
       endpoint.post
         .description("Gets the segment position for the given segment id on the given date.")
         .in("segmentPositionOnDate" / path[String]("segmentId").description("the segment id to search for").example("SN-019"))
         .in(localDateBody)
         .out(segmentToM1PosOptionBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(p: (String, LocalDate)): Future[Either[Unit, Option[SegmentToM1Pos]]] = {
+    override def impl(p: (String, LocalDate)): Future[Either[ErrorInfo, Option[SegmentToM1Pos]]] = {
       posTable.segmentPositionOnDate(p._2, p._1).map(r => Right(r))
     }
   }
 
-  private object segmentAtPositionOnDate extends DocRoute[(String, LocalDate), Unit, Option[SegmentToM1Pos]] {
-    override val doc: Endpoint[(String, LocalDate), Unit, Option[SegmentToM1Pos], Any] =
+  private object segmentAtPositionOnDate extends DocRoute[(String, LocalDate), Option[SegmentToM1Pos]] {
+    override val doc: Endpoint[(String, LocalDate), ErrorInfo, Option[SegmentToM1Pos], Any] =
       endpoint.post
         .description("Gets the id of the segment that was installed in the given position on the given date.")
         .in("segmentAtPositionOnDate" / path[String]("position").description("the segment position to search for").example("A82"))
         .in(localDateBody)
         .out(segmentToM1PosOptionBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(p: (String, LocalDate)): Future[Either[Unit, Option[SegmentToM1Pos]]] = {
+    override def impl(p: (String, LocalDate)): Future[Either[ErrorInfo, Option[SegmentToM1Pos]]] = {
       posTable.segmentAtPositionOnDate(p._2, p._1).map(r => Right(r))
     }
   }
 
-  private object resetTables extends DocRoute[Unit, Unit, Unit] {
-    override val doc: Endpoint[Unit, Unit, Unit, Any] =
+  private object resetTables extends DocRoute[Unit, Unit] {
+    override val doc: Endpoint[Unit, ErrorInfo, Unit, Any] =
       endpoint.post
         .description("Drops and recreates the database tables (for testing)")
         .in("resetTables")
         .out(statusCode(StatusCode.Ok))
         .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(x: Unit): Future[Either[Unit, Unit]] = {
+    override def impl(x: Unit): Future[Either[ErrorInfo, Unit]] = {
       val f1 = jiraSegmentDataTable.resetJiraSegmentDataTable()
       val f2 = posTable.resetSegmentToM1PosTable()
       Future.sequence(List(f1, f2)).map(_.forall(b => b)).map(booleanToEither)
     }
   }
 
-  private object resetJiraSegmentDataTable extends DocRoute[Unit, Unit, Unit] {
-    override val doc: Endpoint[Unit, Unit, Unit, Any] =
+  private object resetJiraSegmentDataTable extends DocRoute[Unit, Unit] {
+    override val doc: Endpoint[Unit, ErrorInfo, Unit, Any] =
       endpoint.post
         .description("Drops and recreates the JIRA segment database table (for testing)")
         .in("resetJiraSegmentDataTable")
         .out(statusCode(StatusCode.Ok))
         .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(x: Unit): Future[Either[Unit, Unit]] = {
+    override def impl(x: Unit): Future[Either[ErrorInfo, Unit]] = {
       jiraSegmentDataTable.resetJiraSegmentDataTable().map(booleanToEither)
     }
   }
 
-  private object resetSegmentToM1PosTable extends DocRoute[Unit, Unit, Unit] {
-    override val doc: Endpoint[Unit, Unit, Unit, Any] =
+  private object resetSegmentToM1PosTable extends DocRoute[Unit, Unit] {
+    override val doc: Endpoint[Unit, ErrorInfo, Unit, Any] =
       endpoint.post
         .description("Drops and recreates the segment database table (for testing)")
         .in("resetSegmentToM1PosTable")
         .out(statusCode(StatusCode.Ok))
         .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(x: Unit): Future[Either[Unit, Unit]] = {
+    override def impl(x: Unit): Future[Either[ErrorInfo, Unit]] = {
       posTable.resetSegmentToM1PosTable().map(booleanToEither)
     }
   }
 
-  private object mostRecentChange extends DocRoute[LocalDate, Unit, LocalDate] {
-    override val doc: Endpoint[LocalDate, Unit, LocalDate, Any] =
+  private object mostRecentChange extends DocRoute[LocalDate, LocalDate] {
+    override val doc: Endpoint[LocalDate, ErrorInfo, LocalDate, Any] =
       endpoint.post
         .description(
           "Returns the most recent date that segments were changed up to the given date, or the current date, if there are no segments installed yet."
@@ -426,14 +443,16 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
         .in("mostRecentChange")
         .in(localDateBody)
         .out(localDateBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(date: LocalDate): Future[Either[Unit, LocalDate]] = {
+    override def impl(date: LocalDate): Future[Either[ErrorInfo, LocalDate]] = {
       posTable.mostRecentChange(date).map(r => Right(r))
     }
   }
 
-  private object nextChange extends DocRoute[LocalDate, Unit, LocalDate] {
-    override val doc: Endpoint[LocalDate, Unit, LocalDate, Any] =
+  private object nextChange extends DocRoute[LocalDate, LocalDate] {
+    override val doc: Endpoint[LocalDate, ErrorInfo, LocalDate, Any] =
       endpoint.post
         .description(
           "Returns the next date after the given one where segments were changed, or the current date, if there are no newer changes."
@@ -441,14 +460,16 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
         .in("nextChange")
         .in(localDateBody)
         .out(localDateBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(date: LocalDate): Future[Either[Unit, LocalDate]] = {
+    override def impl(date: LocalDate): Future[Either[ErrorInfo, LocalDate]] = {
       posTable.nextChange(date).map(r => Right(r))
     }
   }
 
-  private object prevChange extends DocRoute[LocalDate, Unit, LocalDate] {
-    override val doc: Endpoint[LocalDate, Unit, LocalDate, Any] =
+  private object prevChange extends DocRoute[LocalDate, LocalDate] {
+    override val doc: Endpoint[LocalDate, ErrorInfo, LocalDate, Any] =
       endpoint.post
         .description(
           "Returns the previous date before the given one where segments were changed, or the first date, if there are no older changes."
@@ -456,96 +477,112 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
         .in("prevChange")
         .in(localDateBody)
         .out(localDateBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(date: LocalDate): Future[Either[Unit, LocalDate]] = {
+    override def impl(date: LocalDate): Future[Either[ErrorInfo, LocalDate]] = {
       posTable.prevChange(date).map(r => Right(r))
     }
   }
 
-  private object currentPositions extends DocRoute[Unit, Unit, List[SegmentToM1Pos]] {
-    override val doc: Endpoint[Unit, Unit, List[SegmentToM1Pos], Any] =
+  private object currentPositions extends DocRoute[Unit, List[SegmentToM1Pos]] {
+    override val doc: Endpoint[Unit, ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.get
         .description("Returns the current segment positions.")
         .in("currentPositions")
         .out(segmentToM1PosListBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(x: Unit): Future[Either[Unit, List[SegmentToM1Pos]]] = {
+    override def impl(x: Unit): Future[Either[ErrorInfo, List[SegmentToM1Pos]]] = {
       posTable.currentPositions().map(r => Right(r))
     }
   }
 
-  private object plannedPositions extends DocRoute[Unit, Unit, List[SegmentToM1Pos]] {
-    override val doc: Endpoint[Unit, Unit, List[SegmentToM1Pos], Any] =
+  private object plannedPositions extends DocRoute[Unit, List[SegmentToM1Pos]] {
+    override val doc: Endpoint[Unit, ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.get
         .description("Returns the segment positions as defined in the JIRA issues.")
         .in("plannedPositions")
         .out(segmentToM1PosListBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(x: Unit): Future[Either[Unit, List[SegmentToM1Pos]]] = {
+    override def impl(x: Unit): Future[Either[ErrorInfo, List[SegmentToM1Pos]]] = {
       jiraSegmentDataTable.plannedPositions().map(r => Right(r))
     }
   }
 
-  private object segmentData extends DocRoute[Unit, Unit, List[JiraSegmentData]] {
-    override val doc: Endpoint[Unit, Unit, List[JiraSegmentData], Any] =
+  private object segmentData extends DocRoute[Unit, List[JiraSegmentData]] {
+    override val doc: Endpoint[Unit, ErrorInfo, List[JiraSegmentData], Any] =
       endpoint.get
         .description("Gets the JIRA segment data for all segments.")
         .in("segmentData")
         .out(jiraSegmentDataListBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(x: Unit): Future[Either[Unit, List[JiraSegmentData]]] = {
+    override def impl(x: Unit): Future[Either[ErrorInfo, List[JiraSegmentData]]] = {
       jiraSegmentDataTable.segmentData().map(r => Right(r))
     }
   }
 
-  private object currentSegmentPosition extends DocRoute[String, Unit, Option[SegmentToM1Pos]] {
-    override val doc: Endpoint[String, Unit, Option[SegmentToM1Pos], Any] =
+  private object currentSegmentPosition extends DocRoute[String, Option[SegmentToM1Pos]] {
+    override val doc: Endpoint[String, ErrorInfo, Option[SegmentToM1Pos], Any] =
       endpoint.get
         .description("Gets the current segment position for the given segment id.")
         .in("currentSegmentPosition" / path[String]("segmentId").description("the segment id to search for").example("SN-019"))
         .out(segmentToM1PosOptionBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(segmentId: String): Future[Either[Unit, Option[SegmentToM1Pos]]] = {
+    override def impl(segmentId: String): Future[Either[ErrorInfo, Option[SegmentToM1Pos]]] = {
       posTable.currentSegmentPosition(segmentId).map(r => Right(r))
     }
   }
 
-  private object currentSegmentAtPosition extends DocRoute[String, Unit, Option[SegmentToM1Pos]] {
-    override val doc: Endpoint[String, Unit, Option[SegmentToM1Pos], Any] =
+  private object currentSegmentAtPosition extends DocRoute[String, Option[SegmentToM1Pos]] {
+    override val doc: Endpoint[String, ErrorInfo, Option[SegmentToM1Pos], Any] =
       endpoint.get
         .description("Gets the id of the segment currently in the given position.")
         .in(
           "currentSegmentAtPosition" / path[String]("position").description("the segment position to search for").example("A82")
         )
         .out(segmentToM1PosOptionBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(position: String): Future[Either[Unit, Option[SegmentToM1Pos]]] = {
+    override def impl(position: String): Future[Either[ErrorInfo, Option[SegmentToM1Pos]]] = {
       posTable.currentSegmentAtPosition(position).map(r => Right(r))
     }
   }
 
-  private object availableSegmentIdsForPos extends DocRoute[String, Unit, List[String]] {
-    override val doc: Endpoint[String, Unit, List[String], Any] =
+  private object availableSegmentIdsForPos extends DocRoute[String, List[String]] {
+    override val doc: Endpoint[String, ErrorInfo, List[String], Any] =
       endpoint.get
         .description("Gets a list of segment-ids that can be installed at the given position.")
         .in(
           "availableSegmentIdsForPos" / path[String]("position").description("the segment position to search for").example("A82")
         )
-        .out(jsonBody[List[String]])
+        .out(jsonBody[List[String]].example(List("SN-517")))
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(position: String): Future[Either[Unit, List[String]]] = {
+    override def impl(position: String): Future[Either[ErrorInfo, List[String]]] = {
       availableSegmentIds(jiraSegmentDataTable.availableSegmentIdsForPos(position)).map(r => Right(r))
     }
   }
 
-  private object allSegmentIds extends DocRoute[String, Unit, List[SegmentToM1Pos]] {
-    override val doc: Endpoint[String, Unit, List[SegmentToM1Pos], Any] =
+  private object allSegmentIds extends DocRoute[String, List[SegmentToM1Pos]] {
+    override val doc: Endpoint[String, ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.get
         .description("Gets a list of segments that were in the given position.")
         .in("allSegmentIds" / path[String]("position").description("the segment position to search for").example("A82"))
         .out(segmentToM1PosListBody)
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
 
-    override def impl(position: String): Future[Either[Unit, List[SegmentToM1Pos]]] = {
+    override def impl(position: String): Future[Either[ErrorInfo, List[SegmentToM1Pos]]] = {
       posTable.allSegmentIds(position).map(r => Right(r))
     }
   }
