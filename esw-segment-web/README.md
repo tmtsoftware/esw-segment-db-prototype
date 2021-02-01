@@ -1,7 +1,7 @@
 # esw-segment-web
 This subproject contains the Typescript based ESW Segment DB web app.
 
-![screenshot](images/esw-segment-web.png)
+![screenshot](../images/esw-segment-web.png)
 
 ## Prerequisites Required for Running App
 
