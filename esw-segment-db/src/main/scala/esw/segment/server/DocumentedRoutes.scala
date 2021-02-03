@@ -10,9 +10,19 @@ import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Source
 import buildinfo.BuildInfo
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives.cors
+import csw.aas.http.AuthorizationPolicy.RealmRolePolicy
+import csw.aas.http.SecurityDirectives
+import csw.location.client.scaladsl.HttpLocationServiceFactory
 import csw.logging.api.scaladsl.Logger
 import esw.segment.db.{JiraSegmentDataTable, SegmentToM1PosTable}
-import esw.segment.shared.EswSegmentData.{AllSegmentPositions, DateRange, MirrorConfig, SegmentConfig, SegmentToM1Pos, currentDate}
+import esw.segment.shared.EswSegmentData.{
+  AllSegmentPositions,
+  DateRange,
+  MirrorConfig,
+  SegmentConfig,
+  SegmentToM1Pos,
+  currentDate
+}
 import sttp.tapir._
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto._
@@ -194,9 +204,14 @@ object DocumentedRoutes extends JsonSupport {
 //noinspection TypeAnnotation
 class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDataTable, logger: Logger)(implicit
     ec: ExecutionContext,
-    sys: ActorSystem[_]
+    actorSystem: ActorSystem[_]
 ) {
   import DocumentedRoutes._
+
+  val locationService = HttpLocationServiceFactory.makeLocalClient
+  private val config  = actorSystem.settings.config
+  val directives      = SecurityDirectives(config, locationService)
+  import directives._
 
   // Combines Tapir/OpenAPI doc with akka-http route
   private trait DocRoute[I, O] {
@@ -213,11 +228,19 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
     // Implements the server route
     def impl(i: I): Future[Either[ErrorInfo, O]]
 
+    // Set to true if the route is protected by Auth/Keycloak
+    def isProtected: Boolean = false
+
     // Returns the akka-http route for this endpoint
-    final def route: Route =
-      AkkaHttpServerInterpreter.toRoute(doc) { i =>
+    final def route: Route = {
+      val innerRoute = AkkaHttpServerInterpreter.toRoute(doc) { i =>
         handleErrors(impl(i))
       }
+      if (isProtected)
+        sPost(RealmRolePolicy("admin"))(innerRoute)
+      else
+        innerRoute
+    }
   }
 
   // Returns
@@ -257,6 +280,8 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
     override def impl(segmentToM1Pos: SegmentToM1Pos): Future[Either[ErrorInfo, Unit]] = {
       posTable.setPosition(segmentToM1Pos).map(booleanToEither)
     }
+
+    override val isProtected = true
   }
 
   private object setPositions extends DocRoute[MirrorConfig, Unit] {
@@ -272,6 +297,8 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
     override def impl(mirrorConfig: MirrorConfig): Future[Either[ErrorInfo, Unit]] = {
       posTable.setPositions(mirrorConfig).map(booleanToEither)
     }
+
+    override val isProtected = true
   }
 
   private object setAllPositions extends DocRoute[AllSegmentPositions, Unit] {
@@ -287,6 +314,8 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
     override def impl(allSegmentPositions: AllSegmentPositions): Future[Either[ErrorInfo, Unit]] = {
       posTable.setAllPositions(allSegmentPositions.date, allSegmentPositions.allPositions).map(booleanToEither)
     }
+
+    override val isProtected = true
   }
 
   private object segmentPositions extends DocRoute[(String, DateRange), List[SegmentToM1Pos]] {
@@ -408,6 +437,8 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
       val f2 = posTable.resetSegmentToM1PosTable()
       Future.sequence(List(f1, f2)).map(_.forall(b => b)).map(booleanToEither)
     }
+
+    override val isProtected = true
   }
 
   private object resetJiraSegmentDataTable extends DocRoute[Unit, Unit] {
@@ -422,6 +453,8 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
     override def impl(x: Unit): Future[Either[ErrorInfo, Unit]] = {
       jiraSegmentDataTable.resetJiraSegmentDataTable().map(booleanToEither)
     }
+
+    override val isProtected = true
   }
 
   private object resetSegmentToM1PosTable extends DocRoute[Unit, Unit] {
@@ -436,6 +469,8 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
     override def impl(x: Unit): Future[Either[ErrorInfo, Unit]] = {
       posTable.resetSegmentToM1PosTable().map(booleanToEither)
     }
+
+    override val isProtected = true
   }
 
   private object mostRecentChange extends DocRoute[LocalDate, LocalDate] {
@@ -592,6 +627,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   // Tapir doesn't support SSE, so this is an undocumented route
+  // XXX TODO: Add Auth
   private val syncWithJiraRoute: Route = {
     import akka.http.scaladsl.server.Directives._
     get {

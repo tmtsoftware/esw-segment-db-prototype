@@ -27,6 +27,7 @@ object CSW {
 
   val `csw-location-client` = Org %% "csw-location-client" % Version
   val `csw-database` = Org %% "csw-database" % Version
+  val `csw-aas-http` = Org %% "csw-aas-http" % Version
 }
 
 object AkkaHttp { //ApacheV2

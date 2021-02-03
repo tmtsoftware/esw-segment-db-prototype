@@ -8,6 +8,8 @@ import 'antd/dist/antd.css'
 import {Sidebar} from "./components/Sidebar";
 import {Legend} from "./components/Legend";
 import {format} from "date-fns";
+import { AuthContextProvider, CheckLogin, RealmRole } from '@tmtsoftware/esw-ts'
+import {AppConfig} from "./config/AppConfig";
 
 const {Content} = Layout;
 
@@ -139,6 +141,7 @@ const App = (): JSX.Element => {
   if (mostRecentChange.getTime() == 0) return <div/>
   else
     return (
+      <AuthContextProvider config={AppConfig}>
       <Layout className='App'>
         <Topbar
           mostRecentChange={mostRecentChange}
@@ -166,6 +169,7 @@ const App = (): JSX.Element => {
           <Legend viewMode={viewMode} segmentMap={segmentMap}/>
         </Layout>
       </Layout>
+      </AuthContextProvider>
     )
 }
 export default App

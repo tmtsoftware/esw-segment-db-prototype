@@ -5,6 +5,7 @@ object Dependencies {
   val `esw-segment-db-deps` = Seq(
     CSW.`csw-location-client`,
     CSW.`csw-database`,
+    CSW.`csw-aas-http`,
     Akka.`akka-actor-typed`,
     Akka.`akka-slf4j`,
     Akka.`akka-remote`,
