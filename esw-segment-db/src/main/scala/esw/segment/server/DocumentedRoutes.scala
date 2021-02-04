@@ -237,7 +237,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
         handleErrors(impl(i))
       }
       if (isProtected)
-        sPost(RealmRolePolicy("admin"))(innerRoute)
+        sPost(RealmRolePolicy("config-admin1"))(innerRoute)
       else
         innerRoute
     }
