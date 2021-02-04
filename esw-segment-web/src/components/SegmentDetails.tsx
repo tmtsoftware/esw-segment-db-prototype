@@ -21,6 +21,7 @@ type SegmentDetailsProps = {
   viewMode: React.Key
   segmentData: JiraSegmentData
   auth: Auth | null
+  authEnabled: boolean
 }
 
 /**
@@ -35,6 +36,7 @@ type SegmentDetailsProps = {
  * @param viewMode selected view mode from sidebar
  * @param segmentData segment data from JIRA
  * @param auth login authorization from Keycloak
+ * @param authEnabled true if login authorization via Keycloak is enabled
  * @constructor
  */
 export const SegmentDetails = ({
@@ -46,7 +48,8 @@ export const SegmentDetails = ({
                                  updateDisplay,
                                  viewMode,
                                  segmentData,
-                                 auth
+                                 auth,
+                                 authEnabled
                                }: SegmentDetailsProps): JSX.Element => {
   const emptyId = 'empty'
   const [availableSegmentIds, setAvailableSegmentIds] = useState<Array<string>>(
@@ -61,9 +64,11 @@ export const SegmentDetails = ({
   const [changed, setChanged] = useState(1)
 
   function isAuthenticated(): boolean {
-    if (auth)
-      return (auth.isAuthenticated() || false)
-    return false
+    if (authEnabled) {
+      if (auth)
+        return (auth.isAuthenticated() || false)
+      return false
+    } else return true
   }
 
   // Gets the list of available segment ids for this position

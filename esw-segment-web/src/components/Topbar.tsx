@@ -8,13 +8,15 @@ type TopbarProps = {
   updateDisplay: (refDate: Date) => void
   jiraMode: boolean
   auth: Auth | null
+  authEnabled: boolean
 }
 
 export const Topbar = ({
                          mostRecentChange,
                          updateDisplay,
                          jiraMode,
-                         auth
+                         auth,
+                         authEnabled
                        }: TopbarProps): JSX.Element => {
 
   const [selectedDate, setSelectedDate] = useState<Date>(mostRecentChange)
@@ -22,6 +24,16 @@ export const Topbar = ({
   const refDateChanged = (date: Date) => {
     setSelectedDate(date)
     updateDisplay(date)
+  }
+
+  const makeLoginItem = () => {
+    return (!auth ? (
+      <span>Loading...</span>
+    ) : auth.isAuthenticated() ? (
+      <Logout/>
+    ) : (
+      <Login/>
+    ))
   }
 
   return (
@@ -38,13 +50,7 @@ export const Topbar = ({
             jiraMode={jiraMode}
           />
           <span style={{marginLeft: 20}}>
-                     {!auth ? (
-                       <span>Loading...</span>
-                     ) : auth.isAuthenticated() ? (
-                       <Logout/>
-                     ) : (
-                       <Login/>
-                     )}
+            {authEnabled ? makeLoginItem() : <span/>}
           </span>
         </span>
       }

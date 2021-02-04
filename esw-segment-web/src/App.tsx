@@ -21,6 +21,7 @@ const App = (): JSX.Element => {
   const [mostRecentChange, setMostRecentChange] = useState<Date>(new Date(0))
   const [viewMode, setViewMode] = useState<React.Key>("installed")
   const [jiraMode, setJiraMode] = useState<boolean>(false)
+  const [authEnabled, setAuthEnabled] = useState<boolean>(true)
 
   const {auth} = useContext(AuthContext)
 
@@ -34,22 +35,26 @@ const App = (): JSX.Element => {
     const [
       mostRecentChangeResponse,
       positionsOnDateResponse,
-      segmentDataResponse
+      segmentDataResponse,
+      authEnabledResponse
     ] = await Promise.all([
       fetch(`${SegmentData.baseUri}/mostRecentChange`, requestOptions),
       fetch(`${SegmentData.baseUri}/positionsOnDate`, requestOptions),
       fetch(`${SegmentData.baseUri}/segmentData`),
+      fetch(`${SegmentData.baseUri}/authEnabled`),
     ])
 
     const dateStr: string = await mostRecentChangeResponse.json()
     const mostRecentChange: Date = new Date(dateStr)
     const positionsOnDate: Array<SegmentToM1Pos> = await positionsOnDateResponse.json()
     const segmentData: Array<JiraSegmentData> = await segmentDataResponse.json()
+    const authEnabled: boolean = await authEnabledResponse.json()
 
     return {
       mostRecentChange,
       positionsOnDate,
-      segmentData
+      segmentData,
+      authEnabled
     }
   }
 
@@ -81,7 +86,7 @@ const App = (): JSX.Element => {
 
   function updateDataNow(refDate: Date) {
     if (!jiraMode) {
-      fetchData(refDate).then(({mostRecentChange, positionsOnDate, segmentData}) => {
+      fetchData(refDate).then(({mostRecentChange, positionsOnDate, segmentData, authEnabled}) => {
         const posMap: Map<string, SegmentToM1Pos> = positionsOnDate.reduce(
           (map, obj) => map.set(obj.position, obj),
           new Map()
@@ -93,6 +98,7 @@ const App = (): JSX.Element => {
         )
         setSegmentMap(segMap)
         setMostRecentChange(mostRecentChange)
+        setAuthEnabled(authEnabled)
       })
     } else {
       fetchPlannedData().then(({plannedPositions, segmentData}) => {
@@ -149,6 +155,7 @@ const App = (): JSX.Element => {
             updateDisplay={updateDisplay}
             jiraMode={jiraMode}
             auth={auth}
+            authEnabled={authEnabled}
           />
           <Layout>
             <Sidebar
@@ -157,6 +164,7 @@ const App = (): JSX.Element => {
               date={mostRecentChange}
               updateDisplay={updateData}
               auth={auth}
+              authEnabled={authEnabled}
             />
             <Content>
               <Mirror
@@ -168,6 +176,7 @@ const App = (): JSX.Element => {
                 updateDisplay={updateData}
                 viewMode={viewMode}
                 auth={auth}
+                authEnabled={authEnabled}
               />
             </Content>
             <Legend viewMode={viewMode} segmentMap={segmentMap}/>

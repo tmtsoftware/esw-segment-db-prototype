@@ -14,6 +14,7 @@ type MirrorProps = {
   updateDisplay: () => void
   viewMode: React.Key
   auth: Auth | null
+  authEnabled: boolean
 }
 
 /**
@@ -27,6 +28,7 @@ type MirrorProps = {
  * @param updateDisplay function to update the display
  * @param viewMode string indicating the selected view (from the Sidebar menu)
  * @param auth login authorization from Keycloak
+ * @param authEnabled true if login authorization via Keycloak is enabled
  * @constructor
  */
 export const Mirror = ({
@@ -37,7 +39,8 @@ export const Mirror = ({
                          mostRecentChange,
                          updateDisplay,
                          viewMode,
-                         auth
+                         auth,
+                         authEnabled
                        }: MirrorProps): JSX.Element => {
   if (posMap.size == 0 || mostRecentChange.getTime() == 0) {
     return <div/>
@@ -71,6 +74,7 @@ export const Mirror = ({
                 updateDisplay={updateDisplay}
                 viewMode={viewMode}
                 auth={auth}
+                authEnabled={authEnabled}
               />
             ))}
           </g>

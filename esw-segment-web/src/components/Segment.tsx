@@ -16,6 +16,7 @@ type SegmentProps = {
   updateDisplay: () => void
   viewMode: React.Key
   auth: Auth | null
+  authEnabled: boolean
 }
 
 /**
@@ -31,6 +32,7 @@ type SegmentProps = {
  * @param updateDisplay function to update the display after a DB change
  * @param viewMode string indicating the selected view (from the Sidebar menu)
  * @param auth login authorization from Keycloak
+ * @param authEnabled true if login authorization via Keycloak is enabled
  * @constructor
  */
 export const Segment = ({
@@ -44,7 +46,8 @@ export const Segment = ({
                           y,
                           updateDisplay,
                           viewMode,
-                          auth
+                          auth,
+                          authEnabled
                         }: SegmentProps): JSX.Element => {
   const sector = pos.charAt(0)
   const fill = getFillColor()
@@ -149,6 +152,7 @@ export const Segment = ({
         viewMode={viewMode}
         segmentData={segmentData}
         auth={auth}
+        authEnabled={authEnabled}
       />
     </g>
   )

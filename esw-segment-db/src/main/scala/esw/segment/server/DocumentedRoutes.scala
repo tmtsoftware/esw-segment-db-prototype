@@ -5,7 +5,7 @@ import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.model.sse.ServerSentEvent
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.http.scaladsl.server.Directives.{complete, extractUri, handleExceptions}
+import akka.http.scaladsl.server.Directives.{complete, extractUri}
 import akka.http.scaladsl.server.{Directive0, ExceptionHandler, Route}
 import akka.http.scaladsl.server.directives.{DebuggingDirectives, LoggingMagnet}
 import akka.stream.OverflowStrategy
@@ -213,10 +213,11 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
 
   val locationService = HttpLocationServiceFactory.makeLocalClient
   private val config  = actorSystem.settings.config
-  val directives      = SecurityDirectives(config, locationService)
+  private val role = config.getString("esw-segment-db.role")
+  private val directives      = SecurityDirectives(config, locationService)
   import directives._
 
-  val myExceptionHandler = ExceptionHandler {
+  private val myExceptionHandler = ExceptionHandler {
     case e: Throwable =>
       extractUri { uri =>
         println(s"Request to $uri could not be handled normally")
@@ -248,7 +249,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
         handleErrors(impl(i))
       }
       if (isProtected)
-        sPost(RealmRolePolicy("config-admin"))(innerRoute)
+        sPost(RealmRolePolicy(role))(innerRoute)
       else
         innerRoute
     }
@@ -535,6 +536,23 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
     }
   }
 
+  private object authEnabled extends DocRoute[Unit, Boolean] {
+    override val doc: Endpoint[Unit, ErrorInfo, Boolean, Any] =
+      endpoint.get
+        .description(
+          "Returns true if authorization via Keycloak is enabled."
+        )
+        .in("authEnabled")
+        .out(jsonBody[Boolean])
+        .errorOut(statusCode(StatusCode.BadRequest))
+        .errorOut(errorOutWithDoc)
+
+    override def impl(x: Unit): Future[Either[ErrorInfo, Boolean]] = {
+      val disabled = config.hasPath("auth-config.disabled") && config.getBoolean("auth-config.disabled")
+      Future.successful(Right(!disabled))
+    }
+  }
+
   private object currentPositions extends DocRoute[Unit, List[SegmentToM1Pos]] {
     override val doc: Endpoint[Unit, ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.get
@@ -672,6 +690,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
     mostRecentChange,
     nextChange,
     prevChange,
+    authEnabled,
     currentPositions,
     plannedPositions,
     segmentData,

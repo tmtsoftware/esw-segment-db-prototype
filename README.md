@@ -70,6 +70,19 @@ Usage: esw-segment-db [options]
 Interactive HTTP API documentation is available under 
 [http://localhost:9192/docs](http://localhost:9192/docs).
 
+## Authentication
+
+To run the server and web app with CSW/Keycloak based authentication turned on, 
+set the `auth-config.disabled` property to false in application.conf or on the command line:
+
+```
+  esw-segment-db -Dauth-config.disabled=false
+```
+
+When not disabled, the web app will display a Login button and features that modify the
+database will be disabled unless the user is logged in. The default credentials for
+development mode are currently: user: `config-admin1`, password: `config-admin1` (role: `config-admin`).
+
 ## Running the command line client
 
 The command line client requires the server to be running.

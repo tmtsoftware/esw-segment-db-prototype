@@ -17,9 +17,10 @@ type SidebarProps = {
   date: Date
   updateDisplay: () => void
   auth: Auth|null
+  authEnabled: boolean
 }
 
-export const Sidebar = ({sidebarOptionsChanged, posMap, date, updateDisplay, auth}: SidebarProps): JSX.Element => {
+export const Sidebar = ({sidebarOptionsChanged, posMap, date, updateDisplay, auth, authEnabled}: SidebarProps): JSX.Element => {
 
   const [viewMode, setViewMode] = useState<string | number>("installed")
   const [showSegmentIds, setShowSegmentIds] = useState<boolean>(false)
@@ -42,9 +43,11 @@ export const Sidebar = ({sidebarOptionsChanged, posMap, date, updateDisplay, aut
   }, [date])
 
   function isAuthenticated(): boolean {
-    if (auth)
-      return (auth.isAuthenticated() || false)
-    return false
+    if (authEnabled) {
+      if (auth)
+        return (auth.isAuthenticated() || false)
+      return false
+    } else return true
   }
 
   function menuItemSelected(info: MenuInfo) {

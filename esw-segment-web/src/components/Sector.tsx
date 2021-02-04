@@ -13,6 +13,7 @@ type SectorProps = {
   updateDisplay: () => void
   viewMode: React.Key
   auth: Auth | null
+  authEnabled: boolean
 }
 
 /**
@@ -25,6 +26,7 @@ type SectorProps = {
  * @param updateDisplay function to update the display after a DB change
  * @param viewMode string indicating the selected view (from the Sidebar menu)
  * @param auth login authorization from Keycloak
+ * @param authEnabled true if login authorization via Keycloak is enabled
  * @constructor
  */
 export const Sector = ({
@@ -35,7 +37,8 @@ export const Sector = ({
                          showSegmentIds,
                          updateDisplay,
                          viewMode,
-                         auth
+                         auth,
+                         authEnabled
                        }: SectorProps): JSX.Element => {
   const xInc = (3 * Config.segmentRadius) / 2.0
   const yInc = Config.segmentRadius * Math.sin((60 * Math.PI) / 180.0)
@@ -90,6 +93,7 @@ export const Sector = ({
             updateDisplay={updateDisplay}
             viewMode={viewMode}
             auth={auth}
+            authEnabled={authEnabled}
           />
         )
       })
