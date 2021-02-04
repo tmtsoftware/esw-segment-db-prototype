@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useContext, useEffect, useState} from 'react'
 import './App.css'
 import {Topbar} from './components/Topbar'
 import {Mirror} from './components/Mirror'
@@ -8,7 +8,7 @@ import 'antd/dist/antd.css'
 import {Sidebar} from "./components/Sidebar";
 import {Legend} from "./components/Legend";
 import {format} from "date-fns";
-import { AuthContextProvider, CheckLogin, RealmRole } from '@tmtsoftware/esw-ts'
+import {Auth, AuthContext, AuthContextProvider} from '@tmtsoftware/esw-ts'
 import {AppConfig} from "./config/AppConfig";
 
 const {Content} = Layout;
@@ -21,6 +21,8 @@ const App = (): JSX.Element => {
   const [mostRecentChange, setMostRecentChange] = useState<Date>(new Date(0))
   const [viewMode, setViewMode] = useState<React.Key>("installed")
   const [jiraMode, setJiraMode] = useState<boolean>(false)
+
+  const {auth} = useContext(AuthContext)
 
   async function fetchData(refDate: Date) {
     const requestOptions = {
@@ -141,35 +143,36 @@ const App = (): JSX.Element => {
   if (mostRecentChange.getTime() == 0) return <div/>
   else
     return (
-      <AuthContextProvider config={AppConfig}>
-      <Layout className='App'>
-        <Topbar
-          mostRecentChange={mostRecentChange}
-          updateDisplay={updateDisplay}
-          jiraMode={jiraMode}
-        />
-        <Layout>
-          <Sidebar
-            sidebarOptionsChanged={sidebarOptionsChanged}
-            posMap={posMap}
-            date={mostRecentChange}
-            updateDisplay={updateData}
+        <Layout className='App'>
+          <Topbar
+            mostRecentChange={mostRecentChange}
+            updateDisplay={updateDisplay}
+            jiraMode={jiraMode}
+            auth={auth}
           />
-          <Content>
-            <Mirror
-              showSegmentIds={showSegmentIds}
-              showSpares={showSpares}
+          <Layout>
+            <Sidebar
+              sidebarOptionsChanged={sidebarOptionsChanged}
               posMap={posMap}
-              segmentMap={segmentMap}
-              mostRecentChange={mostRecentChange}
+              date={mostRecentChange}
               updateDisplay={updateData}
-              viewMode={viewMode}
+              auth={auth}
             />
-          </Content>
-          <Legend viewMode={viewMode} segmentMap={segmentMap}/>
+            <Content>
+              <Mirror
+                showSegmentIds={showSegmentIds}
+                showSpares={showSpares}
+                posMap={posMap}
+                segmentMap={segmentMap}
+                mostRecentChange={mostRecentChange}
+                updateDisplay={updateData}
+                viewMode={viewMode}
+                auth={auth}
+              />
+            </Content>
+            <Legend viewMode={viewMode} segmentMap={segmentMap}/>
+          </Layout>
         </Layout>
-      </Layout>
-      </AuthContextProvider>
     )
 }
 export default App

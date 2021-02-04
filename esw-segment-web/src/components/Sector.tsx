@@ -2,6 +2,7 @@ import React from 'react'
 import {Segment} from './Segment'
 import {Config} from './Config'
 import {JiraSegmentData, SegmentToM1Pos} from './SegmentData'
+import {Auth} from "@tmtsoftware/esw-ts";
 
 type SectorProps = {
   sector: string
@@ -11,6 +12,7 @@ type SectorProps = {
   showSegmentIds: boolean
   updateDisplay: () => void
   viewMode: React.Key
+  auth: Auth | null
 }
 
 /**
@@ -22,6 +24,7 @@ type SectorProps = {
  * @param showSegmentIds if true display segment ids in the segments instead of the position
  * @param updateDisplay function to update the display after a DB change
  * @param viewMode string indicating the selected view (from the Sidebar menu)
+ * @param auth login authorization from Keycloak
  * @constructor
  */
 export const Sector = ({
@@ -31,7 +34,8 @@ export const Sector = ({
                          mostRecentChange,
                          showSegmentIds,
                          updateDisplay,
-                         viewMode
+                         viewMode,
+                         auth
                        }: SectorProps): JSX.Element => {
   const xInc = (3 * Config.segmentRadius) / 2.0
   const yInc = Config.segmentRadius * Math.sin((60 * Math.PI) / 180.0)
@@ -85,6 +89,7 @@ export const Sector = ({
             y={yStart + yInc * (2 - count + (i + offset / 2.0) * 2)}
             updateDisplay={updateDisplay}
             viewMode={viewMode}
+            auth={auth}
           />
         )
       })

@@ -3,6 +3,7 @@ import './Mirror.css'
 import {Sector} from './Sector'
 import {Config} from './Config'
 import {JiraSegmentData, SegmentToM1Pos} from './SegmentData'
+import {Auth} from "@tmtsoftware/esw-ts";
 
 type MirrorProps = {
   showSegmentIds: boolean
@@ -12,6 +13,7 @@ type MirrorProps = {
   mostRecentChange: Date
   updateDisplay: () => void
   viewMode: React.Key
+  auth: Auth | null
 }
 
 /**
@@ -24,6 +26,7 @@ type MirrorProps = {
  * @param mostRecentChange date of most recent change to installed segments
  * @param updateDisplay function to update the display
  * @param viewMode string indicating the selected view (from the Sidebar menu)
+ * @param auth login authorization from Keycloak
  * @constructor
  */
 export const Mirror = ({
@@ -33,7 +36,8 @@ export const Mirror = ({
                          segmentMap,
                          mostRecentChange,
                          updateDisplay,
-                         viewMode
+                         viewMode,
+                         auth
                        }: MirrorProps): JSX.Element => {
   if (posMap.size == 0 || mostRecentChange.getTime() == 0) {
     return <div/>
@@ -66,6 +70,7 @@ export const Mirror = ({
                 showSegmentIds={showSegmentIds}
                 updateDisplay={updateDisplay}
                 viewMode={viewMode}
+                auth={auth}
               />
             ))}
           </g>

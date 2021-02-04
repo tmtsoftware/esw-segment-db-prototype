@@ -2,9 +2,11 @@ package esw.segment.server
 
 import akka.NotUsed
 import akka.actor.typed.ActorSystem
+import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.model.sse.ServerSentEvent
-import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.server.{Directive0, Route}
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import akka.http.scaladsl.server.Directives.{complete, extractUri, handleExceptions}
+import akka.http.scaladsl.server.{Directive0, ExceptionHandler, Route}
 import akka.http.scaladsl.server.directives.{DebuggingDirectives, LoggingMagnet}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Source
@@ -199,6 +201,7 @@ object DocumentedRoutes extends JsonSupport {
 
   // Convert a Boolean result to an Either
   private def booleanToEither(b: Boolean): Either[ErrorInfo, Unit] = if (b) Right(()) else Left("Internal error")
+
 }
 
 //noinspection TypeAnnotation
@@ -212,6 +215,14 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   private val config  = actorSystem.settings.config
   val directives      = SecurityDirectives(config, locationService)
   import directives._
+
+  val myExceptionHandler = ExceptionHandler {
+    case e: Throwable =>
+      extractUri { uri =>
+        println(s"Request to $uri could not be handled normally")
+        complete(HttpResponse(InternalServerError, entity = e.getMessage))
+      }
+  }
 
   // Combines Tapir/OpenAPI doc with akka-http route
   private trait DocRoute[I, O] {
@@ -237,7 +248,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
         handleErrors(impl(i))
       }
       if (isProtected)
-        sPost(RealmRolePolicy("config-admin1"))(innerRoute)
+        sPost(RealmRolePolicy("config-admin"))(innerRoute)
       else
         innerRoute
     }
@@ -694,7 +705,9 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
     val routeList = List(new SwaggerAkka(openApiYml).routes, syncWithJiraRoute) ++ docRoutes.map(_.route)
     cors() {
       routeLogger {
-        concat(routeList: _*)
+        handleExceptions(myExceptionHandler) {
+          concat(routeList: _*)
+        }
       }
     }
   }

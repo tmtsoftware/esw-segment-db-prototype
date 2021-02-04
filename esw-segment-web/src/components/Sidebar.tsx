@@ -7,6 +7,7 @@ import { format } from 'date-fns'
 import {UploadChangeParam} from "antd/es/upload";
 import moment from "moment";
 import ValueType = WebAssembly.ValueType;
+import {Auth} from "@tmtsoftware/esw-ts";
 
 const {Sider} = Layout;
 
@@ -15,9 +16,10 @@ type SidebarProps = {
   posMap: Map<string, SegmentToM1Pos>
   date: Date
   updateDisplay: () => void
+  auth: Auth|null
 }
 
-export const Sidebar = ({sidebarOptionsChanged, posMap, date, updateDisplay}: SidebarProps): JSX.Element => {
+export const Sidebar = ({sidebarOptionsChanged, posMap, date, updateDisplay, auth}: SidebarProps): JSX.Element => {
 
   const [viewMode, setViewMode] = useState<string | number>("installed")
   const [showSegmentIds, setShowSegmentIds] = useState<boolean>(false)
@@ -38,6 +40,12 @@ export const Sidebar = ({sidebarOptionsChanged, posMap, date, updateDisplay}: Si
   useEffect(() => {
     setSelectedExportDate(date)
   }, [date])
+
+  function isAuthenticated(): boolean {
+    if (auth)
+      return (auth.isAuthenticated() || false)
+    return false
+  }
 
   function menuItemSelected(info: MenuInfo) {
     if (info.key == "syncWithJira")
@@ -252,7 +260,7 @@ export const Sidebar = ({sidebarOptionsChanged, posMap, date, updateDisplay}: Si
           <Menu.Item key="status">
             Status
           </Menu.Item>
-          <Menu.Item key="syncWithJira" disabled={syncing}>
+          <Menu.Item key="syncWithJira" disabled={syncing || !isAuthenticated()}>
             Sync with JIRA
           </Menu.Item>
         </SubMenu>
@@ -319,7 +327,7 @@ export const Sidebar = ({sidebarOptionsChanged, posMap, date, updateDisplay}: Si
               </Form.Item>
             </Form>
           </Modal>
-          <Menu.Item key="import">
+          <Menu.Item key="import" disabled={!isAuthenticated()}>
             <Upload {...importProps}>
               <div style={{color: '#ffffffa6'}}>Import</div>
             </Upload>

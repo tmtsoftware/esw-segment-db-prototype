@@ -2,6 +2,7 @@ import React, {useState} from 'react'
 import {Config} from './Config'
 import {SegmentDetails} from './SegmentDetails'
 import {JiraSegmentData} from "./SegmentData";
+import {Auth} from "@tmtsoftware/esw-ts";
 
 type SegmentProps = {
   id?: string
@@ -14,6 +15,7 @@ type SegmentProps = {
   y: number
   updateDisplay: () => void
   viewMode: React.Key
+  auth: Auth | null
 }
 
 /**
@@ -28,6 +30,7 @@ type SegmentProps = {
  * @param y y offset of segment in the display
  * @param updateDisplay function to update the display after a DB change
  * @param viewMode string indicating the selected view (from the Sidebar menu)
+ * @param auth login authorization from Keycloak
  * @constructor
  */
 export const Segment = ({
@@ -40,7 +43,8 @@ export const Segment = ({
                           x,
                           y,
                           updateDisplay,
-                          viewMode
+                          viewMode,
+                          auth
                         }: SegmentProps): JSX.Element => {
   const sector = pos.charAt(0)
   const fill = getFillColor()
@@ -54,7 +58,7 @@ export const Segment = ({
 
   function getFillColor(): string | undefined {
     let c
-    switch(viewMode) {
+    switch (viewMode) {
       case "segmentAllocation":
         c = Config.segmentAllocationColors.get(segmentData.originalPartnerBlankAllocation)
         break
@@ -144,6 +148,7 @@ export const Segment = ({
         updateDisplay={updateDisplay}
         viewMode={viewMode}
         segmentData={segmentData}
+        auth={auth}
       />
     </g>
   )

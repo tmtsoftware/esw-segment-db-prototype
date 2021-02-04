@@ -4,6 +4,7 @@ import {PositionHistory} from './PositionHistory'
 import {Button, DatePicker, Divider, Drawer, Form, Select, Typography} from "antd"
 import moment from 'moment'
 import {format} from "date-fns";
+import {Auth} from "@tmtsoftware/esw-ts";
 
 const {Option} = Select;
 
@@ -19,6 +20,7 @@ type SegmentDetailsProps = {
   updateDisplay: () => void
   viewMode: React.Key
   segmentData: JiraSegmentData
+  auth: Auth | null
 }
 
 /**
@@ -32,6 +34,7 @@ type SegmentDetailsProps = {
  * @param updateDisplay function to update the display after a DB change
  * @param viewMode selected view mode from sidebar
  * @param segmentData segment data from JIRA
+ * @param auth login authorization from Keycloak
  * @constructor
  */
 export const SegmentDetails = ({
@@ -42,7 +45,8 @@ export const SegmentDetails = ({
                                  closeDialog,
                                  updateDisplay,
                                  viewMode,
-                                 segmentData
+                                 segmentData,
+                                 auth
                                }: SegmentDetailsProps): JSX.Element => {
   const emptyId = 'empty'
   const [availableSegmentIds, setAvailableSegmentIds] = useState<Array<string>>(
@@ -55,6 +59,12 @@ export const SegmentDetails = ({
   )
   const [saveEnabled, setSaveEnabled] = useState(false)
   const [changed, setChanged] = useState(1)
+
+  function isAuthenticated(): boolean {
+    if (auth)
+      return (auth.isAuthenticated() || false)
+    return false
+  }
 
   // Gets the list of available segment ids for this position
   function updateAvailableSegmentIds() {
@@ -89,10 +99,10 @@ export const SegmentDetails = ({
   const changeSegmentId = (selectedId: string) => {
     setSelectedSegmentId(selectedId)
     // Default to current date, since the segment id changed
-    if ((date ? date  : new Date()).getTime() == selectedDate.getTime()) {
+    if ((date ? date : new Date()).getTime() == selectedDate.getTime()) {
       setSelectedDate(new Date())
     }
-    setSaveEnabled(true)
+    setSaveEnabled(isAuthenticated())
   }
 
   // A menu of available segment ids for this position
@@ -104,7 +114,11 @@ export const SegmentDetails = ({
         validateStatus={validateStatus}
         help={errorMessage}
       >
-        <Select value={selectedSegmentId} onChange={changeSegmentId}>
+        <Select
+          value={selectedSegmentId}
+          onChange={changeSegmentId}
+          disabled={!isAuthenticated()}
+        >
           {availableSegmentIds.map((segId) => {
             return (
               <Option key={segId} value={segId}>
@@ -120,7 +134,7 @@ export const SegmentDetails = ({
   const handleDateChange = (value: moment.Moment | null) => {
     const newDate = value ? value.toDate() : new Date()
     setSelectedDate(newDate)
-    setSaveEnabled(true)
+    setSaveEnabled(isAuthenticated())
   }
 
   // Display/edit the installation date
@@ -134,6 +148,7 @@ export const SegmentDetails = ({
           showToday={true}
           onChange={handleDateChange}
           value={moment(selectedDate)}
+          disabled={!isAuthenticated()}
           // defaultValue={moment(date)}
         />
       </Form.Item>
@@ -159,9 +174,13 @@ export const SegmentDetails = ({
       maybeId: maybeId,
       position: pos
     }
+    const token = auth?.token()
     const requestOptions = {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
       body: JSON.stringify(segmentToM1Pos)
     }
     fetch(`${SegmentData.baseUri}/setPosition`, requestOptions)
@@ -319,8 +338,8 @@ export const SegmentDetails = ({
     )
   }
 
-  if (availableSegmentIds.length != 0)
+  if (availableSegmentIds.length != 0) {
     return (viewMode == "installed" ? installedLayout() : plannedLayout())
-  else
+  } else
     return (<div/>)
 }
