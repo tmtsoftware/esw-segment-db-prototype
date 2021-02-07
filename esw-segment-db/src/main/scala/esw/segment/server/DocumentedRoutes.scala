@@ -14,17 +14,11 @@ import buildinfo.BuildInfo
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives.cors
 import csw.aas.http.AuthorizationPolicy.RealmRolePolicy
 import csw.aas.http.SecurityDirectives
+import csw.location.api.scaladsl.LocationService
 import csw.location.client.scaladsl.HttpLocationServiceFactory
 import csw.logging.api.scaladsl.Logger
 import esw.segment.db.{JiraSegmentDataTable, SegmentToM1PosTable}
-import esw.segment.shared.EswSegmentData.{
-  AllSegmentPositions,
-  DateRange,
-  MirrorConfig,
-  SegmentConfig,
-  SegmentToM1Pos,
-  currentDate
-}
+import esw.segment.shared.EswSegmentData.{AllSegmentPositions, DateRange, MirrorConfig, SegmentConfig, SegmentToM1Pos, currentDate}
 import sttp.tapir._
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto._
@@ -44,6 +38,10 @@ import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
+/**
+ * Defines the routes and documentation for the ESW Segment DB HTTP server,
+ * based on Tapir and akka-http.
+ */
 object DocumentedRoutes extends JsonSupport {
   // Type returned for errors (plain text error message)
   private type ErrorInfo = String
@@ -205,13 +203,23 @@ object DocumentedRoutes extends JsonSupport {
 }
 
 //noinspection TypeAnnotation
+/**
+ * Defines the routes and documentation for the ESW Segment DB HTTP server,
+ * based on Tapir and akka-http.
+ *
+ * @param posTable object managing the ESW segment database position table
+ * @param jiraSegmentDataTable object managing the database table containing the JIRA info
+ * @param logger used to log messages
+ * @param ec akka execution context
+ * @param actorSystem actor system used for async and futures
+ */
 class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDataTable, logger: Logger)(implicit
     ec: ExecutionContext,
     actorSystem: ActorSystem[_]
 ) {
   import DocumentedRoutes._
 
-  val locationService = HttpLocationServiceFactory.makeLocalClient
+  val locationService: LocationService = HttpLocationServiceFactory.makeLocalClient
   private val config  = actorSystem.settings.config
   private val role = config.getString("esw-segment-db.role")
   private val directives      = SecurityDirectives(config, locationService)
