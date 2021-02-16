@@ -9,7 +9,7 @@ import {Sidebar} from "./components/Sidebar";
 import {Legend} from "./components/Legend";
 import {format} from "date-fns";
 import {AuthContext} from '@tmtsoftware/esw-ts'
-import {appContext} from './context'
+import {appContext, AppContextState} from './AppContext'
 
 const {Content} = Layout
 
@@ -77,7 +77,7 @@ const App = (): JSX.Element => {
     }
   }
 
-  function updateDataNow(refDate: Date) {
+  function updateDisplayForRefDate(refDate: Date) {
     if (!jiraMode) {
       fetchData(refDate).then(({mostRecentChange, positionsOnDate, segmentData, authEnabled}) => {
         const posMap: Map<string, SegmentToM1Pos> = positionsOnDate.reduce(
@@ -109,7 +109,7 @@ const App = (): JSX.Element => {
     }
   }
 
-  function updateData() {
+  function updateDisplay() {
     const requestOptions = {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -120,63 +120,59 @@ const App = (): JSX.Element => {
       .then((result) => {
         const dateStr: string = result
         const date: Date = new Date(dateStr)
-        updateDataNow(date)
+        updateDisplayForRefDate(date)
       })
-  }
-
-  function updateDisplay() {
-    updateDataNow(refDate)
   }
 
   // Update the segment data being displayed whenever the JIRA mode changes
   useEffect(() => {
-    updateData()
+    updateDisplay()
   }, [jiraMode])
 
   // Update the display whenever the reference date changes
   useEffect(() => {
-    updateDisplay()
+    updateDisplayForRefDate(refDate)
   }, [refDate])
 
-  function sidebarOptionsChanged(viewMode: string | number, showSegmentIds: boolean, showSpares: boolean) {
+  // JIRA mode is dependent on view mode
+  useEffect(() => {
     setJiraMode(viewMode != 'installed')
-    setViewMode(viewMode)
-    setShowSegmentIds(showSegmentIds)
-    setShowSpares(showSpares)
+  }, [viewMode])
+
+  const appContextValues: AppContextState = {
+    refDate,
+    setRefDate,
+    updateDisplay,
+    viewMode,
+    setViewMode,
+    jiraMode,
+    showSegmentIds,
+    setShowSegmentIds,
+    showSpares,
+    setShowSpares,
+    auth,
+    authEnabled
   }
 
   if (mostRecentChange.getTime() == 0) return <div/>
   else
     return (
-      <appContext.Provider value={{refDate, setRefDate, updateDisplay: updateData}}>
+      <appContext.Provider value={appContextValues}>
         <Layout className='App'>
-          <Topbar
-            mostRecentChange={mostRecentChange}
-            jiraMode={jiraMode}
-            auth={auth}
-            authEnabled={authEnabled}
-          />
+          <Topbar mostRecentChange={mostRecentChange}/>
           <Layout>
             <Sidebar
-              sidebarOptionsChanged={sidebarOptionsChanged}
               posMap={posMap}
               date={mostRecentChange}
-              auth={auth}
-              authEnabled={authEnabled}
             />
             <Content>
               <Mirror
-                showSegmentIds={showSegmentIds}
-                showSpares={showSpares}
                 posMap={posMap}
                 segmentMap={segmentMap}
                 mostRecentChange={mostRecentChange}
-                viewMode={viewMode}
-                auth={auth}
-                authEnabled={authEnabled}
               />
             </Content>
-            <Legend viewMode={viewMode} segmentMap={segmentMap}/>
+            <Legend segmentMap={segmentMap}/>
           </Layout>
         </Layout>
       </appContext.Provider>

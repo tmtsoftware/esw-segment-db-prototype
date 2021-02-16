@@ -1,11 +1,11 @@
 import React from 'react'
-import {Table, Tag} from "antd";
-import {Config} from "./Config";
-import {ColumnsType} from "antd/es/table";
-import {JiraSegmentData} from "./SegmentData";
+import {Table, Tag} from "antd"
+import {Config} from "./Config"
+import {ColumnsType} from "antd/es/table"
+import {JiraSegmentData} from "./SegmentData"
+import {useAppContext} from "../AppContext"
 
 type LegendProps = {
-  viewMode: React.Key
   segmentMap: Map<string, JiraSegmentData>
 }
 
@@ -25,7 +25,9 @@ interface SegmentAllocation {
   totalSegments: number,
 }
 
-export const Legend = ({viewMode, segmentMap}: LegendProps): JSX.Element => {
+export const Legend = ({segmentMap}: LegendProps): JSX.Element => {
+  const {viewMode} = useAppContext()
+
   function makeTable(map: Map<string, string>): JSX.Element {
     const columns: ColumnsType<SegmentAllocation> = [
       {

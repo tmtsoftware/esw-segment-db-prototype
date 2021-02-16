@@ -1,25 +1,19 @@
 import React, {useState} from 'react'
 import {TopbarDateChooser} from './TopbarDateChooser'
 import {PageHeader} from "antd"
-import {Logout, Login, Auth} from '@tmtsoftware/esw-ts'
-import {useAppContext} from "../context";
+import {Logout, Login} from '@tmtsoftware/esw-ts'
+import {useAppContext} from "../AppContext"
 
 type TopbarProps = {
   mostRecentChange: Date
-  jiraMode: boolean
-  auth: Auth | null
-  authEnabled: boolean
 }
 
 export const Topbar = ({
-                         mostRecentChange,
-                         jiraMode,
-                         auth,
-                         authEnabled
+                         mostRecentChange
                        }: TopbarProps): JSX.Element => {
 
+  const {setRefDate, jiraMode, auth, authEnabled} = useAppContext()
   const [, setSelectedDate] = useState<Date>(mostRecentChange)
-  const {setRefDate} = useAppContext();
 
   const refDateChanged = (date: Date) => {
     setSelectedDate(date)

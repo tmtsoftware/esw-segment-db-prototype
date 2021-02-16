@@ -7,24 +7,18 @@ import { format } from 'date-fns'
 import {UploadChangeParam} from "antd/es/upload";
 import moment from "moment";
 import ValueType = WebAssembly.ValueType;
-import {Auth} from "@tmtsoftware/esw-ts";
-import {useAppContext} from "../context";
+import {useAppContext} from "../AppContext"
 
 const {Sider} = Layout;
 
 type SidebarProps = {
-  sidebarOptionsChanged: (viewMode: React.Key, showSegmentIds: boolean, showSpares: boolean) => void
   posMap: Map<string, SegmentToM1Pos>
   date: Date
-  auth: Auth|null
-  authEnabled: boolean
 }
 
-export const Sidebar = ({sidebarOptionsChanged, posMap, date, auth, authEnabled}: SidebarProps): JSX.Element => {
+export const Sidebar = ({posMap, date}: SidebarProps): JSX.Element => {
 
-  const [viewMode, setViewMode] = useState<string | number>("installed")
-  const [showSegmentIds, setShowSegmentIds] = useState<boolean>(false)
-  const [showSpares, setShowSpares] = useState<boolean>(false)
+  const {updateDisplay, setViewMode, setShowSegmentIds, setShowSpares, auth, authEnabled} = useAppContext()
   const [syncing, setSyncing] = useState<boolean>(false)
   const [syncProgress, setSyncProgress] = useState<number>(0)
   const [syncPopupVisible, setSyncPopupVisible] = useState<boolean>(false)
@@ -33,11 +27,6 @@ export const Sidebar = ({sidebarOptionsChanged, posMap, date, auth, authEnabled}
   const [selectedExportDate, setSelectedExportDate] = useState(date);
   const [selectedExportBaseFileName, setSelectedExportBaseFileName] = useState('mirror');
   const [selectedExportOpt, setSelectedExportOpt] = useState('recent');
-  const {updateDisplay} = useAppContext();
-
-  useEffect(() => {
-    sidebarOptionsChanged(viewMode, showSegmentIds, showSpares)
-  }, [viewMode, showSegmentIds, showSpares])
 
   useEffect(() => {
     setSelectedExportDate(date)

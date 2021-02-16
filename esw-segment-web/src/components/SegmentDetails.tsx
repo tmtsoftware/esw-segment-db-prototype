@@ -4,8 +4,7 @@ import {PositionHistory} from './PositionHistory'
 import {Button, DatePicker, Divider, Drawer, Form, Select, Typography} from "antd"
 import moment from 'moment'
 import {format} from "date-fns";
-import {Auth} from "@tmtsoftware/esw-ts";
-import {useAppContext} from "../context";
+import {useAppContext} from "../AppContext"
 
 const {Option} = Select;
 
@@ -18,10 +17,7 @@ type SegmentDetailsProps = {
   date?: Date
   open: boolean,
   closeDialog: () => void
-  viewMode: React.Key
   segmentData: JiraSegmentData
-  auth: Auth | null
-  authEnabled: boolean
 }
 
 /**
@@ -33,10 +29,7 @@ type SegmentDetailsProps = {
  * @param open true if drawer is open
  * @param closeDialog function to call to close the drawer
  * @param updateDisplay function to update the display after a DB change
- * @param viewMode selected view mode from sidebar
  * @param segmentData segment data from JIRA
- * @param auth login authorization from Keycloak
- * @param authEnabled true if login authorization via Keycloak is enabled
  * @constructor
  */
 export const SegmentDetails = ({
@@ -45,11 +38,9 @@ export const SegmentDetails = ({
                                  date,
                                  open,
                                  closeDialog,
-                                 viewMode,
-                                 segmentData,
-                                 auth,
-                                 authEnabled
+                                 segmentData
                                }: SegmentDetailsProps): JSX.Element => {
+  const {updateDisplay, viewMode, auth, authEnabled} = useAppContext()
   const emptyId = 'empty'
   const [availableSegmentIds, setAvailableSegmentIds] = useState<Array<string>>(
     []
@@ -61,7 +52,6 @@ export const SegmentDetails = ({
   )
   const [saveEnabled, setSaveEnabled] = useState(false)
   const [changed, setChanged] = useState(1)
-  const {updateDisplay} = useAppContext();
 
   function isAuthenticated(): boolean {
     if (authEnabled) {
