@@ -11,26 +11,21 @@ import {useAppContext} from "../AppContext"
 
 const {Sider} = Layout;
 
-type SidebarProps = {
-  posMap: Map<string, SegmentToM1Pos>
-  date: Date
-}
+export const Sidebar = (): JSX.Element => {
 
-export const Sidebar = ({posMap, date}: SidebarProps): JSX.Element => {
-
-  const {updateDisplay, setViewMode, setShowSegmentIds, setShowSpares, auth, authEnabled} = useAppContext()
+  const {updateDisplay, setViewMode, setShowSegmentIds, setShowSpares, auth, authEnabled, posMap, mostRecentChange} = useAppContext()
   const [syncing, setSyncing] = useState<boolean>(false)
   const [syncProgress, setSyncProgress] = useState<number>(0)
   const [syncPopupVisible, setSyncPopupVisible] = useState<boolean>(false)
   const [fileMenuSelectedKeys, setFileMenuSelectedKeys] = useState<Array<string>>([])
   const [isExportModalVisible, setExportModalVisible] = useState(false);
-  const [selectedExportDate, setSelectedExportDate] = useState(date);
+  const [selectedExportDate, setSelectedExportDate] = useState(mostRecentChange);
   const [selectedExportBaseFileName, setSelectedExportBaseFileName] = useState('mirror');
   const [selectedExportOpt, setSelectedExportOpt] = useState('recent');
 
   useEffect(() => {
-    setSelectedExportDate(date)
-  }, [date])
+    setSelectedExportDate(mostRecentChange)
+  }, [mostRecentChange])
 
   function isAuthenticated(): boolean {
     if (authEnabled) {
@@ -104,7 +99,7 @@ export const Sidebar = ({posMap, date}: SidebarProps): JSX.Element => {
   function exportFilter(pos: SegmentToM1Pos): Boolean {
     const spare = pos.position.charAt(0) == 'G'
     if (spare) return false
-    return (selectedExportOpt == 'recent') ? new Date(pos.date) >= date : true
+    return (selectedExportOpt == 'recent') ? new Date(pos.date) >= mostRecentChange : true
   }
 
   function exportMirrorConfigToFile() {
@@ -122,7 +117,7 @@ export const Sidebar = ({posMap, date}: SidebarProps): JSX.Element => {
       }
     })
     const jsonObject: MirrorConfig = {
-      date: format(date, 'yyyy-MM-dd'),
+      date: format(mostRecentChange, 'yyyy-MM-dd'),
       segments: values.map((value: SegmentToM1Pos) => {
         return {
           position: value.position,
@@ -210,8 +205,8 @@ export const Sidebar = ({posMap, date}: SidebarProps): JSX.Element => {
   };
 
   const handleExportDateChange = (value: moment.Moment | null) => {
-    const newDate = value ? value.toDate() : date
-    console.log(`XXX 2 setSelectedExportDate(${date})`)
+    const newDate = value ? value.toDate() : mostRecentChange
+    console.log(`XXX 2 setSelectedExportDate(${mostRecentChange})`)
     setSelectedExportDate(newDate)
   }
 

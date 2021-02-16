@@ -9,7 +9,6 @@ type SegmentProps = {
   pos: string
   segmentData: JiraSegmentData
   date?: Date
-  mostRecentChange: Date
   x: number
   y: number
 }
@@ -20,8 +19,6 @@ type SegmentProps = {
  * @param pos A1 to F82
  * @param segmentData data from JIRA task for segment
  * @param date date the segment was installed
- * @param mostRecentChange date of most recent segment change
- * @param showSegmentIds if true, display the segment id, otherwise the position
  * @param x x offset of segment in the display
  * @param y y offset of segment in the display
  * @constructor
@@ -31,11 +28,10 @@ export const Segment = ({
                           pos,
                           segmentData,
                           date,
-                          mostRecentChange,
                           x,
                           y
                         }: SegmentProps): JSX.Element => {
-  const {showSegmentIds, viewMode} = useAppContext()
+  const {showSegmentIds, viewMode, mostRecentChange} = useAppContext()
   const sector = pos.charAt(0)
   const fill = getFillColor()
   const labelXOffset = pos.length == 2 ? -4 : -6

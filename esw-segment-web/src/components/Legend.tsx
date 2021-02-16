@@ -5,10 +5,6 @@ import {ColumnsType} from "antd/es/table"
 import {JiraSegmentData} from "./SegmentData"
 import {useAppContext} from "../AppContext"
 
-type LegendProps = {
-  segmentMap: Map<string, JiraSegmentData>
-}
-
 interface SegmentStats {
   segmentTypes: number,
   totalPrimeSegments: number,
@@ -25,8 +21,8 @@ interface SegmentAllocation {
   totalSegments: number,
 }
 
-export const Legend = ({segmentMap}: LegendProps): JSX.Element => {
-  const {viewMode} = useAppContext()
+export const Legend = (): JSX.Element => {
+  const {viewMode, segmentMap} = useAppContext()
 
   function makeTable(map: Map<string, string>): JSX.Element {
     const columns: ColumnsType<SegmentAllocation> = [

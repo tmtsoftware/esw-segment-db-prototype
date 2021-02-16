@@ -1,36 +1,26 @@
-import React, {useState} from 'react'
+import React from 'react'
 import {SegmentData} from './SegmentData'
-import {Button, DatePicker, Tooltip, Typography} from "antd";
+import {Button, DatePicker, Tooltip} from "antd";
 import {LeftOutlined, RightOutlined} from '@ant-design/icons'
 import moment from "moment";
 import {format} from "date-fns";
+import {useAppContext} from "../AppContext";
 
-type TopbarDateChooserProps = {
-  mostRecentChange: Date
-  updateDisplay: (refDate: Date) => void
-  jiraMode: boolean
-}
-
-export const TopbarDateChooser = ({
-                                    mostRecentChange,
-                                    updateDisplay,
-                                    jiraMode
-                                  }: TopbarDateChooserProps): JSX.Element => {
-  const [selectedDate, setSelectedDate] = useState<Date>(mostRecentChange)
+export const TopbarDateChooser = (): JSX.Element => {
+  const {refDate, setRefDate, jiraMode} = useAppContext()
 
   function nextDate() {
     const requestOptions = {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(format(selectedDate, 'yyyy-MM-dd'))
+      body: JSON.stringify(format(refDate, 'yyyy-MM-dd'))
 
   }
     fetch(`${SegmentData.baseUri}/nextChange`, requestOptions)
       .then((response) => response.json())
       .then((result) => {
         const date: Date = new Date(result)
-        setSelectedDate(date)
-        updateDisplay(date)
+        setRefDate(date)
       })
   }
 
@@ -38,21 +28,19 @@ export const TopbarDateChooser = ({
     const requestOptions = {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(format(selectedDate, 'yyyy-MM-dd'))
+      body: JSON.stringify(format(refDate, 'yyyy-MM-dd'))
     }
     fetch(`${SegmentData.baseUri}/prevChange`, requestOptions)
       .then((response) => response.json())
       .then((result) => {
         const date: Date = new Date(result)
-        setSelectedDate(date)
-        updateDisplay(date)
+        setRefDate(date)
       })
   }
 
   const handleDateChange = (value: moment.Moment | null) => {
     const newDate = value ? value.toDate() : new Date()
-    setSelectedDate(newDate)
-    updateDisplay(newDate)
+    setRefDate(newDate)
 
   }
 
@@ -74,8 +62,8 @@ export const TopbarDateChooser = ({
           format={"ddd ll"}
           showToday={true}
           onChange={handleDateChange}
-          defaultValue={moment(selectedDate)}
-          value={moment(selectedDate)}
+          defaultValue={moment(refDate)}
+          value={moment(refDate)}
         />
       </Tooltip>
       <Tooltip placement="bottom" title='Go forward to the next segment change'>

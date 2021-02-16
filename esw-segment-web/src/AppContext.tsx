@@ -1,5 +1,6 @@
 import React, {createContext, useContext} from "react"
 import {Auth} from "@tmtsoftware/esw-ts";
+import {JiraSegmentData, SegmentToM1Pos} from "./components/SegmentData";
 
 // Application context: Holds values and functions that are shared by different components in the app
 
@@ -29,26 +30,33 @@ export type AppContextState = {
 
   // true if auth is enabled/required
   authEnabled: boolean
+
+  // Map of position ("A1" to "G82") to SegmentToM1Pos instance
+  posMap: Map<string, SegmentToM1Pos>
+
+  // Map of position ("A1" to "G82") to JiraSegmentData instance
+  segmentMap: Map<string, JiraSegmentData>
+
+  // Date of most recent row in the database
+  mostRecentChange: Date
 }
 
-export const appContextDefaultValue: AppContextState = {
+const appContextDefaultValue: AppContextState = {
   refDate: new Date(),
-  setRefDate: (_: Date) => {
-  },
-  updateDisplay: () => {
-  },
+  setRefDate: (_: Date) => {},
+  updateDisplay: () => {},
   viewMode: "installed",
-  setViewMode: (_: React.Key) => {
-  },
+  setViewMode: (_: React.Key) => {},
   jiraMode: false,
   showSegmentIds: false,
-  setShowSegmentIds: (_: boolean) => {
-  },
+  setShowSegmentIds: (_: boolean) => {},
   showSpares: false,
-  setShowSpares: (_: boolean) => {
-  },
+  setShowSpares: (_: boolean) => {},
   auth: null,
-  authEnabled: false
+  authEnabled: false,
+  posMap: new Map(),
+  segmentMap: new Map(),
+  mostRecentChange: new Date(0),
 }
 
 export const appContext = createContext<AppContextState>(appContextDefaultValue)

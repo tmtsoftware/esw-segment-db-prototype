@@ -1,24 +1,12 @@
-import React, {useState} from 'react'
+import React from 'react'
 import {TopbarDateChooser} from './TopbarDateChooser'
 import {PageHeader} from "antd"
 import {Logout, Login} from '@tmtsoftware/esw-ts'
 import {useAppContext} from "../AppContext"
 
-type TopbarProps = {
-  mostRecentChange: Date
-}
+export const Topbar = (): JSX.Element => {
 
-export const Topbar = ({
-                         mostRecentChange
-                       }: TopbarProps): JSX.Element => {
-
-  const {setRefDate, jiraMode, auth, authEnabled} = useAppContext()
-  const [, setSelectedDate] = useState<Date>(mostRecentChange)
-
-  const refDateChanged = (date: Date) => {
-    setSelectedDate(date)
-    setRefDate(date)
-  }
+  const {auth, authEnabled} = useAppContext()
 
   const makeLoginItem = () => {
     return (!auth ? (
@@ -38,11 +26,7 @@ export const Topbar = ({
       title="TMT Segment Database"
       extra={
         <span>
-          <TopbarDateChooser
-            mostRecentChange={mostRecentChange}
-            updateDisplay={refDateChanged}
-            jiraMode={jiraMode}
-          />
+          <TopbarDateChooser/>
           <span style={{marginLeft: 20}}>
             {authEnabled ? makeLoginItem() : <span/>}
           </span>

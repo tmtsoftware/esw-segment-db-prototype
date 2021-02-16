@@ -151,7 +151,10 @@ const App = (): JSX.Element => {
     showSpares,
     setShowSpares,
     auth,
-    authEnabled
+    authEnabled,
+    posMap,
+    segmentMap,
+    mostRecentChange
   }
 
   if (mostRecentChange.getTime() == 0) return <div/>
@@ -159,20 +162,13 @@ const App = (): JSX.Element => {
     return (
       <appContext.Provider value={appContextValues}>
         <Layout className='App'>
-          <Topbar mostRecentChange={mostRecentChange}/>
+          <Topbar/>
           <Layout>
-            <Sidebar
-              posMap={posMap}
-              date={mostRecentChange}
-            />
+            <Sidebar/>
             <Content>
-              <Mirror
-                posMap={posMap}
-                segmentMap={segmentMap}
-                mostRecentChange={mostRecentChange}
-              />
+              <Mirror/>
             </Content>
-            <Legend segmentMap={segmentMap}/>
+            <Legend/>
           </Layout>
         </Layout>
       </appContext.Provider>

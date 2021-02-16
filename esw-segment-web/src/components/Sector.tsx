@@ -1,30 +1,20 @@
 import React from 'react'
 import {Segment} from './Segment'
 import {Config} from './Config'
-import {JiraSegmentData, SegmentToM1Pos} from './SegmentData'
+import {useAppContext} from "../AppContext";
 
 type SectorProps = {
   sector: string
-  posMap: Map<string, SegmentToM1Pos>
-  segmentMap: Map<string, JiraSegmentData>
-  mostRecentChange: Date
 }
 
 /**
  * Represents a sector of the mirror
  * @param sector A to F
- * @param posMap a map of pos (A1 to F82) to SegmentToM1Pos object
- * @param segmentMap maps pos ("A23") to data from JIRA task
- * @param mostRecentChange date of most recent segment change
  * @param showSegmentIds if true display segment ids in the segments instead of the position
  * @constructor
  */
-export const Sector = ({
-                         sector,
-                         posMap,
-                         segmentMap,
-                         mostRecentChange
-                       }: SectorProps): JSX.Element => {
+export const Sector = ({sector,}: SectorProps): JSX.Element => {
+  const {posMap, segmentMap} = useAppContext()
   const xInc = (3 * Config.segmentRadius) / 2.0
   const yInc = Config.segmentRadius * Math.sin((60 * Math.PI) / 180.0)
 
@@ -70,7 +60,6 @@ export const Sector = ({
             pos={pos}
             segmentData={segmentData}
             date={date}
-            mostRecentChange={mostRecentChange}
             key={key}
             x={xStart + xInc * row}
             y={yStart + yInc * (2 - count + (i + offset / 2.0) * 2)}
