@@ -8,10 +8,10 @@ import 'antd/dist/antd.css'
 import {Sidebar} from "./components/Sidebar";
 import {Legend} from "./components/Legend";
 import {format} from "date-fns";
-import {Auth, AuthContext, AuthContextProvider} from '@tmtsoftware/esw-ts'
-import {AppConfig} from "./config/AppConfig";
+import {AuthContext} from '@tmtsoftware/esw-ts'
+import {appContext} from './context'
 
-const {Content} = Layout;
+const {Content} = Layout
 
 const App = (): JSX.Element => {
   const [showSegmentIds, setShowSegmentIds] = useState<boolean>(false)
@@ -22,6 +22,7 @@ const App = (): JSX.Element => {
   const [viewMode, setViewMode] = useState<React.Key>("installed")
   const [jiraMode, setJiraMode] = useState<boolean>(false)
   const [authEnabled, setAuthEnabled] = useState<boolean>(true)
+  const [refDate, setRefDate] = useState<Date>(new Date())
 
   const {auth} = useContext(AuthContext)
 
@@ -76,14 +77,6 @@ const App = (): JSX.Element => {
     }
   }
 
-  // async function fetchPlannedData() {
-  //   const positionsResponse = await fetch(`${SegmentData.baseUri}/plannedPositions`)
-  //   const positions: Array<SegmentToM1Pos> = await positionsResponse.json()
-  //   return {
-  //     positions
-  //   }
-  // }
-
   function updateDataNow(refDate: Date) {
     if (!jiraMode) {
       fetchData(refDate).then(({mostRecentChange, positionsOnDate, segmentData, authEnabled}) => {
@@ -131,13 +124,19 @@ const App = (): JSX.Element => {
       })
   }
 
-  function updateDisplay(refDate: Date) {
+  function updateDisplay() {
     updateDataNow(refDate)
   }
 
+  // Update the segment data being displayed whenever the JIRA mode changes
   useEffect(() => {
     updateData()
   }, [jiraMode])
+
+  // Update the display whenever the reference date changes
+  useEffect(() => {
+    updateDisplay()
+  }, [refDate])
 
   function sidebarOptionsChanged(viewMode: string | number, showSegmentIds: boolean, showSpares: boolean) {
     setJiraMode(viewMode != 'installed')
@@ -149,10 +148,10 @@ const App = (): JSX.Element => {
   if (mostRecentChange.getTime() == 0) return <div/>
   else
     return (
+      <appContext.Provider value={{refDate, setRefDate, updateDisplay: updateData}}>
         <Layout className='App'>
           <Topbar
             mostRecentChange={mostRecentChange}
-            updateDisplay={updateDisplay}
             jiraMode={jiraMode}
             auth={auth}
             authEnabled={authEnabled}
@@ -162,7 +161,6 @@ const App = (): JSX.Element => {
               sidebarOptionsChanged={sidebarOptionsChanged}
               posMap={posMap}
               date={mostRecentChange}
-              updateDisplay={updateData}
               auth={auth}
               authEnabled={authEnabled}
             />
@@ -173,7 +171,6 @@ const App = (): JSX.Element => {
                 posMap={posMap}
                 segmentMap={segmentMap}
                 mostRecentChange={mostRecentChange}
-                updateDisplay={updateData}
                 viewMode={viewMode}
                 auth={auth}
                 authEnabled={authEnabled}
@@ -182,6 +179,7 @@ const App = (): JSX.Element => {
             <Legend viewMode={viewMode} segmentMap={segmentMap}/>
           </Layout>
         </Layout>
+      </appContext.Provider>
     )
 }
 export default App

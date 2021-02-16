@@ -13,7 +13,6 @@ type SegmentProps = {
   showSegmentIds: boolean
   x: number
   y: number
-  updateDisplay: () => void
   viewMode: React.Key
   auth: Auth | null
   authEnabled: boolean
@@ -44,7 +43,6 @@ export const Segment = ({
                           showSegmentIds,
                           x,
                           y,
-                          updateDisplay,
                           viewMode,
                           auth,
                           authEnabled
@@ -148,7 +146,6 @@ export const Segment = ({
         date={date}
         open={open}
         closeDialog={closeDialog}
-        updateDisplay={updateDisplay}
         viewMode={viewMode}
         segmentData={segmentData}
         auth={auth}

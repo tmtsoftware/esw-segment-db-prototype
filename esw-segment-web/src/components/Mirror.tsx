@@ -11,7 +11,6 @@ type MirrorProps = {
   posMap: Map<string, SegmentToM1Pos>
   segmentMap: Map<string, JiraSegmentData>
   mostRecentChange: Date
-  updateDisplay: () => void
   viewMode: React.Key
   auth: Auth | null
   authEnabled: boolean
@@ -37,7 +36,6 @@ export const Mirror = ({
                          posMap,
                          segmentMap,
                          mostRecentChange,
-                         updateDisplay,
                          viewMode,
                          auth,
                          authEnabled
@@ -71,7 +69,6 @@ export const Mirror = ({
                 segmentMap={segmentMap}
                 mostRecentChange={mostRecentChange}
                 showSegmentIds={showSegmentIds}
-                updateDisplay={updateDisplay}
                 viewMode={viewMode}
                 auth={auth}
                 authEnabled={authEnabled}

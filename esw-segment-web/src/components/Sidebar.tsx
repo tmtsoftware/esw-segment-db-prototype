@@ -8,6 +8,7 @@ import {UploadChangeParam} from "antd/es/upload";
 import moment from "moment";
 import ValueType = WebAssembly.ValueType;
 import {Auth} from "@tmtsoftware/esw-ts";
+import {useAppContext} from "../context";
 
 const {Sider} = Layout;
 
@@ -15,12 +16,11 @@ type SidebarProps = {
   sidebarOptionsChanged: (viewMode: React.Key, showSegmentIds: boolean, showSpares: boolean) => void
   posMap: Map<string, SegmentToM1Pos>
   date: Date
-  updateDisplay: () => void
   auth: Auth|null
   authEnabled: boolean
 }
 
-export const Sidebar = ({sidebarOptionsChanged, posMap, date, updateDisplay, auth, authEnabled}: SidebarProps): JSX.Element => {
+export const Sidebar = ({sidebarOptionsChanged, posMap, date, auth, authEnabled}: SidebarProps): JSX.Element => {
 
   const [viewMode, setViewMode] = useState<string | number>("installed")
   const [showSegmentIds, setShowSegmentIds] = useState<boolean>(false)
@@ -33,6 +33,7 @@ export const Sidebar = ({sidebarOptionsChanged, posMap, date, updateDisplay, aut
   const [selectedExportDate, setSelectedExportDate] = useState(date);
   const [selectedExportBaseFileName, setSelectedExportBaseFileName] = useState('mirror');
   const [selectedExportOpt, setSelectedExportOpt] = useState('recent');
+  const {updateDisplay} = useAppContext();
 
   useEffect(() => {
     sidebarOptionsChanged(viewMode, showSegmentIds, showSpares)

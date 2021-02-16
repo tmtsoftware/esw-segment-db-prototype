@@ -10,7 +10,6 @@ type SectorProps = {
   segmentMap: Map<string, JiraSegmentData>
   mostRecentChange: Date
   showSegmentIds: boolean
-  updateDisplay: () => void
   viewMode: React.Key
   auth: Auth | null
   authEnabled: boolean
@@ -35,7 +34,6 @@ export const Sector = ({
                          segmentMap,
                          mostRecentChange,
                          showSegmentIds,
-                         updateDisplay,
                          viewMode,
                          auth,
                          authEnabled
@@ -90,7 +88,6 @@ export const Sector = ({
             key={key}
             x={xStart + xInc * row}
             y={yStart + yInc * (2 - count + (i + offset / 2.0) * 2)}
-            updateDisplay={updateDisplay}
             viewMode={viewMode}
             auth={auth}
             authEnabled={authEnabled}

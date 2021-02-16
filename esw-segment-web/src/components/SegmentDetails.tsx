@@ -5,6 +5,7 @@ import {Button, DatePicker, Divider, Drawer, Form, Select, Typography} from "ant
 import moment from 'moment'
 import {format} from "date-fns";
 import {Auth} from "@tmtsoftware/esw-ts";
+import {useAppContext} from "../context";
 
 const {Option} = Select;
 
@@ -17,7 +18,6 @@ type SegmentDetailsProps = {
   date?: Date
   open: boolean,
   closeDialog: () => void
-  updateDisplay: () => void
   viewMode: React.Key
   segmentData: JiraSegmentData
   auth: Auth | null
@@ -45,7 +45,6 @@ export const SegmentDetails = ({
                                  date,
                                  open,
                                  closeDialog,
-                                 updateDisplay,
                                  viewMode,
                                  segmentData,
                                  auth,
@@ -62,6 +61,7 @@ export const SegmentDetails = ({
   )
   const [saveEnabled, setSaveEnabled] = useState(false)
   const [changed, setChanged] = useState(1)
+  const {updateDisplay} = useAppContext();
 
   function isAuthenticated(): boolean {
     if (authEnabled) {
