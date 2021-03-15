@@ -2,7 +2,7 @@
   "name": "esw-segment-web",
   "author": "TMT",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "license": "Apache License, Version 2.0",
   "scripts": {
     "build": "electron-snowpack build",
