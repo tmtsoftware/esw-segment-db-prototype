@@ -1,7 +1,7 @@
 {
   "name": "esw-segment-web",
   "author": "TMT",
-  "version": "0.1.0-M1",
+  "version": "0.1.0",
   "private": true,
   "license": "Apache License, Version 2.0",
   "scripts": {
@@ -33,6 +33,7 @@
   },
   "build": {
     "appId": "esw.segment.db",
+    "productName": "ESW Segment DB",
     "extends": "electron-snowpack/config/electron-builder.js"
   }
 }

@@ -9,3 +9,8 @@
 target/
 /esw-segment-db/target/
 /esw-segment-db/xxx.json
+/scripts/www.json
+/scripts/xxx.json
+/xxx.json
+/scripts/yyy.json
+/scripts/zzz.json
