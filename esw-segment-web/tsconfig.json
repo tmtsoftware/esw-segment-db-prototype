@@ -1,4 +1,5 @@
 {
   "extends": "electron-snowpack/config/tsconfig.json",
   "include": ["src", "types"],
+  "allowSyntheticDefaultImports": true
 }
