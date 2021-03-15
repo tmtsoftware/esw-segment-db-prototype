@@ -133,7 +133,7 @@ once. Then to start the web app server for development:
  
     $ npm run dev
 
-This automatically opens a window running the app (based on [Electron app](https://www.electronjs.org/) ).
+This automatically opens a window running the app (based on [Electron](https://www.electronjs.org/) ).
 
 ![screenshot](images/esw-segment-web.png)
 
