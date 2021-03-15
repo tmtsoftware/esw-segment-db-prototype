@@ -4,7 +4,11 @@ import { getAssetURL } from 'electron-snowpack';
 let mainWindow: BrowserWindow | null | undefined;
 
 function createMainWindow(): BrowserWindow {
-  const window = new BrowserWindow();
+  const window = new BrowserWindow({
+    webPreferences: {
+      webSecurity: false
+    }
+  });
   window.maximize();
 
   // if (process.env.MODE !== 'production') {
