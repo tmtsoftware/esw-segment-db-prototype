@@ -122,7 +122,7 @@ Usage: esw-segment-db-client [options]
   --resetTables            Drops and recreates the database tables (for testing)
 ```
 
- ## Running the Web App Server
+ ## Running the Web App
  
  The web app requires npm (or yarn). Run:
  

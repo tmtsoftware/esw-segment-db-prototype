@@ -39,6 +39,9 @@ npm install
 npm run release
 ```
 
+The release files are then found under ./dist (`snap` for Linux, `dmg` for MacOS).
+Note that you can only build a release for the OS that you are building on.
+
 ## References
 - ESW-TS Library - [Link](https://tmtsoftware/esw-ts/)
 - ESW-TS Library Documentation - [Link](https://tmtsoftware.github.io/esw-ts/)
