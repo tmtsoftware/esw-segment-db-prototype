@@ -40,7 +40,11 @@ npm run release
 ```
 
 The release files are then found under ./dist (`snap` for Linux, `dmg` for MacOS).
-Note that you can only build a release for the OS that you are building on.
+
+Notes:
+
+* You can only build a release for the OS that you are building on.
+* To install the generated `snap` on a Linux system, you currently need to pass teh `--dangerous` option to `snap`, since it is not signed.
 
 ## References
 - ESW-TS Library - [Link](https://tmtsoftware/esw-ts/)
