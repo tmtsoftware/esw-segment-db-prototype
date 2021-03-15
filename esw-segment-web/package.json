@@ -3,7 +3,7 @@
   "author": "TMT",
   "version": "0.1.0",
   "private": false,
-  "license": "Apache License, Version 2.0",
+  "license": "Apache-2.0",
   "scripts": {
     "build": "electron-snowpack build",
     "clean": "electron-snowpack clean",
@@ -11,7 +11,8 @@
     "dist": "electron-builder",
     "dist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null",
     "open": "open dist/mac/${npm_package_name}.app",
-    "try": "run-s clean build dist:dir open"
+    "try": "run-s clean build dist:dir open",
+    "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
     "@tmtsoftware/esw-ts": "^0.1.0",
