@@ -32,8 +32,6 @@
     "typescript": "^4.2.3"
   },
   "build": {
-    "appId": "esw.segment.db",
-    "productName": "ESW Segment DB",
     "extends": "electron-snowpack/config/electron-builder.js"
   }
 }
