@@ -9,7 +9,7 @@
     "clean": "electron-snowpack clean",
     "dev": "electron-snowpack dev",
     "dist": "electron-builder",
-    "dist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null",
+    "dist:dir": "npm run dist --dir -c.compression=store -c.mac.identity=null",
     "openMac": "open dist/mac/${npm_package_name}.app",
     "openLinux": "dist/linux-unpacked/${npm_package_name}",
     "tryMac": "run-s clean build dist:dir openMac",

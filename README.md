@@ -124,30 +124,18 @@ Usage: esw-segment-db-client [options]
 
  ## Running the Web App Server
  
- The web app requires npm. It may be necessary to run:
+ The web app requires npm (or yarn). Run:
  
     $ cd ./esw-segment-web
     $ npm install
 
 once. Then to start the web app server for development: 
  
-    $ npm start
+    $ npm run dev
 
-This automatically opens the browser to [http://localhost:8080/](http://localhost:8080/).
+This automatically opens a window running the app (based on [Electron app](https://www.electronjs.org/) ).
 
 ![screenshot](images/esw-segment-web.png)
 
-# Deploying the Web App
-
-Note: For remote use, you will need to edit [SegmentData.tsx](esw-segment-web/src/components/SegmentData.tsx) and change
-the value of `baseUri` to where `esw-segment-db` is running. 
-Since there are two servers (esw-segment-db and the react web app), this is currently how the companion server is located.
-
-Then run:
-    
-    npm run build
-    serve -s build -l 8080
-
-Use the `-l` option to change the port the app will run on.
- 
+See [esw-segment-web](esw-segment-web/README.md) for more information. 
 

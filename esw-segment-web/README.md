@@ -1,5 +1,6 @@
 # esw-segment-web
-This subproject contains the Typescript based ESW Segment DB web app.
+This subproject contains the React/Typescript based ESW Segment DB web application.
+This version runs outside the browser as an [Electron app](https://www.electronjs.org/).
 
 ![screenshot](../images/esw-segment-web.png)
 
@@ -14,52 +15,29 @@ Updating the JIRA information (via the "Sync with JIRA" item) requires a valid J
 
 ## Prerequisites Required for Running App
 
-The latest version of [Node.js](https://nodejs.org/en/download/package-manager/) must be installed.
+* The latest version of [Node.js](https://nodejs.org/en/download/package-manager/) must be installed.
+* csw-services should be running (including the Database Service)
+* The esw-segment-db server must be running
 
 ## Run the App in Local Environment
 
-Run following commands in the terminal.
-   ```
-   npm install
-   npm start
-   ```
-Then, open http://localhost:8080 in a browser
-
-## Build the App for Production
+(Note: `npm` or `yarn` can be used in the following commands, but should not be mixed.)
 
 Run following commands in the terminal.
 ```
 npm install
-npm run build
+npm run dev
 ```
 
-## Running Tests
+This should open the application in a dedicated window.
 
+## Build the App for Production
+
+Run following commands in the terminal:
 ```
-npm test
+npm install
+npm run release
 ```
-
-## How to Use the Project
-
-The project has following structure:
-```bash
-.
-├── src
-│   ├── assets
-│   ├── components
-│   ├── config
-│   ├── helpers
-├── test
-├── types
-```
-
-* `assets`: This directory contains all the files (images, audio etc) that are used by the UI component.
-* `components`: This directory contains all the components created for this UI application.
-* `config`: This contains the application specific configurations.
-* `helpers`: App reusable functions / utilities goes here.
-* `test`: This directory contains all the tests for the UI application.
-* `types`: This directory contains all the types that needs to be imported externally for UI application.
-
 
 ## References
 - ESW-TS Library - [Link](https://tmtsoftware/esw-ts/)
