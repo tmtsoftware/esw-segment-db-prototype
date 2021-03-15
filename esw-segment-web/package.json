@@ -10,7 +10,8 @@
     "dev": "electron-snowpack dev",
     "dist": "electron-builder",
     "dist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null",
-    "open": "open dist/mac/${npm_package_name}.app",
+    "openMac": "open dist/mac/${npm_package_name}.app",
+    "openLinux": "open dist/${npm_package_name}.AppImage",
     "try": "run-s clean build dist:dir open",
     "postinstall": "electron-builder install-app-deps"
   },
