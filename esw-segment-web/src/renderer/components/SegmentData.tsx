@@ -1,7 +1,9 @@
 // These should match the JSON output of the classes on the server side in EswSegmentData.scala
 export class SegmentData {
   // TODO: Configure
-  static baseUri = 'http://localhost:9192'
+  // static baseUri = 'http://localhost:9192'
+  // Set in snowpack.config.js
+  static baseUri = import.meta.env.SNOWPACK_PUBLIC_API_URL
 }
 
 /**
