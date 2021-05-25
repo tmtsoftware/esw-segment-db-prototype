@@ -133,7 +133,7 @@ object DocumentedRoutes extends JsonSupport {
   // Tapir description of MirrorConfig List JSON argument
   private val mirrorConfigListBody = jsonBody[List[MirrorConfig]]
     .description(
-      "Holds a MirrirConfig, representing segment changes on different dates."
+      "Holds a MirrorConfig, representing segment changes on different dates."
     )
     .example(
       List(
