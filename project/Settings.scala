@@ -17,7 +17,6 @@ object Settings {
     parallelExecution in Test := false,
     fork := true,
     resolvers += "jitpack" at "https://jitpack.io",
-//    resolvers += "bintray" at "https://jcenter.bintray.com",
     updateOptions := updateOptions.value.withLatestSnapshots(false),
     scalacOptions ++= Seq(
       "-encoding",
