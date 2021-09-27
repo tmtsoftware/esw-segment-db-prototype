@@ -50,7 +50,7 @@ the segments directly from JIRA.
 
 See [here](https://developer.atlassian.com/cloud/jira/platform/basic-auth-for-rest-apis/) for more information.
 
-To start the server, run:
+To start the server, run (using csw-services for CSW-4.0.0):
 
 ```
 $ csw-services start
