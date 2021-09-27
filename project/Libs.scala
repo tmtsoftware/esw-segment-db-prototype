@@ -20,7 +20,8 @@ object Tapir {
 object CSW {
   private val Org = "com.github.tmtsoftware.csw"
 //  private val Version = "0.1.0-SNAPSHOT"
-  private val Version = "3.0.1"
+//  private val Version = "3.0.1"
+  private val Version = "4.0.0"
 
   val `csw-logging-client` = Org %% "csw-logging-client" % Version
   val `csw-commons` = Org %% "csw-commons" % Version
@@ -31,7 +32,7 @@ object CSW {
 }
 
 object AkkaHttp { //ApacheV2
-  val Version = "10.2.3"
+  val Version = "10.2.4"
   val `akka-http` = "com.typesafe.akka" %% "akka-http" % Version
   val `akka-http-core` = "com.typesafe.akka" %% "akka-http-core" % Version
   val `akka-http-testkit` = "com.typesafe.akka" %% "akka-http-testkit" % Version
@@ -41,7 +42,7 @@ object AkkaHttp { //ApacheV2
 }
 
 object Akka {
-  val Version = "2.6.11" //all akka is Apache License 2.0
+  val Version = "2.6.15" //all akka is Apache License 2.0
 
   val `akka-stream`              = "com.typesafe.akka" %% "akka-stream"              % Version
   val `akka-stream-typed`        = "com.typesafe.akka" %% "akka-stream-typed"        % Version

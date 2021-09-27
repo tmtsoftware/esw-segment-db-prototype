@@ -128,10 +128,6 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
                |VALUES ('${date.toString}', '{$allSegmentIdsStr}', '{$allInstallDatesStr}')""".stripMargin)
           .executeAsyncScala()
       ) == 1
-
-//      val posList = (1 to totalSegments).toList.map(pos => SegmentToM1Pos(installDates(pos-1), idOption(positions(pos-1)), toPosition(pos)))
-//      result && await(updateAllPositionsAfter(posList))
-
       result
     }
 

@@ -27,7 +27,7 @@ import esw.segment.shared.{JiraSegmentData, JsonSupport}
 import sttp.capabilities.WebSockets
 import sttp.capabilities.akka.AkkaStreams
 import sttp.tapir.docs.openapi.OpenAPIDocsInterpreter
-import sttp.tapir.openapi.OpenAPI
+import sttp.tapir.openapi.{Info, OpenAPI}
 import sttp.tapir.server.akkahttp.AkkaHttpServerInterpreter
 import sttp.tapir.swagger.akkahttp.SwaggerAkka
 import sttp.tapir.openapi.circe.yaml._
@@ -719,8 +719,10 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   private val openApiDocs: OpenAPI =
     OpenAPIDocsInterpreter.toOpenAPI(
       docRoutes.map(_.doc),
-      "The ESW Segment DB API",
-      BuildInfo.version
+      Info("The ESW Segment DB API",
+        BuildInfo.version,
+        Some("HTTP API to ESW Segment DB service, used for keeping track of TMT mirror segments")
+      )
     )
   private val openApiYml: String = openApiDocs.toYaml
 
