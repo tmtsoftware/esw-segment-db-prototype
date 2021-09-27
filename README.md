@@ -37,6 +37,7 @@ The following environment variables need to be defined (Required by csw-services
 
 PGDATA is the directory containing the data for the Postgres database.
 
+### Optional JIRA Interface
 In addition, in order for the server to update information about the segments from JIRA (via the 
 "Sync with JIRA" item in the web app), the 
 following environment variables need to be defined and the user must have read access to the `M1ST` JIRA project:
@@ -44,7 +45,8 @@ following environment variables need to be defined and the user must have read a
 * JIRA_USER
 * JIRA_API_TOKEN
 
-The basic JIRA information is included by default.
+The basic JIRA information is included by default, so you can ignore this if you don't need the latest information on
+the segments directly from JIRA.
 
 See [here](https://developer.atlassian.com/cloud/jira/platform/basic-auth-for-rest-apis/) for more information.
 
