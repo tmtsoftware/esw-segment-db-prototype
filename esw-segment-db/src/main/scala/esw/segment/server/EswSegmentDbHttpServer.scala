@@ -4,7 +4,7 @@ import buildinfo.BuildInfo
 
 object EswSegmentDbHttpServer extends App {
 
-  case class Options(port: Int = 9192, testMode: Boolean = false)
+  private case class Options(port: Int = 9192, testMode: Boolean = false)
 
   private val parser = new scopt.OptionParser[Options]("esw-segment-db") {
     head("esw-segment-db", BuildInfo.version)
@@ -34,7 +34,7 @@ object EswSegmentDbHttpServer extends App {
 
   // Run the application
   private def run(options: Options): Unit = {
-    import esw.segment.db.DbWiring._
+    import esw.segment.db.DbWiring.*
     val dbName = if (options.testMode) testDbName else defaultDbName
     val wiring = new ServerWiring(options.port, dbName)
     wiring.server.start()

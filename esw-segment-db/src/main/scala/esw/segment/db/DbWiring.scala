@@ -10,8 +10,8 @@ import csw.logging.client.scaladsl.{GenericLoggerFactory, LoggingSystemFactory}
 import org.jooq.DSLContext
 
 import scala.concurrent.{Await, ExecutionContextExecutor}
-import scala.concurrent.duration._
-import DbWiring._
+import scala.concurrent.duration.*
+import DbWiring.*
 import esw.segment.jira.JiraClient
 
 object DbWiring {

@@ -1,10 +1,10 @@
 package esw.segment.server
 
 import esw.segment.db.DbWiring
-import DbWiring._
+import DbWiring.*
+import akka.http.scaladsl.server.Route
 
 class ServerWiring(port: Int, dbName: String = defaultDbName) extends DbWiring(dbName) {
-//  lazy val routes = new Routes(segmentToM1PosTable, jiraSegmentDataTable, log)
-  lazy val routes = new DocumentedRoutes(segmentToM1PosTable, jiraSegmentDataTable, log).routes
-  lazy val server = new Server(port, routes)
+  lazy val routes: Route = new DocumentedRoutes(segmentToM1PosTable, jiraSegmentDataTable, log).routes
+  lazy val server: Server = new Server(port, routes)
 }

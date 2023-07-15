@@ -10,7 +10,7 @@ import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.headers.{Authorization, BasicHttpCredentials}
-import spray.json._
+import spray.json.*
 
 //noinspection TypeAnnotation
 object JiraClient extends SprayJsonSupport with DefaultJsonProtocol with NullOptions {
@@ -129,7 +129,7 @@ object JiraClient extends SprayJsonSupport with DefaultJsonProtocol with NullOpt
 }
 
 class JiraClient()(implicit typedSystem: ActorSystem[SpawnProtocol.Command], ec: ExecutionContextExecutor) {
-  import JiraClient._
+  import JiraClient.*
 
   // Get the JIRA credentials from the environment variables JIRA_USER and JIRA_API_TOKEN
   private def getJiraAuthorization: List[Authorization] = {

@@ -1,14 +1,14 @@
 package esw.segment.client
 
 import esw.segment.shared.{EswSegmentData, JiraSegmentData, JiraSegmentDataApi, JsonSupport, SegmentToM1Api}
-import EswSegmentData._
+import EswSegmentData.*
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes.OK
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest, Uri}
-import spray.json._
+import spray.json.*
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import EswSegmentClientOptions._
+import EswSegmentClientOptions.*
 
 import java.time.LocalDate
 import scala.async.Async.{async, await}

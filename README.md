@@ -5,7 +5,7 @@ This project contains a server, command line client and web app for keeping trac
 The server uses Postgres to manage the data and makes use of the CSW Database Service.
 It provides an HTTP API, by default on port 9192. You can use the `--port` option to override this.
 
-The command line client makes use the the HTTP service to provide some access via the command line.
+The command line client makes use the HTTP service to provide some access via the command line.
 
 The web app uses the HTTP server and displays the mirror sectors and segments. 
 Clicking on a segment displays the details and allows you to change the Segment-ID for the selected position. 

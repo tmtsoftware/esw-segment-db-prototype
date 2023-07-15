@@ -3,24 +3,24 @@ package esw.segment.client
 import akka.actor.ActorSystem
 import buildinfo.BuildInfo
 import esw.segment.client.EswSegmentClientOptions.defaultPort
-import esw.segment.shared.EswSegmentData._
+import esw.segment.shared.EswSegmentData.*
 import esw.segment.shared.JsonSupport
 import scopt.Read.reads
 import scopt.Read
-import spray.json._
+import spray.json.*
 
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.time.LocalDate
 import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.io.Source
 
 object EswSegmentDbClient extends App with JsonSupport {
   implicit val system: ActorSystem = ActorSystem()
 
-  import system._
+  import system.*
 
   implicit val durationRead: Read[LocalDate] =
     reads {
@@ -167,7 +167,7 @@ object EswSegmentDbClient extends App with JsonSupport {
 
   // Run the application
   private def run(options: EswSegmentClientOptions): Unit = {
-    import options._
+    import options.*
     val client = new EswSegmentHttpClient(host, port)
 
     if (options.setPosition.isDefined) {

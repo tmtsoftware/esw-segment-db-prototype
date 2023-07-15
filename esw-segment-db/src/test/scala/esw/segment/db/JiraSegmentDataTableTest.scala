@@ -1,13 +1,13 @@
 package esw.segment.db
 
-import JiraSegmentDataTableTest._
+import JiraSegmentDataTableTest.*
 import esw.segment.shared.EswSegmentData.totalSegments
 import org.scalatest.funsuite.AsyncFunSuite
 
 import scala.async.Async.{async, await}
 
 object JiraSegmentDataTableTest {
-  import DbWiring._
+  import DbWiring.*
   val wiring                                          = new DbWiring(testDbName)
   lazy val jiraSegmentDataTable: JiraSegmentDataTable = wiring.jiraSegmentDataTable
 }

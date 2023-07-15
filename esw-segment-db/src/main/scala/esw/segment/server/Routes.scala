@@ -3,16 +3,16 @@
 //import akka.NotUsed
 //import akka.actor.typed.ActorSystem
 //import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest, HttpResponse}
-//import akka.http.scaladsl.model.StatusCodes._
+//import akka.http.scaladsl.model.StatusCodes.*
 //import akka.http.scaladsl.model.sse.ServerSentEvent
 //import akka.http.scaladsl.server.directives.{DebuggingDirectives, LoggingMagnet}
 //import akka.http.scaladsl.server.{Directive0, Directives, ExceptionHandler, RejectionHandler, Route}
 //import akka.stream.OverflowStrategy
 //import akka.stream.scaladsl.Source
 //import esw.segment.db.{JiraSegmentDataTable, SegmentToM1PosTable}
-//import esw.segment.shared.EswSegmentData._
+//import esw.segment.shared.EswSegmentData.*
 //import esw.segment.shared.JsonSupport
-//import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
+//import ch.megard.akka.http.cors.scaladsl.CorsDirectives.*
 //import csw.logging.api.scaladsl.Logger
 //
 //import java.time.LocalDate
@@ -196,7 +196,7 @@
 //          complete(posTable.allSegmentIds(position))
 //        } ~
 //        path("syncWithJira") {
-//          import akka.http.scaladsl.marshalling.sse.EventStreamMarshalling._
+//          import akka.http.scaladsl.marshalling.sse.EventStreamMarshalling.*
 //          complete {
 //            syncWithJiraStream()
 //              .map(p => ServerSentEvent(p.toString))

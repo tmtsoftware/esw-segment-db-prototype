@@ -19,18 +19,18 @@ import csw.location.client.scaladsl.HttpLocationServiceFactory
 import csw.logging.api.scaladsl.Logger
 import esw.segment.db.{JiraSegmentDataTable, SegmentToM1PosTable}
 import esw.segment.shared.EswSegmentData.{AllSegmentPositions, DateRange, MirrorConfig, SegmentConfig, SegmentToM1Pos, currentDate}
-import sttp.tapir._
+import sttp.tapir.*
 import sttp.model.StatusCode
-import sttp.tapir.generic.auto._
-import sttp.tapir.json.spray._
+import sttp.tapir.generic.auto.*
+import sttp.tapir.json.spray.*
 import esw.segment.shared.{JiraSegmentData, JsonSupport}
+import sttp.apispec.openapi.OpenAPI
 import sttp.capabilities.WebSockets
 import sttp.capabilities.akka.AkkaStreams
 import sttp.tapir.docs.openapi.OpenAPIDocsInterpreter
-import sttp.tapir.openapi.OpenAPI
 import sttp.tapir.server.akkahttp.AkkaHttpServerInterpreter
 import sttp.tapir.swagger.akkahttp.SwaggerAkka
-import sttp.tapir.openapi.circe.yaml._
+import sttp.apispec.openapi.circe.yaml.*
 import sttp.tapir.generic.Derived
 
 import java.time.LocalDate
@@ -133,7 +133,7 @@ object DocumentedRoutes extends JsonSupport {
   // Tapir description of MirrorConfig List JSON argument
   private val mirrorConfigListBody = jsonBody[List[MirrorConfig]]
     .description(
-      "Holds a MirrirConfig, representing segment changes on different dates."
+      "Holds a MirrorConfig, representing segment changes on different dates."
     )
     .example(
       List(
@@ -215,15 +215,15 @@ object DocumentedRoutes extends JsonSupport {
  */
 class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: JiraSegmentDataTable, logger: Logger)(implicit
     ec: ExecutionContext,
-    actorSystem: ActorSystem[_]
+    actorSystem: ActorSystem[?]
 ) {
-  import DocumentedRoutes._
+  import DocumentedRoutes.*
 
   val locationService: LocationService = HttpLocationServiceFactory.makeLocalClient
   private val config  = actorSystem.settings.config
   private val role = config.getString("esw-segment-db.role")
   private val directives      = SecurityDirectives(config, locationService)
-  import directives._
+  import directives.*
 
   private val myExceptionHandler = ExceptionHandler {
     case e: Throwable =>
@@ -243,7 +243,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
       }
 
     // Documents the route
-    def doc: Endpoint[I, ErrorInfo, O, AkkaStreams with WebSockets]
+    def doc: PublicEndpoint[I, ErrorInfo, O, AkkaStreams & WebSockets]
 
     // Implements the server route
     def impl(i: I): Future[Either[ErrorInfo, O]]
@@ -253,9 +253,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
 
     // Returns the akka-http route for this endpoint
     final def route: Route = {
-      val innerRoute = AkkaHttpServerInterpreter.toRoute(doc) { i =>
-        handleErrors(impl(i))
-      }
+      val innerRoute = AkkaHttpServerInterpreter().toRoute(doc.serverLogic(i => handleErrors(impl(i))))
       if (isProtected)
         sPost(RealmRolePolicy(role))(innerRoute)
       else
@@ -288,7 +286,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   // --- Endpoints ---
 
   private object setPosition extends DocRoute[SegmentToM1Pos, Unit] {
-    override val doc: Endpoint[SegmentToM1Pos, ErrorInfo, Unit, Any] =
+    override val doc: PublicEndpoint[SegmentToM1Pos, ErrorInfo, Unit, Any] =
       endpoint.post
         .description("Insert/update segment to M1 positions mapping")
         .in("setPosition")
@@ -305,7 +303,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object setPositions extends DocRoute[MirrorConfig, Unit] {
-    override val doc: Endpoint[MirrorConfig, ErrorInfo, Unit, Any] =
+    override val doc: PublicEndpoint[MirrorConfig, ErrorInfo, Unit, Any] =
       endpoint.post
         .description("Set positions of a number of segments on a given date")
         .in("setPositions")
@@ -322,7 +320,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object setAllPositions extends DocRoute[AllSegmentPositions, Unit] {
-    override val doc: Endpoint[AllSegmentPositions, ErrorInfo, Unit, Any] =
+    override val doc: PublicEndpoint[AllSegmentPositions, ErrorInfo, Unit, Any] =
       endpoint.post
         .description("Sets all 574 segment positions (A1 to G82) for a given date")
         .in("setAllPositions")
@@ -339,7 +337,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object segmentPositions extends DocRoute[(String, DateRange), List[SegmentToM1Pos]] {
-    override val doc: Endpoint[(String, DateRange), ErrorInfo, List[SegmentToM1Pos], Any] =
+    override val doc: PublicEndpoint[(String, DateRange), ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.post
         .description("Gets a list of segments positions for the given segment id in the given date range")
         .in("segmentPositions" / path[String]("segmentId").description("the segment id to search for").example("SN-484"))
@@ -354,7 +352,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object segmentIds extends DocRoute[(String, DateRange), List[SegmentToM1Pos]] {
-    override val doc: Endpoint[(String, DateRange), ErrorInfo, List[SegmentToM1Pos], Any] =
+    override val doc: PublicEndpoint[(String, DateRange), ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.post
         .description("Gets a list of segment ids that were in the given position in the given date range.")
         .in("segmentIds" / path[String]("position").description("the segment position to search for (A1 to F82)").example("A32"))
@@ -369,7 +367,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object newlyInstalledSegments extends DocRoute[LocalDate, List[SegmentToM1Pos]] {
-    override val doc: Endpoint[LocalDate, ErrorInfo, List[SegmentToM1Pos], Any] =
+    override val doc: PublicEndpoint[LocalDate, ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.post
         .description("Returns a list of segments that were installed since the given date.")
         .in("newlyInstalledSegments")
@@ -384,7 +382,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object segmentExchanges extends DocRoute[LocalDate, List[MirrorConfig]] {
-    override val doc: Endpoint[LocalDate, ErrorInfo, List[MirrorConfig], Any] =
+    override val doc: PublicEndpoint[LocalDate, ErrorInfo, List[MirrorConfig], Any] =
       endpoint.post
         .description("Returns a list of segment exchanges since the given date.")
         .in("segmentExchanges")
@@ -399,7 +397,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object positionsOnDate extends DocRoute[LocalDate, List[SegmentToM1Pos]] {
-    override val doc: Endpoint[LocalDate, ErrorInfo, List[SegmentToM1Pos], Any] =
+    override val doc: PublicEndpoint[LocalDate, ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.post
         .description("Returns the segment positions as they were on the given date.")
         .in("positionsOnDate")
@@ -414,7 +412,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object segmentPositionOnDate extends DocRoute[(String, LocalDate), Option[SegmentToM1Pos]] {
-    override val doc: Endpoint[(String, LocalDate), ErrorInfo, Option[SegmentToM1Pos], Any] =
+    override val doc: PublicEndpoint[(String, LocalDate), ErrorInfo, Option[SegmentToM1Pos], Any] =
       endpoint.post
         .description("Gets the segment position for the given segment id on the given date.")
         .in("segmentPositionOnDate" / path[String]("segmentId").description("the segment id to search for").example("SN-019"))
@@ -429,7 +427,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object segmentAtPositionOnDate extends DocRoute[(String, LocalDate), Option[SegmentToM1Pos]] {
-    override val doc: Endpoint[(String, LocalDate), ErrorInfo, Option[SegmentToM1Pos], Any] =
+    override val doc: PublicEndpoint[(String, LocalDate), ErrorInfo, Option[SegmentToM1Pos], Any] =
       endpoint.post
         .description("Gets the id of the segment that was installed in the given position on the given date.")
         .in("segmentAtPositionOnDate" / path[String]("position").description("the segment position to search for").example("A82"))
@@ -444,7 +442,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object resetTables extends DocRoute[Unit, Unit] {
-    override val doc: Endpoint[Unit, ErrorInfo, Unit, Any] =
+    override val doc: PublicEndpoint[Unit, ErrorInfo, Unit, Any] =
       endpoint.post
         .description("Drops and recreates the database tables (for testing)")
         .in("resetTables")
@@ -462,7 +460,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object resetJiraSegmentDataTable extends DocRoute[Unit, Unit] {
-    override val doc: Endpoint[Unit, ErrorInfo, Unit, Any] =
+    override val doc: PublicEndpoint[Unit, ErrorInfo, Unit, Any] =
       endpoint.post
         .description("Drops and recreates the JIRA segment database table (for testing)")
         .in("resetJiraSegmentDataTable")
@@ -478,7 +476,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object resetSegmentToM1PosTable extends DocRoute[Unit, Unit] {
-    override val doc: Endpoint[Unit, ErrorInfo, Unit, Any] =
+    override val doc: PublicEndpoint[Unit, ErrorInfo, Unit, Any] =
       endpoint.post
         .description("Drops and recreates the segment database table (for testing)")
         .in("resetSegmentToM1PosTable")
@@ -494,7 +492,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object mostRecentChange extends DocRoute[LocalDate, LocalDate] {
-    override val doc: Endpoint[LocalDate, ErrorInfo, LocalDate, Any] =
+    override val doc: PublicEndpoint[LocalDate, ErrorInfo, LocalDate, Any] =
       endpoint.post
         .description(
           "Returns the most recent date that segments were changed up to the given date, or the current date, if there are no segments installed yet."
@@ -511,7 +509,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object nextChange extends DocRoute[LocalDate, LocalDate] {
-    override val doc: Endpoint[LocalDate, ErrorInfo, LocalDate, Any] =
+    override val doc: PublicEndpoint[LocalDate, ErrorInfo, LocalDate, Any] =
       endpoint.post
         .description(
           "Returns the next date after the given one where segments were changed, or the current date, if there are no newer changes."
@@ -528,7 +526,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object prevChange extends DocRoute[LocalDate, LocalDate] {
-    override val doc: Endpoint[LocalDate, ErrorInfo, LocalDate, Any] =
+    override val doc: PublicEndpoint[LocalDate, ErrorInfo, LocalDate, Any] =
       endpoint.post
         .description(
           "Returns the previous date before the given one where segments were changed, or the first date, if there are no older changes."
@@ -545,7 +543,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object authEnabled extends DocRoute[Unit, Boolean] {
-    override val doc: Endpoint[Unit, ErrorInfo, Boolean, Any] =
+    override val doc: PublicEndpoint[Unit, ErrorInfo, Boolean, Any] =
       endpoint.get
         .description(
           "Returns true if authorization via Keycloak is enabled."
@@ -562,7 +560,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object currentPositions extends DocRoute[Unit, List[SegmentToM1Pos]] {
-    override val doc: Endpoint[Unit, ErrorInfo, List[SegmentToM1Pos], Any] =
+    override val doc: PublicEndpoint[Unit, ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.get
         .description("Returns the current segment positions.")
         .in("currentPositions")
@@ -576,7 +574,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object plannedPositions extends DocRoute[Unit, List[SegmentToM1Pos]] {
-    override val doc: Endpoint[Unit, ErrorInfo, List[SegmentToM1Pos], Any] =
+    override val doc: PublicEndpoint[Unit, ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.get
         .description("Returns the segment positions as defined in the JIRA issues.")
         .in("plannedPositions")
@@ -590,7 +588,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object segmentData extends DocRoute[Unit, List[JiraSegmentData]] {
-    override val doc: Endpoint[Unit, ErrorInfo, List[JiraSegmentData], Any] =
+    override val doc: PublicEndpoint[Unit, ErrorInfo, List[JiraSegmentData], Any] =
       endpoint.get
         .description("Gets the JIRA segment data for all segments.")
         .in("segmentData")
@@ -604,7 +602,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object currentSegmentPosition extends DocRoute[String, Option[SegmentToM1Pos]] {
-    override val doc: Endpoint[String, ErrorInfo, Option[SegmentToM1Pos], Any] =
+    override val doc: PublicEndpoint[String, ErrorInfo, Option[SegmentToM1Pos], Any] =
       endpoint.get
         .description("Gets the current segment position for the given segment id.")
         .in("currentSegmentPosition" / path[String]("segmentId").description("the segment id to search for").example("SN-019"))
@@ -618,7 +616,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object currentSegmentAtPosition extends DocRoute[String, Option[SegmentToM1Pos]] {
-    override val doc: Endpoint[String, ErrorInfo, Option[SegmentToM1Pos], Any] =
+    override val doc: PublicEndpoint[String, ErrorInfo, Option[SegmentToM1Pos], Any] =
       endpoint.get
         .description("Gets the id of the segment currently in the given position.")
         .in(
@@ -634,7 +632,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object availableSegmentIdsForPos extends DocRoute[String, List[String]] {
-    override val doc: Endpoint[String, ErrorInfo, List[String], Any] =
+    override val doc: PublicEndpoint[String, ErrorInfo, List[String], Any] =
       endpoint.get
         .description("Gets a list of segment-ids that can be installed at the given position.")
         .in(
@@ -650,7 +648,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   }
 
   private object allSegmentIds extends DocRoute[String, List[SegmentToM1Pos]] {
-    override val doc: Endpoint[String, ErrorInfo, List[SegmentToM1Pos], Any] =
+    override val doc: PublicEndpoint[String, ErrorInfo, List[SegmentToM1Pos], Any] =
       endpoint.get
         .description("Gets a list of segments that were in the given position.")
         .in("allSegmentIds" / path[String]("position").description("the segment position to search for").example("A82"))
@@ -666,10 +664,10 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
   // Tapir doesn't support SSE, so this is an undocumented route
   // XXX TODO: Add Auth
   private val syncWithJiraRoute: Route = {
-    import akka.http.scaladsl.server.Directives._
+    import akka.http.scaladsl.server.Directives.*
     get {
       path("syncWithJira") {
-        import akka.http.scaladsl.marshalling.sse.EventStreamMarshalling._
+        import akka.http.scaladsl.marshalling.sse.EventStreamMarshalling.*
         complete {
           syncWithJiraStream()
             .map(_.map(p => ServerSentEvent(p.toString)))
@@ -717,7 +715,7 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
 
   // Enable the Open API routes
   private val openApiDocs: OpenAPI =
-    OpenAPIDocsInterpreter.toOpenAPI(
+    OpenAPIDocsInterpreter().toOpenAPI(
       docRoutes.map(_.doc),
       "The ESW Segment DB API",
       BuildInfo.version
@@ -728,12 +726,12 @@ class DocumentedRoutes(posTable: SegmentToM1PosTable, jiraSegmentDataTable: Jira
    * The routes for this server
    */
   val routes: Route = {
-    import akka.http.scaladsl.server.Directives._
+    import akka.http.scaladsl.server.Directives.*
     val routeList = List(new SwaggerAkka(openApiYml).routes, syncWithJiraRoute) ++ docRoutes.map(_.route)
     cors() {
       routeLogger {
         handleExceptions(myExceptionHandler) {
-          concat(routeList: _*)
+          concat(routeList *)
         }
       }
     }

@@ -1,14 +1,14 @@
 package esw.segment.db
 
 import org.jooq.DSLContext
-import csw.database.scaladsl.JooqExtentions._
-import esw.segment.shared.EswSegmentData._
-import SegmentToM1PosTable._
+import csw.database.scaladsl.JooqExtentions.*
+import esw.segment.shared.EswSegmentData.*
+import SegmentToM1PosTable.*
 import esw.segment.shared.SegmentToM1Api
 
 import java.sql.Date
 import java.time.LocalDate
-import scala.async.Async._
+import scala.async.Async.*
 import scala.concurrent.{ExecutionContext, Future}
 
 object SegmentToM1PosTable {
@@ -63,7 +63,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
    */
   private def getInstallDates(date: LocalDate): Future[Array[LocalDate]] =
     async {
-      import scala.jdk.CollectionConverters._
+      import scala.jdk.CollectionConverters.*
       import scala.compat.java8.FutureConverters.CompletionStageOps
 
       await(
@@ -89,7 +89,7 @@ class SegmentToM1PosTable(dsl: DSLContext)(implicit ec: ExecutionContext) extend
    */
   private def getPositions(date: LocalDate): Future[Array[String]] =
     async {
-      import scala.jdk.CollectionConverters._
+      import scala.jdk.CollectionConverters.*
       import scala.compat.java8.FutureConverters.CompletionStageOps
 
       await(

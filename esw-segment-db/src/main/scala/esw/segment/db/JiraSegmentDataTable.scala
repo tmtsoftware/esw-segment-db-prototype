@@ -1,17 +1,17 @@
 package esw.segment.db
 
 import org.jooq.DSLContext
-import csw.database.scaladsl.JooqExtentions._
+import csw.database.scaladsl.JooqExtentions.*
 import esw.segment.jira.JiraClient
 import esw.segment.shared.{JiraSegmentData, JiraSegmentDataApi, JsonSupport}
-import spray.json._
+import spray.json.*
 
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
-import JiraSegmentDataTable._
+import JiraSegmentDataTable.*
 import esw.segment.jira.JiraClient.{jiraBrowseUri, toPos}
 import esw.segment.shared.EswSegmentData.SegmentToM1Pos
-import esw.segment.shared.EswSegmentData._
+import esw.segment.shared.EswSegmentData.*
 
 import java.nio.charset.StandardCharsets
 
@@ -68,7 +68,7 @@ class JiraSegmentDataTable(dsl: DSLContext, jiraClient: JiraClient)(implicit ec:
         true
       else {
         val item = list.head
-        import item._
+        import item.*
         val result = await(
           dsl
             .query(s"""INSERT INTO $tableName VALUES (
